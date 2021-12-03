@@ -7,8 +7,8 @@
 
 const app = {
   app_id: 123188,
-  title: 'My Awesome E-Com Plus App',
-  slug: 'my-awesome-app',
+  title: 'Galax Pay',
+  slug: 'galaxpay',
   type: 'external',
   state: 'active',
   authentication: true,
