@@ -34,13 +34,13 @@ const app = {
      * Triggered when listing payments, must return available payment methods.
      * Start editing `routes/ecom/modules/list-payments.js`
      */
-    // list_payments:        { enabled: true },
+    list_payments:        { enabled: true },
 
     /**
      * Triggered when order is being closed, must create payment transaction and return info.
      * Start editing `routes/ecom/modules/create-transaction.js`
      */
-    // create_transaction:   { enabled: true },
+    create_transaction:   { enabled: true },
   },
 
   /**
@@ -82,8 +82,8 @@ const app = {
       // 'DELETE',        // Delete customers
     ],
     orders: [
-      // 'GET',           // List/read orders with public and private fields
-      // 'POST',          // Create orders
+      'GET',           // List/read orders with public and private fields
+      'POST',          // Create orders
       // 'PATCH',         // Edit orders
       // 'PUT',           // Overwrite orders
       // 'DELETE',        // Delete orders
@@ -106,7 +106,7 @@ const app = {
     ],
     'orders/payments_history': [
       // 'GET',           // List/read order payments history events
-      // 'POST',          // Create payments history entry with new status
+      'POST',          // Create payments history entry with new status
       // 'DELETE',        // Delete payments history entry
     ],
 
@@ -138,6 +138,247 @@ const app = {
   },
 
   admin_settings: {
+    galaxpay_id: {
+      schema: {
+        type: 'string',
+        maxLength: 255,
+        title: 'Galax ID',
+        description: 'Seu ID de acesso a API do Galaxpay, solicitação via suporte https://docs.galaxpay.com.br/suporte'
+      },
+      hide: true
+    },
+    galaxpay_hash: {
+      schema: {
+        type: 'string',
+        maxLength: 255,
+        title: 'Galax Hash',
+        description: 'Seu hash de acesso a API do Galaxpay, solicitação via suporte https://docs.galaxpay.com.br/suporte'
+      },
+      hide: true
+    },
+    galaxpay_sandbox: {
+      schema: {
+        type: 'boolean',
+        title: 'Galaxpay Sandbox',
+        description: 'Galaxpay API sandbox env'
+      },
+      hide: false
+    },
+    credit_card: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          disable: {
+            type: 'boolean',
+            title: 'Desabilitar cartão',
+            description: 'Desabilitar pagamento com cartão via Galaxpay'
+          },
+          label: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Rótulo',
+            description: 'Nome da forma de pagamento exibido para os clientes',
+            default: 'Cartão de crédito'
+          },
+          text: {
+            type: 'string',
+            maxLength: 1000,
+            title: 'Descrição',
+            description: 'Texto auxiliar sobre a forma de pagamento, pode conter tags HTML'
+          },
+          icon: {
+            type: 'string',
+            maxLength: 255,
+            format: 'uri',
+            title: 'Ícone',
+            description: 'Ícone customizado para a forma de pagamento, URL da imagem'
+          }
+        },
+        title: 'Cartão de crédito',
+        description: 'Configurações adicionais para cartão de crédito'
+      },
+      hide: false
+    },
+    banking_billet: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          disable: {
+            type: 'boolean',
+            title: 'Desabilitar boleto',
+            description: 'Desabilitar pagamento com boleto bancário via Galaxpay'
+          },
+          label: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Rótulo',
+            description: 'Nome da forma de pagamento exibido para os clientes',
+            default: 'Boleto bancário'
+          },
+          text: {
+            type: 'string',
+            maxLength: 1000,
+            title: 'Descrição',
+            description: 'Texto auxiliar sobre a forma de pagamento, pode conter tags HTML'
+          },
+          icon: {
+            type: 'string',
+            maxLength: 255,
+            format: 'uri',
+            title: 'Ícone',
+            description: 'Ícone customizado para a forma de pagamento, URL da imagem'
+          }
+        },
+        title: 'Boleto bancário',
+        description: 'Configurações adicionais para boleto bancário'
+      },
+      hide: false
+    },
+    discount: {
+      schema: {
+        type: 'object',
+        required: [
+          'value'
+        ],
+        additionalProperties: false,
+        properties: {
+          apply_at: {
+            type: 'string',
+            enum: [
+              'total',
+              'subtotal',
+              'freight'
+            ],
+            default: 'subtotal',
+            title: 'Aplicar desconto em',
+            description: 'Em qual valor o desconto deverá ser aplicado no checkout'
+          },
+          min_amount: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 999999999,
+            title: 'Pedido mínimo',
+            description: 'Montante mínimo para aplicar o desconto'
+          },
+          type: {
+            type: 'string',
+            enum: [
+              'percentage',
+              'fixed'
+            ],
+            default: 'percentage',
+            title: 'Tipo de desconto',
+            description: 'Desconto com valor percentual ou fixo'
+          },
+          value: {
+            type: 'number',
+            minimum: -99999999,
+            maximum: 99999999,
+            title: 'Valor do desconto',
+            description: 'Valor percentual ou fixo a ser descontado, dependendo to tipo configurado'
+          },
+          banking_billet: {
+            type: 'boolean',
+            default: true,
+            title: 'Desconto no boleto',
+            description: 'Habilitar desconto via boleto Galaxpay (padrão)'
+          },
+          credit_card: {
+            type: 'boolean',
+            title: 'Desconto no cartão',
+            description: 'Habilitar desconto com cartão de crédito via Galaxpay'
+          }
+        },
+        title: 'Desconto',
+        description: 'Desconto a ser aplicado para pagamentos via Galaxpay'
+      },
+      hide: false
+    },
+    installments: {
+      schema: {
+        type: 'object',
+        required: [
+          'max_number'
+        ],
+        additionalProperties: false,
+        properties: {
+          min_installment: {
+            type: 'number',
+            minimum: 1,
+            maximum: 99999999,
+            default: 5,
+            title: 'Parcela mínima',
+            description: 'Valor mínimo da parcela'
+          },
+          max_number: {
+            type: 'integer',
+            minimum: 2,
+            maximum: 999,
+            title: 'Máximo de parcelas',
+            description: 'Número máximo de parcelas'
+          },
+          monthly_interest: {
+            type: 'number',
+            minimum: 0,
+            maximum: 9999,
+            default: 0,
+            title: 'Juros mensais',
+            description: 'Taxa de juros mensal, zero para parcelamento sem juros'
+          },
+          max_interest_free: {
+            type: 'integer',
+            minimum: 2,
+            maximum: 999,
+            title: 'Parcelas sem juros',
+            description: 'Mesclar parcelamento com e sem juros (ex.: até 3x sem juros e 12x com juros)'
+          },
+          interest_free_min_amount: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 999999999,
+            title: 'Mínimo sem juros',
+            description: 'Montante mínimo para parcelamento sem juros'
+          }
+        },
+        title: 'Parcelamento',
+        description: 'Opções de parcelamento no cartão via Galaxpay'
+      },
+      hide: false
+    },
+    plan_recurrence: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          disable: {
+            type: 'boolean',
+            title: 'Desabilitar plano de recorrência',
+            description: 'Desabilitar recorrência via Galaxpay'
+          },
+          periodicity: {
+            type: 'string',
+            enum: [
+              'weekly',
+              'biweekly',
+              'monthly',
+              'bimonthly',
+              'quarterly',
+              'biannual',
+              'yearly'
+            ],
+            default: 'monthly',
+            title: 'Periodicidade da recorrência',
+            description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
+          },
+        },
+        title: 'Plano de recorrência',
+        description: 'Configurações para cobranças por recorrência'
+      },
+      hide: false
+    }
+
     /**
      * JSON schema based fields to be configured by merchant and saved to app `data` / `hidden_data`, such as:
 
