@@ -236,117 +236,6 @@ const app = {
       },
       hide: false
     },
-    discount: {
-      schema: {
-        type: 'object',
-        required: [
-          'value'
-        ],
-        additionalProperties: false,
-        properties: {
-          apply_at: {
-            type: 'string',
-            enum: [
-              'total',
-              'subtotal',
-              'freight'
-            ],
-            default: 'subtotal',
-            title: 'Aplicar desconto em',
-            description: 'Em qual valor o desconto deverá ser aplicado no checkout'
-          },
-          min_amount: {
-            type: 'integer',
-            minimum: 1,
-            maximum: 999999999,
-            title: 'Pedido mínimo',
-            description: 'Montante mínimo para aplicar o desconto'
-          },
-          type: {
-            type: 'string',
-            enum: [
-              'percentage',
-              'fixed'
-            ],
-            default: 'percentage',
-            title: 'Tipo de desconto',
-            description: 'Desconto com valor percentual ou fixo'
-          },
-          value: {
-            type: 'number',
-            minimum: -99999999,
-            maximum: 99999999,
-            title: 'Valor do desconto',
-            description: 'Valor percentual ou fixo a ser descontado, dependendo to tipo configurado'
-          },
-          banking_billet: {
-            type: 'boolean',
-            default: true,
-            title: 'Desconto no boleto',
-            description: 'Habilitar desconto via boleto Galaxpay (padrão)'
-          },
-          credit_card: {
-            type: 'boolean',
-            title: 'Desconto no cartão',
-            description: 'Habilitar desconto com cartão de crédito via Galaxpay'
-          }
-        },
-        title: 'Desconto',
-        description: 'Desconto a ser aplicado para pagamentos via Galaxpay'
-      },
-      hide: false
-    },
-    installments: {
-      schema: {
-        type: 'object',
-        required: [
-          'max_number'
-        ],
-        additionalProperties: false,
-        properties: {
-          min_installment: {
-            type: 'number',
-            minimum: 1,
-            maximum: 99999999,
-            default: 5,
-            title: 'Parcela mínima',
-            description: 'Valor mínimo da parcela'
-          },
-          max_number: {
-            type: 'integer',
-            minimum: 2,
-            maximum: 999,
-            title: 'Máximo de parcelas',
-            description: 'Número máximo de parcelas'
-          },
-          monthly_interest: {
-            type: 'number',
-            minimum: 0,
-            maximum: 9999,
-            default: 0,
-            title: 'Juros mensais',
-            description: 'Taxa de juros mensal, zero para parcelamento sem juros'
-          },
-          max_interest_free: {
-            type: 'integer',
-            minimum: 2,
-            maximum: 999,
-            title: 'Parcelas sem juros',
-            description: 'Mesclar parcelamento com e sem juros (ex.: até 3x sem juros e 12x com juros)'
-          },
-          interest_free_min_amount: {
-            type: 'integer',
-            minimum: 1,
-            maximum: 999999999,
-            title: 'Mínimo sem juros',
-            description: 'Montante mínimo para parcelamento sem juros'
-          }
-        },
-        title: 'Parcelamento',
-        description: 'Opções de parcelamento no cartão via Galaxpay'
-      },
-      hide: false
-    },
     plan_recurrence: {
       schema: {
         type: 'object',
@@ -371,6 +260,12 @@ const app = {
             default: 'monthly',
             title: 'Periodicidade da recorrência',
             description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
+          },
+          quantity: {
+            type: 'number',
+            default: 0,
+            title: 'Quantidade da recorrência',
+            description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser cancelado, deixe vazio'
           },
         },
         title: 'Plano de recorrência',

@@ -1,3 +1,4 @@
+const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -17,7 +18,78 @@ exports.post = ({ appSdk, admin }, req, res) => {
   // merge all app options configured by merchant
   const appData = Object.assign({}, application.data, application.hidden_data)
   // setup required `transaction` response object
-  const transaction = {}
+  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+
+  const orderId = params.order_id
+  const { amount, buyer, payer, to, items, type } = params
+  console.log('> Transaction #', storeId, orderId)
+
+  const transaction = {
+    type: type,
+    amount: amount.total
+  }
+  // https://docs.galaxpay.com.br/subscriptions/create-without-plan
+
+  const galaxpayCustomer = {
+    myId: buyer.customer_id,
+    name: buyer.fullname,
+    document: buyer.doc_number,
+    email: buyer.email,
+    phones: [parseInt(`+${(buyer.phone.country_code || '55')}${buyer.phone.number}`, 10)]
+  }
+
+  const parseAddress = to => ({
+    zipcode: to.zip,
+    street: to.street,
+    number: String(to.number) || 's/n',
+    complementary: to.complement || undefined,
+    neighborhood: to.borough,
+    city: to.city,
+    state: to.province || to.province_code
+  })
+
+  let galaxpaySubscriptions
+  const finalAmount = amount.total
+
+  if (params.payment_method.code === 'credit_card') {
+    const card = {
+      myId: params.credit_card.last_digits,
+      hash: params.credit_card.hash
+    }
+
+    const PaymentMethodCreditCard = {
+      card: card,
+      preAuthorize: false
+    }
+
+    galaxpaySubscriptions = {
+      myId,// requered
+      value: Math.floor(finalAmount * 100),
+      quantity: appData.plan_recurrence.quantity,
+      periodicity: appData.plan_recurrence.periodicity,
+      firstPayDayDate, // requered
+      additionalInfo: {}, // optional
+      mainPaymentMethodId: 'credicard',
+      Customer: galaxpayCustomer,
+      PaymentMethodCreditCard: PaymentMethodCreditCard
+
+    }
+  } else if (params.payment_method.code === 'banking_billet') {
+    let address
+
+    galaxpaySubscriptions = {
+      myId,// requered
+      value: Math.floor(finalAmount * 100),
+      quantity: appData.plan_recurrence.quantity,
+      periodicity: appData.plan_recurrence.periodicity,
+      firstPayDayDate, // requered
+      additionalInfo: {}, // optional
+      mainPaymentMethodId: 'boleto',
+      Customer: galaxpayCustomer,
+      PaymentMethodBoleto: {} // requered
+
+    }
+  }
 
   // indicates whether the buyer should be redirected to payment link right after checkout
   let redirectToPayment = false
