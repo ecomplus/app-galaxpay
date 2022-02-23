@@ -28,68 +28,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
     type: type,
     amount: amount.total
   }
-  // https://docs.galaxpay.com.br/subscriptions/create-without-plan
-
-  const galaxpayCustomer = {
-    myId: buyer.customer_id,
-    name: buyer.fullname,
-    document: buyer.doc_number,
-    email: buyer.email,
-    phones: [parseInt(`+${(buyer.phone.country_code || '55')}${buyer.phone.number}`, 10)]
-  }
-
-  const parseAddress = to => ({
-    zipcode: to.zip,
-    street: to.street,
-    number: String(to.number) || 's/n',
-    complementary: to.complement || undefined,
-    neighborhood: to.borough,
-    city: to.city,
-    state: to.province || to.province_code
-  })
-
-  let galaxpaySubscriptions
-  const finalAmount = amount.total
-
-  if (params.payment_method.code === 'credit_card') {
-    const card = {
-      myId: params.credit_card.last_digits,
-      hash: params.credit_card.hash
-    }
-
-    const PaymentMethodCreditCard = {
-      card: card,
-      preAuthorize: false
-    }
-
-    galaxpaySubscriptions = {
-      myId,// requered
-      value: Math.floor(finalAmount * 100),
-      quantity: appData.plan_recurrence.quantity,
-      periodicity: appData.plan_recurrence.periodicity,
-      firstPayDayDate, // requered
-      additionalInfo: {}, // optional
-      mainPaymentMethodId: 'credicard',
-      Customer: galaxpayCustomer,
-      PaymentMethodCreditCard: PaymentMethodCreditCard
-
-    }
-  } else if (params.payment_method.code === 'banking_billet') {
-    let address
-
-    galaxpaySubscriptions = {
-      myId,// requered
-      value: Math.floor(finalAmount * 100),
-      quantity: appData.plan_recurrence.quantity,
-      periodicity: appData.plan_recurrence.periodicity,
-      firstPayDayDate, // requered
-      additionalInfo: {}, // optional
-      mainPaymentMethodId: 'boleto',
-      Customer: galaxpayCustomer,
-      PaymentMethodBoleto: {} // requered
-
-    }
-  }
 
   // indicates whether the buyer should be redirected to payment link right after checkout
   let redirectToPayment = false
@@ -114,8 +52,91 @@ exports.post = ({ appSdk, admin }, req, res) => {
       break
   }
 
-  res.send({
-    redirect_to_payment: redirectToPayment,
-    transaction
+  // https://docs.galaxpay.com.br/subscriptions/create-without-plan
+
+  const galaxpayCustomer = {
+    myId: buyer.customer_id,
+    name: buyer.fullname,
+    document: buyer.doc_number,
+    email: buyer.email,
+    phones: [parseInt(`${buyer.phone.number}`, 10)]
+  }
+
+  const parseAddress = to => ({
+    zipCode: to.zip,
+    street: to.street,
+    number: String(to.number) || 's/n',
+    complementary: to.complement || undefined,
+    neighborhood: to.borough,
+    city: to.city,
+    state: to.province || to.province_code
   })
+
+  let galaxpaySubscriptions
+
+  const finalAmount = transaction.amount
+
+  if (params.payment_method.code === 'credit_card') {
+    const card = {
+      myId: params.credit_card.last_digits,
+      hash: params.credit_card.hash
+    }
+
+    const PaymentMethodCreditCard = {
+      card: card,
+      preAuthorize: false
+    }
+
+    galaxpaySubscriptions = {
+      myId: `${orderId}`, // requered
+      value: Math.floor(finalAmount * 100),
+      quantity: appData.plan_recurrence.quantity,
+      periodicity: appData.plan_recurrence.periodicity,
+      firstPayDayDate: new Date().toISOString().split('T')[0], // requered
+      // additionalInfo: '', // optional
+      mainPaymentMethodId: 'credicard',
+      Customer: galaxpayCustomer,
+      PaymentMethodCreditCard: PaymentMethodCreditCard
+
+    }
+  } else if (params.payment_method.code === 'banking_billet') {
+    if (to) {
+      galaxpayCustomer.Address = parseAddress(to)
+    } else if (params.billing_address) {
+      galaxpayCustomer.Address = parseAddress(params.billing_address)
+    }
+
+    galaxpaySubscriptions = {
+      myId: `${orderId}`, // requered
+      value: Math.floor(finalAmount * 100),
+      quantity: appData.plan_recurrence.quantity,
+      periodicity: appData.plan_recurrence.periodicity,
+      firstPayDayDate: new Date().toISOString().split('T')[0], // requered
+      // additionalInfo: '', // optional,  instructions banking billet?
+      mainPaymentMethodId: 'boleto',
+      Customer: galaxpayCustomer
+    }
+  }
+
+  galaxpayAxios.preparing
+    .then(() => {
+      if (type === 'recurrence') {
+        galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
+          .then((data) => {
+            transaction.intermediator = {
+              transaction_id: String(data.galaxPayId),
+              buyer_id: String(data.Customer.galaxPayId)
+            }
+
+            if (data.mainPaymentMethodId === 'boleto') {
+              transaction.payment_link = data.paymentLink
+            }
+
+            res.send({
+              redirect_to_payment: redirectToPayment,
+              transaction
+            })
+          })
+      }
+    })
 }
