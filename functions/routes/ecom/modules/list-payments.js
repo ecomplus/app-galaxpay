@@ -74,8 +74,8 @@ exports.post = ({ appSdk }, req, res) => {
       if (!methodConfig.disable) {
         const isCreditCard = paymentMethod === 'credit_card'
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
-        if (type === 'recurrence' && appData.galaxpay_subscription_label) { // alterar o plan_recurrence.title e adicionar rotulo na configuração
-          label = appData.plan_recurrence.title + label
+        if (type === 'recurrence' && appData.galaxpay_subscription_label) {
+          label = appData.galaxpay_subscription_label + ' ' + label
         }
         const gateway = {
           label,
@@ -91,9 +91,9 @@ exports.post = ({ appSdk }, req, res) => {
 
         if (isCreditCard) {
           // tratar hash e configurações do cartão de crédito
-          if (!gateway.icon) {
-            gateway.icon = `${baseUri}/credit-card.png`
-          }
+          // if (!gateway.icon) {
+          //   gateway.icon = `${baseUri}/credit-card.png`
+          // }
           // https://docs.galaxpay.com.br/tokenizacao-cartao-js
           gateway.js_client = {
             script_uri: 'https://js.galaxpay.com.br/checkout.min.js',
@@ -105,7 +105,6 @@ exports.post = ({ appSdk }, req, res) => {
             }
           }
         }
-
         response.payment_gateways.push(gateway)
       }
     })
