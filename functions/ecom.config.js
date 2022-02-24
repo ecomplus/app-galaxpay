@@ -164,6 +164,24 @@ const app = {
       },
       hide: false
     },
+    galaxpay_public_token: {
+      schema: {
+        type: 'string',
+        maxLength: 255,
+        title: 'Galax Public Token',
+        description: 'Seu Public Token para Tokenização de Cartão, disponivél no Dashbord do GalaxPay, sessão de modulos, configuração de WebServices'
+      },
+      hide: true
+    },
+    galaxpay_token_webhook: {
+      schema: {
+        type: 'string',
+        maxLength: 255,
+        title: 'Galax Token Webhook',
+        description: 'Seu Token de segurança para Webhooks para atualização de transações, disponivél no Dashbord do GalaxPay, sessão de modulos, configuração de WebServices'
+      },
+      hide: true
+    },
     credit_card: {
       schema: {
         type: 'object',
@@ -265,7 +283,7 @@ const app = {
             type: 'number',
             default: 0,
             title: 'Quantidade da recorrência',
-            description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser cancelado, deixe vazio'
+            description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0'
           },
         },
         title: 'Plano de recorrência',

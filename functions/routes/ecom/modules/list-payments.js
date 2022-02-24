@@ -1,3 +1,6 @@
+const { baseUri } = require('../../../__env')
+const fs = require('fs')
+const path = require('path')
 exports.post = ({ appSdk }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -88,6 +91,19 @@ exports.post = ({ appSdk }, req, res) => {
 
         if (isCreditCard) {
           // tratar hash e configurações do cartão de crédito
+          if (!gateway.icon) {
+            gateway.icon = `${baseUri}/credit-card.png`
+          }
+          // https://docs.galaxpay.com.br/tokenizacao-cartao-js
+          gateway.js_client = {
+            script_uri: 'https://js.galaxpay.com.br/checkout.min.js',
+            onload_expression: `window._galaxPayPublicToken="${appData.galaxpay_public_token}";  window._galaxPaySandbox="${appData.galaxpay_sandbox}";` +
+              fs.readFileSync(path.join(__dirname, '../../../public/onload-expression.js'), 'utf8'),
+            cc_hash: {
+              function: '_galaxyHashcard',
+              is_promise: true
+            }
+          }
         }
 
         response.payment_gateways.push(gateway)

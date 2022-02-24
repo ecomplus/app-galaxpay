@@ -20,7 +20,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
       resolve(self.accessToken)
     }
 
-    const handleAuth = () => {
+    const handleAuth = (isSandbox) => {
       console.log('> Galaxpay Auth02')
       auth(hashLogin, isSandbox)
         .then((accessToken, isSandbox) => {
@@ -44,12 +44,12 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
           ) {
             authenticate(documentSnapshot.get('accessToken'), isSandbox)
           } else {
-            handleAuth()
+            handleAuth(isSandbox)
           }
         })
         .catch(console.error)
     } else {
-      handleAuth()
+      handleAuth(isSandbox)
     }
   })
 }

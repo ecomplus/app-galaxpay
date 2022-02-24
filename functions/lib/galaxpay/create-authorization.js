@@ -8,7 +8,7 @@ module.exports = (hashLogin, isSandbox) => new Promise((resolve, reject) => {
       grant_type: 'authorization_code',
       scope: 'customers.read customers.write plans.read plans.write transactions.read transactions.write webhooks.write cards.read cards.write card-brands.read subscriptions.read subscriptions.write charges.read charges.write boletos.read'
     }, { headers: { Authorization: `Basic ${hashLogin}` } })
-      .then(({ data }) => resolve(data))
+      .then(({ data }) => resolve(data.access_token))
       .catch(err => {
         if (!isRetry && err.response && err.response.status >= 429) {
           setTimeout(() => request(true), 7000)
