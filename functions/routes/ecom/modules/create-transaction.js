@@ -78,7 +78,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   if (params.payment_method.code === 'credit_card') {
     const card = {
-      myId: params.credit_card.last_digits,
       hash: params.credit_card.hash
     }
 

@@ -74,7 +74,7 @@ exports.post = ({ appSdk }, req, res) => {
       if (!methodConfig.disable) {
         const isCreditCard = paymentMethod === 'credit_card'
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
-        if (type === 'recurrence' && appData.plan_recurrence.title) { // alterar o plan_recurrence.title e adicionar rotulo na configuração
+        if (type === 'recurrence' && appData.galaxpay_subscription_label) { // alterar o plan_recurrence.title e adicionar rotulo na configuração
           label = appData.plan_recurrence.title + label
         }
         const gateway = {

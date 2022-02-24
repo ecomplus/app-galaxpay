@@ -182,6 +182,16 @@ const app = {
       },
       hide: true
     },
+    galaxpay_subscription_label: {
+      schema: {
+        type: 'string',
+        maxLength: 50,
+        title: 'Rótulo para assinatura',
+        description: 'Exibido para os clientes junto ao nome da forma de pagamento',
+        default: 'Assinatura'
+      },
+      hide: true
+    },
     credit_card: {
       schema: {
         type: 'object',

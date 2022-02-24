@@ -8,7 +8,7 @@
       const galaxpayCard = galaxpay.newCard({
         number: card.number,
         holder: card.name,
-        expiresAt: card.month.toString() + card.year.toString(),
+        expiresAt: '20' + card.year.toString() + '-' + card.month.toString(),
         cvv: card.cvc
       })
       window.galaxpay.hasCreditCard(galaxpayCard, function (hash) {
