@@ -45,5 +45,54 @@ exports.post = ({ appSdk }, req, res) => {
 
   */
 
+  if (!appData.galaxpay_id || !appData.galaxpay_hash) {
+    return res.status(409).send({
+      error: 'NO_GALAXPAY_KEYS',
+      message: 'GalaxPay ID e/ou GalaxPay Hash da API indefinido(s) (lojista deve configurar o aplicativo)'
+    })
+  }
+  const isSandbox = appData.galaxpay_sandbox
+
+  // common payment methods data
+  const intermediator = {
+    name: 'GalaxPay',
+    link: `https://api.${isSandbox ? 'sandbox.cloud.' : ''}galaxpay.com.br/v2`,
+    code: 'galaxpay_app'
+  }
+  const paymentTypes = []
+  if (!appData.plan_recurrence.disable) {
+    paymentTypes.push('recurrence')
+  }
+
+  // setup payment gateway objects
+  ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
+    paymentTypes.forEach(type => {
+      const methodConfig = appData[paymentMethod] || {}
+      if (!methodConfig.disable) {
+        const isCreditCard = paymentMethod === 'credit_card'
+        let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
+        if (type === 'recurrence' && appData.plan_recurrence.title) { // alterar o plan_recurrence.title e adicionar rotulo na configuração
+          label = appData.plan_recurrence.title + label
+        }
+        const gateway = {
+          label,
+          icon: methodConfig.icon,
+          text: methodConfig.text,
+          payment_method: {
+            code: paymentMethod,
+            name: `${label} - ${intermediator.name}`
+          },
+          type,
+          intermediator
+        }
+
+        if (isCreditCard) {
+          // tratar hash e configurações do cartão de crédito
+        }
+
+        response.payment_gateways.push(gateway)
+      }
+    })
+  })
   res.send(response)
 }
