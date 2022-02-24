@@ -4,14 +4,14 @@
       // https://docs.galaxpay.com.br/tokenizacao-cartao-js
       const token = window._galaxPayPublicToken
       const environment = !window._galaxPaySandbox
-      const galaxpay = new GalaxPay(token, environment)
-      const galaxpayCard = galaxpay.newCard({
+      var galaxPay = new GalaxPay(token, environment)
+      const galaxpayCard = galaxPay.newCard({
         number: card.number,
         holder: card.name,
         expiresAt: '20' + card.year.toString() + '-' + card.month.toString(),
         cvv: card.cvc
       })
-      galaxpay.hashCreditCard(galaxpayCard, function (hash) {
+      galaxPay.hashCreditCard(galaxpayCard, function (hash) {
         return hash
       }, function (error) {
         return error
