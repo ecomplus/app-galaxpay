@@ -11,7 +11,6 @@
         expiresAt: '20' + card.year.toString() + '-' + card.month.toString(),
         cvv: card.cvc
       })
-      console.log(galaxpayCard)
       galaxPay.hashCreditCard(galaxpayCard, function (hash) {
         return hash
       }, function (error) {
