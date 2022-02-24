@@ -1,4 +1,5 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
+const errorHandling = require('../../../lib/store-api/error-handling')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -136,6 +137,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction
             })
           })
+          .catch(console.error)
       }
+    })
+    .catch(err => {
+      errorHandling(err)
+      throw err
     })
 }

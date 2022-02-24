@@ -12,10 +12,8 @@
         cvv: card.cvc
       })
       galaxpay.hashCreditCard(galaxpayCard, function (hash) {
-        console.log('hash OK ', hash)
         return hash
       }, function (error) {
-        console.log('Erro hash')
         return error
       })
         .then(resolve)
