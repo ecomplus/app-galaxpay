@@ -8,6 +8,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   // POST subscription.addTransaction adiciona uma transação a assinatura
 
   const galaxpayHook = req.body
+  console.log('WebHook Active')
   if (galaxpayHook.confirmHash) {
     // verificar o hash do webHook do galaxpay com a propriedade confirmHash, evitar invação
 

@@ -90,7 +90,6 @@ exports.post = ({ appSdk }, req, res) => {
         }
 
         if (isCreditCard) {
-          // tratar hash e configurações do cartão de crédito
           // if (!gateway.icon) {
           //   gateway.icon = `${baseUri}/credit-card.png`
           // }
