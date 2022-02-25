@@ -123,6 +123,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       if (type === 'recurrence') {
         galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
           .then((data) => {
+            console.log('Subscription OK ->', data)
             transaction.intermediator = {
               transaction_id: String(data.galaxPayId),
               buyer_id: String(data.Customer.galaxPayId)
@@ -137,7 +138,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction
             })
           })
-          .catch(console.error)
+          .catch(error => {
+            console.log('Erro Subscription >', error)
+          })
       }
     })
     .catch(err => {
