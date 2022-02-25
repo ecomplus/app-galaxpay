@@ -15,6 +15,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   }
   if (galaxpayHook.type === 'transaction.updateStatus') {
-
+    res.status(200)
   }
 }

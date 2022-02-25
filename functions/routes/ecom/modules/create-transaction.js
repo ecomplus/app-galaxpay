@@ -55,6 +55,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   // https://docs.galaxpay.com.br/subscriptions/create-without-plan
 
+  const extraFields = [
+    { tagName: 'storeId',
+      tagValue: storeId
+    }
+  ]
+
   const galaxpayCustomer = {
     myId: buyer.customer_id,
     name: buyer.fullname,
@@ -96,8 +102,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
       // additionalInfo: '', // optional
       mainPaymentMethodId: 'creditcard',
       Customer: galaxpayCustomer,
-      PaymentMethodCreditCard: PaymentMethodCreditCard
-
+      PaymentMethodCreditCard: PaymentMethodCreditCard,
+      ExtraFields: extraFields
     }
   } else if (params.payment_method.code === 'banking_billet') {
     if (to) {
@@ -114,7 +120,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
       firstPayDayDate: new Date().toISOString().split('T')[0], // requered
       // additionalInfo: '', // optional,  instructions banking billet?
       mainPaymentMethodId: 'boleto',
-      Customer: galaxpayCustomer
+      Customer: galaxpayCustomer,
+      ExtraFields: extraFields
     }
   }
 
