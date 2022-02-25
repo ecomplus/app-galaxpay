@@ -12,12 +12,10 @@
         cvv: card.cvc
       })
       galaxPay.hashCreditCard(galaxpayCard, function (hash) {
-        return hash
+        resolve(hash)
       }, function (error) {
-        return error
+        reject(error)
       })
-        .then(resolve)
-        .catch(reject)
     })
   }
 }())
