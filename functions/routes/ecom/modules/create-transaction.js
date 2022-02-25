@@ -133,12 +133,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction.payment_link = data.paymentLink
             }
 
-            // res.send({
-            //   redirect_to_payment: redirectToPayment,
-            //   transaction
-            // })
+            res.send({
+              redirect_to_payment: redirectToPayment,
+              transaction
+            })
           })
           .catch(error => {
+            console.log(error)
             // try to debug request error
             const errCode = 'GALAXPAY_TRANSACTION_ERR'
             let { message } = error
@@ -166,5 +167,4 @@ exports.post = ({ appSdk, admin }, req, res) => {
           })
       }
     })
-    
 }

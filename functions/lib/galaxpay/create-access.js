@@ -16,7 +16,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
   this.preparing = new Promise((resolve, reject) => {
     const authenticate = (accessToken, isSandbox) => {
       self.axios = createAxios(accessToken, isSandbox)
-      console.log('accessToken-> ', { accessToken })
+      console.log('> accessToken: ', { accessToken })
       resolve(self.accessToken)
     }
 
@@ -24,7 +24,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
       console.log('> Galaxpay Auth02')
       auth(hashLogin, isSandbox)
         .then((accessToken, isSandbox) => {
-          console.log(`> Galaxy token ${hashLogin}`)
+          console.log(`> Galaxy token: ${hashLogin}`)
           authenticate(accessToken, isSandbox)
           if (documentRef) {
             documentRef.set({ accessToken }).catch(console.error)

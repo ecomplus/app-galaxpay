@@ -9,7 +9,7 @@ module.exports = (accessToken, isSandbox) => {
   if (accessToken) {
     headers.Authorization = `Bearer ${accessToken}`
   }
-  console.log('token ', { headers })
+
   return axios.create({
     baseURL: `https://api.${isSandbox ? 'sandbox.cloud.' : ''}galaxpay.com.br/v2`,
     headers
