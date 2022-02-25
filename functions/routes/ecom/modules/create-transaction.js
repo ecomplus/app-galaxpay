@@ -139,7 +139,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
             })
           })
           .catch(error => {
-            console.log(error)
+            console.log(error.response)
             // try to debug request error
             const errCode = 'GALAXPAY_TRANSACTION_ERR'
             let { message } = error
