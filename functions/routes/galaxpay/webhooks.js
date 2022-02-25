@@ -9,6 +9,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const galaxpayHook = req.body
   console.log('WebHook Active')
+  console.log(galaxpayHook)
   if (galaxpayHook.confirmHash) {
     // verificar o hash do webHook do galaxpay com a propriedade confirmHash, evitar invação
 
