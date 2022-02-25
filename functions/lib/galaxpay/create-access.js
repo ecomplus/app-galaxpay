@@ -6,7 +6,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
 
   let documentRef
   const hashLogin = Buffer.from(`${galaxpayId}:${galaxpayHash}`).toString('base64')
-  let accessToken
+
   if (firestoreColl) {
     documentRef = require('firebase-admin')
       .firestore()
@@ -34,7 +34,6 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
     }
 
     if (documentRef) {
-      authenticate(accessToken, isSandbox)
       documentRef.get()
         .then((documentSnapshot) => {
           if (
