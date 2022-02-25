@@ -132,12 +132,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
             }
-
+            return transaction
+          })
+          .then((data) => {
+            console.log('** Data-> ', data)
             res.send({
               redirect_to_payment: redirectToPayment,
-              transaction
+              transaction: data
             })
-          })
+          }
+          )
           .catch(error => {
             console.log('Erro Subscription >', error)
           })
