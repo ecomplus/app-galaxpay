@@ -124,11 +124,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
           .then((data) => {
             console.log('Subscription OK ->', data)
-            transaction.intermediator = {
-              transaction_id: String(data.galaxPayId),
-              buyer_id: String(data.Customer.galaxPayId)
-            }
-
+           
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
             }
