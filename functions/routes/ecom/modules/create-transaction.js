@@ -132,23 +132,39 @@ exports.post = ({ appSdk, admin }, req, res) => {
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
             }
-            return transaction
+
+            // res.send({
+            //   redirect_to_payment: redirectToPayment,
+            //   transaction
+            // })
           })
-          .then((data) => {
-            console.log('** Data-> ', data)
-            res.send({
-              redirect_to_payment: redirectToPayment,
-              transaction: data
-            })
-          }
-          )
           .catch(error => {
-            console.log('Erro Subscription >', error)
+            // try to debug request error
+            const errCode = 'GALAXPAY_TRANSACTION_ERR'
+            let { message } = error
+            const err = new Error(`${errCode} #${storeId} - ${orderId} => ${message}`)
+            if (error.response) {
+              const { status, data } = error.response
+              if (status !== 401 && status !== 403) {
+                err.payment = JSON.stringify(transaction)
+                err.status = status
+                if (typeof data === 'object' && data) {
+                  err.response = JSON.stringify(data)
+                } else {
+                  err.response = data
+                }
+              } else if (data && Array.isArray(data.errors) && data.errors[0] && data.errors[0].message) {
+                message = data.errors[0].message
+              }
+            }
+            console.error(err)
+            res.status(409)
+            res.send({
+              error: errCode,
+              message
+            })
           })
       }
     })
-    .catch(err => {
-      errorHandling(err)
-      throw err
-    })
+    
 }
