@@ -94,7 +94,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       periodicity: appData.plan_recurrence.periodicity,
       firstPayDayDate: new Date().toISOString().split('T')[0], // requered
       // additionalInfo: '', // optional
-      mainPaymentMethodId: 'credicard',
+      mainPaymentMethodId: 'creditcard',
       Customer: galaxpayCustomer,
       PaymentMethodCreditCard: PaymentMethodCreditCard
 
