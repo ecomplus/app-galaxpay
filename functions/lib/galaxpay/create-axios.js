@@ -7,7 +7,7 @@ module.exports = (accessToken, isSandbox) => {
     'Content-Type': 'application/json'
   }
   if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken.accessToken}`
+    headers.Authorization = `Bearer ${accessToken}`
   }
   console.log('token ', { headers })
   return axios.create({
