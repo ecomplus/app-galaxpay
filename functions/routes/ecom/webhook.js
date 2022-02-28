@@ -1,6 +1,9 @@
 // read configured E-Com Plus app data
 const getAppData = require('./../../lib/store-api/get-app-data')
 
+// Auth GalaxPay
+const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
+
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
 const ECHO_SKIP = 'SKIP'
@@ -15,13 +18,16 @@ exports.post = ({ appSdk }, req, res) => {
    * Ref.: https://developers.e-com.plus/docs/api/#/store/triggers/
    */
   const trigger = req.body
-  const resourceId = trigger.resource_id || trigger.inserted_id
-  console.log('> trigger ', resourceId)
+  const resourceId = trigger.resource_id
+  console.log('> trigger ', trigger.resource)
 
   // get app configured options
   getAppData({ appSdk, storeId })
 
     .then(appData => {
+      console.log('> ID ', appData.galaxpay_id)
+      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+
       if (
         Array.isArray(appData.ignore_triggers) &&
         appData.ignore_triggers.indexOf(trigger.resource) > -1
