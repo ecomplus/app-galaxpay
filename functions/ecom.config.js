@@ -345,11 +345,7 @@ procedures.push({
     // Receive notifications when order financial/fulfillment status are set or changed:
     {
       resource: 'orders',
-      field: 'financial_status',
-    },
-    {
-      resource: 'orders',
-      field: 'fulfillment_status',
+      field: 'status',
     },
   ],
 
