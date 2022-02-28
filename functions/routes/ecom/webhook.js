@@ -36,17 +36,15 @@ exports.post = ({ appSdk }, req, res) => {
 
       /* DO YOUR CUSTOM STUFF HERE */
       const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
-      console.log('body >', trigger.body.status)
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
         console.log('> Cancell Subscription ')
         galaxpayAxios.preparing
           .then(() => {
-            console.log('> Preparing OK ')
             galaxpayAxios.axios.delete(`/subscriptions/${resourceId}/myId`)
               .then((data) => {
-                console.log('> data: ', data)
-                console.log(`> ${resourceId} Cancelled OK `)
+                console.log('> Data: ', data.data.type)
+                console.log(`> ${resourceId} Cancelled`)
                 //
                 res.send(ECHO_SUCCESS)
               })
