@@ -42,16 +42,16 @@ exports.post = ({ appSdk }, req, res) => {
         console.log('> Cancell Subscription ')
         galaxpayAxios.preparing
           .then(() => {
-            console.log('> Preparing OK ', resourceId)
+            console.log('> Preparing OK ')
             galaxpayAxios.axios.delete(`/subscriptions/${resourceId}/myId`)
               .then((data) => {
-                console.log('> ', data.type)
+                console.log('> data: ', data)
+                console.log(`> ${resourceId} Cancelled OK `)
+                //
+                res.send(ECHO_SUCCESS)
               })
           })
       }
-
-      // all done
-      res.send(ECHO_SUCCESS)
     })
 
     .catch(err => {
