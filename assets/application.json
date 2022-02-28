@@ -76,15 +76,6 @@
       },
       "hide": true
     },
-    "galaxpay_token_webhook": {
-      "schema": {
-        "type": "string",
-        "maxLength": 255,
-        "title": "Galax Token Webhook",
-        "description": "Seu Token de segurança para Webhooks para atualização de transações, disponivél no Dashbord do GalaxPay, sessão de modulos, configuração de WebServices"
-      },
-      "hide": true
-    },
     "galaxpay_subscription_label": {
       "schema": {
         "type": "string",
