@@ -2,7 +2,7 @@
 const getAppData = require('./../../lib/store-api/get-app-data')
 
 // Auth GalaxPay
-const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
+const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
@@ -18,7 +18,7 @@ exports.post = ({ appSdk }, req, res) => {
    * Ref.: https://developers.e-com.plus/docs/api/#/store/triggers/
    */
   const trigger = req.body
-  const resourceId = trigger.resource_id
+  const resourceId = trigger.resource_id || trigger.inserted_id
   console.log('> trigger ', trigger.resource)
 
   // get app configured options
