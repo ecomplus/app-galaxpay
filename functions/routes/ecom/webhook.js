@@ -42,7 +42,7 @@ exports.post = ({ appSdk }, req, res) => {
         console.log('> Cancell Subscription ')
         galaxpayAxios.preparing
           .then(() => {
-            galaxpayAxios.axios.post(`/subscriptions/${resourceId}/myId`)
+            galaxpayAxios.axios.delete(`/subscriptions/${resourceId}/myId`)
               .then((data) => {
                 console.log('> ', data.type)
               })
