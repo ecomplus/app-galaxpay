@@ -19,15 +19,11 @@ exports.post = ({ appSdk }, req, res) => {
    */
   const trigger = req.body
   const resourceId = trigger.resource_id || trigger.inserted_id
-  console.log('> trigger ', trigger.resource)
 
   // get app configured options
   getAppData({ appSdk, storeId })
 
     .then(appData => {
-      console.log('> ID ', appData.galaxpay_id)
-      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
-
       if (
         Array.isArray(appData.ignore_triggers) &&
         appData.ignore_triggers.indexOf(trigger.resource) > -1
@@ -39,6 +35,12 @@ exports.post = ({ appSdk }, req, res) => {
       }
 
       /* DO YOUR CUSTOM STUFF HERE */
+      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+
+      if (trigger.resource === 'orders') {
+        console.log('> body')
+        console.log(trigger)
+      }
 
       // all done
       res.send(ECHO_SUCCESS)
