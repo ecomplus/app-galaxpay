@@ -15,6 +15,8 @@ exports.post = ({ appSdk }, req, res) => {
    * Ref.: https://developers.e-com.plus/docs/api/#/store/triggers/
    */
   const trigger = req.body
+  const resourceId = trigger.resource_id || trigger.inserted_id
+  console.log('> trigger ', resourceId)
 
   // get app configured options
   getAppData({ appSdk, storeId })

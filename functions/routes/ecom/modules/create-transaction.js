@@ -55,11 +55,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   // https://docs.galaxpay.com.br/subscriptions/create-without-plan
 
-  const extraFields = [
-    { tagName: 'storeId',
-      tagValue: storeId
-    }
-  ]
+  const extraFields = [{
+    tagName: 'store_id',
+    tagValue: storeId
+  },
+  {
+    tagName: 'order_number',
+    tagValue: params.order_number
+  }]
 
   const galaxpayCustomer = {
     myId: buyer.customer_id,
