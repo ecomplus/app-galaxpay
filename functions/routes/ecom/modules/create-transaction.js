@@ -94,7 +94,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     }
 
     const PaymentMethodCreditCard = {
-      card: card,
+      Card: card,
       preAuthorize: false
     }
 
