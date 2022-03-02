@@ -140,21 +140,21 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
-              return {}
+              res.send({
+                redirect_to_payment: redirectToPayment,
+                transaction
+              })
             } else if (data.mainPaymentMethodId === 'creditcard') {
               console.log('> Credit Card ')
               const transactionId = data.Transactions[0].galaxPayId
               const typeId = 'galaxPayId'
-              console.log('> galaxPayId ', transactionId)
-              return galaxpayAxios.axios.put(`/transactions/${transactionId}/${typeId}/capture`)
+              console.log('> galaxPayId ', transactionId, ' type ', typeId)
+              // PUT /transactions/{transactionId}/{typeId}/capture
+              galaxpayAxios.axios.put(`/transactions/${transactionId}/${typeId}/capture`)
+                .then((resp) => {
+                  console.log('> capture ', resp)
+                })
             }
-          })
-          .then((data) => {
-            console.log('> caputure  ', data)
-            res.send({
-              redirect_to_payment: redirectToPayment,
-              transaction
-            })
           })
           .catch(error => {
             console.log(error.response)
