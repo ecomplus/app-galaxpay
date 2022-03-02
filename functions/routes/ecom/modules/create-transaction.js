@@ -87,6 +87,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const finalAmount = transaction.amount
 
   if (params.payment_method.code === 'credit_card') {
+    console.log('> credit card ', params.credit_card)
     const card = {
       hash: params.credit_card.hash
     }
@@ -133,9 +134,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
       if (type === 'recurrence') {
         galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
           .then((data) => {
-            console.log('> params ', galaxpaySubscriptions)
-            console.log('> resp ', data.data.PaymentMethodCreditCard)
-
             return data.data.Subscription
           })
           .then((data) => {
