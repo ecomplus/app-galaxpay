@@ -143,6 +143,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction.payment_link = data.paymentLink
             }
 
+            console.log('> status ', parseStatus(data.status))
+
             transaction.status = {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
               current: parseStatus(data.status)
