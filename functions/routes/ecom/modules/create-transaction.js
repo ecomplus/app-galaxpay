@@ -133,7 +133,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       if (type === 'recurrence') {
         galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
           .then((data) => {
-            console.log('> Subscription  ', data.data.transactions)
+            console.log('> Subscription  ', data.data.Transactions)
 
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
