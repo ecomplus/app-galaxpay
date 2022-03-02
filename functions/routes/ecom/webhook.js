@@ -49,6 +49,10 @@ exports.post = ({ appSdk }, req, res) => {
                 res.send(ECHO_SUCCESS)
               })
           })
+          .catch(err => {
+            // need handle err
+            console.log('> Not Cancelled', err)
+          })
       }
     })
 
