@@ -89,6 +89,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   if (params.payment_method.code === 'credit_card') {
     console.log('> credit card ', params.credit_card)
     const card = {
+      myId: params.credit_card.last_digits + params.credit_card.cvv,
       hash: params.credit_card.hash
     }
 
@@ -137,10 +138,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
             return data.data.Subscription
           })
           .then((data) => {
-            console.log('> Subscription  ', data.Transactions[0])
+            console.log('> Subscription  ', data)
 
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
+            } else {
+              console.log('> Payment Method ', data.mainPaymentMethodId)
             }
 
             res.send({
