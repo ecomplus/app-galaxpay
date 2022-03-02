@@ -154,6 +154,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 .then((resp) => {
                   console.log('> capture ', resp)
                 })
+                .catch((err)=>{
+                  console.log('> error caputure ', err)
+
+                })
             }
           })
           .catch(error => {
