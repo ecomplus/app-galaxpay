@@ -1,5 +1,6 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 const errorHandling = require('../../../lib/store-api/error-handling')
+const parseStatus = require('../../../lib/payments/parse-status')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -87,9 +88,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const finalAmount = transaction.amount
 
   if (params.payment_method.code === 'credit_card') {
-    console.log('> credit card ', params.credit_card)
     const card = {
-      myId: params.credit_card.last_digits + params.credit_card.cvv,
       hash: params.credit_card.hash
     }
 
@@ -142,8 +141,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
-            } else {
-              console.log('> Payment Method ', data.mainPaymentMethodId)
+            }
+
+            transaction.status = {
+              updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
+              current: parseStatus(data.status)
             }
 
             res.send({
