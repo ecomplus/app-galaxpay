@@ -143,11 +143,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction.payment_link = data.paymentLink
             }
 
-            console.log('> Status ', parseStatus(data.status))
+            console.log('> Status ', parseStatus(data.Transactions[0].status))
 
             transaction.status = {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
-              current: parseStatus(data.status)
+              current: parseStatus(data.Transactions[0].status)
             }
 
             transaction.intermediator = {
