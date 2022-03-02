@@ -133,6 +133,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
       if (type === 'recurrence') {
         galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
           .then((data) => {
+            console.log('> params ', galaxpaySubscriptions)
+            console.log('> resp ', data.data.PaymentMethodCreditCard)
+
             return data.data.Subscription
           })
           .then((data) => {
