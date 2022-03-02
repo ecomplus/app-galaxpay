@@ -342,7 +342,7 @@ procedures.push({
   title: app.title,
 
   triggers: [
-    // Receive notifications when order financial/fulfillment status are set or changed:
+    // Receive notifications when order status are set or changed:
     {
       resource: 'orders',
       field: 'status',

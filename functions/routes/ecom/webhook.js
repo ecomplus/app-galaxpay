@@ -55,7 +55,7 @@ exports.post = ({ appSdk }, req, res) => {
                   })
               })
               .catch(err => {
-                // not cancelled
+                // not cancelled need handle erro
                 console.log(err)
                 console.log('> Not Cancelled')
               })
