@@ -4,17 +4,18 @@ exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
 
-  // POST transaction.updateStatus alterar o status da transação
-  // POST subscription.addTransaction adiciona uma transação a assinatura
+  // POST transaction.updateStatus update Transation status
+  // POST subscription.addTransaction add transation in subscription
 
   const galaxpayHook = req.body
   console.log('WebHook Active')
   console.log(galaxpayHook)
   if (galaxpayHook.confirmHash) {
-    // verificar o hash do webHook do galaxpay com a propriedade confirmHash, evitar invação
-
+    console.log('> ', galaxpayHook.confirmHash)
   }
   if (galaxpayHook.type === 'transaction.updateStatus') {
+    res.status(200)
+  } else if (galaxpayHook.type === 'subscription.addTransaction') {
     res.status(200)
   }
 }

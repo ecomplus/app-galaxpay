@@ -3,6 +3,7 @@ const getAppData = require('./../../lib/store-api/get-app-data')
 
 // Auth GalaxPay
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
+const { consoleOrigin } = require('firebase-tools/lib/api')
 
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
@@ -21,57 +22,67 @@ exports.post = ({ appSdk }, req, res) => {
   const resourceId = trigger.resource_id || trigger.inserted_id
 
   // get app configured options
-  getAppData({ appSdk, storeId })
+  appSdk.getAuth(storeId)
+    .then(auth => {
+      const appClient = { appSdk, storeId, auth }
+      getAppData(appClient)
+        .then(appData => {
+          if (
+            Array.isArray(appData.ignore_triggers) &&
+            appData.ignore_triggers.indexOf(trigger.resource) > -1
+          ) {
+            // ignore current trigger
+            const err = new Error()
+            err.name = SKIP_TRIGGER_NAME
+            throw err
+          }
+          console.log('> APP Client ', appClient)
 
-    .then(appData => {
-      if (
-        Array.isArray(appData.ignore_triggers) &&
-        appData.ignore_triggers.indexOf(trigger.resource) > -1
-      ) {
-        // ignore current trigger
-        const err = new Error()
-        err.name = SKIP_TRIGGER_NAME
-        throw err
-      }
+          /* DO YOUR CUSTOM STUFF HERE */
+          const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+          console.log('price ', trigger.body)
 
-      /* DO YOUR CUSTOM STUFF HERE */
-      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
-
-      if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
-        console.log('> Cancell Subscription ')
-        galaxpayAxios.preparing
-          .then(() => {
-            galaxpayAxios.axios.delete(`/subscriptions/${resourceId}/myId`)
-              .then((data) => {
-                console.log('> Data: ', data.data.type)
-                console.log(`> ${resourceId} Cancelled`)
-                //
-                res.send(ECHO_SUCCESS)
+          if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
+            console.log('> Cancell Subscription ')
+            galaxpayAxios.preparing
+              .then(() => {
+                galaxpayAxios.axios.delete(`/subscriptions/${resourceId}/myId`)
+                  .then((data) => {
+                    console.log('> Data: ', data.data.type)
+                    console.log(`> ${resourceId} Cancelled`)
+                    //
+                    res.send(ECHO_SUCCESS)
+                  })
               })
-          })
-      }
-    })
-
-    .catch(err => {
-      if (err.name === SKIP_TRIGGER_NAME) {
-        // trigger ignored by app configuration
-        res.send(ECHO_SKIP)
-      } else if (err.appWithoutAuth === true) {
-        const msg = `Webhook for ${storeId} unhandled with no authentication found`
-        const error = new Error(msg)
-        error.trigger = JSON.stringify(trigger)
-        console.error(error)
-        res.status(412).send(msg)
-      } else {
-        // console.error(err)
-        // request to Store API with error response
-        // return error status code
-        res.status(500)
-        const { message } = err
-        res.send({
-          error: ECHO_API_ERROR,
-          message
+              .catch(err => {
+                // not cancelled
+                console.log(err)
+                console.log('> Not Cancelled')
+              })
+          }
         })
-      }
+
+        .catch(err => {
+          if (err.name === SKIP_TRIGGER_NAME) {
+            // trigger ignored by app configuration
+            res.send(ECHO_SKIP)
+          } else if (err.appWithoutAuth === true) {
+            const msg = `Webhook for ${storeId} unhandled with no authentication found`
+            const error = new Error(msg)
+            error.trigger = JSON.stringify(trigger)
+            console.error(error)
+            res.status(412).send(msg)
+          } else {
+            // console.error(err)
+            // request to Store API with error response
+            // return error status code
+            res.status(500)
+            const { message } = err
+            res.send({
+              error: ECHO_API_ERROR,
+              message
+            })
+          }
+        })
     })
 }
