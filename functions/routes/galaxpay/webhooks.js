@@ -12,8 +12,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const galaxpayHook = req.body
   const type = galaxpayHook.event
   const subscriptionId = galaxpayHook.Subscription.myId
+  const TransactionId = galaxpayHook.Transaction.galaxPayId
   console.log('> Galaxy WebHook ', type)
-  const collectionRef = admin.firestore().collection('subscriptions')
+  const collectionSubscription = admin.firestore().collection('subscriptions')
+  const collectionTransaction = admin.firestore().collection('transaction')
+
+  const addTransactionFireBase = ({ Transaction }) => {
+    admin.firestore().collection('transation').doc(Transaction.galaxPayId)
+      .set({ Transaction })
+      .catch(console.error)
+  }
 
   if (galaxpayHook.confirmHash) {
     console.log('> ', galaxpayHook.confirmHash)
@@ -21,12 +29,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
   if (type === 'transaction.updateStatus') {
     res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
-    const subscription = collectionRef.doc(subscriptionId)
+    const subscription = collectionSubscription.doc(subscriptionId)
+    const transaction = collectionTransaction.doc(TransactionId)
+
     subscription.get()
       .then((documentSnapshot) => {
-        console.log('> FireBase Subscription ', documentSnapshot)
-        if (documentSnapshot.exists) {
-          res.status(200).send('SUCCESS')
+        console.log('> test ', documentSnapshot.get())
+        if (documentSnapshot.exists && documentSnapshot.get('store_id')) {
+          const storeId = documentSnapshot.get('store_id')
+          res.status(200).send('SUCCESS ', storeId)
         } else {
           res.status(404).send('NOT FOUND')
         }

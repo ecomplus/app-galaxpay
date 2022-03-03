@@ -161,12 +161,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
             })
 
             admin.firestore().collection('subscriptions').doc(orderId)
-            .set({
-              store_id: storeId,
-              order_number:params.order_number
-            })
-            .catch(console.error)
-
+              .set({
+                store_id: storeId,
+                order_number: params.order_number
+              })
+              .catch(console.error)
           })
           .catch(error => {
             console.log(error.response)
