@@ -30,8 +30,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
     res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
     const subscription = collectionSubscription.doc(subscriptionId)
-    const transaction = collectionTransaction.doc(TransactionId)
-
+    if (collectionTransaction) {
+      console.log('Collection Transaction OK')
+    } else {
+      console.log('Collection Transaction NOT FOUND')
+    }
     subscription.get()
       .then((documentSnapshot) => {
         console.log('> test ', documentSnapshot.get())
