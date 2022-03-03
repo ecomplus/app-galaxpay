@@ -38,11 +38,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
           res.status(404).send('NOT FOUND Doc Subscription in Firebase')
         }
       })
-      .catch(err => {
-        console.error()
-        // thinking (this error code is correct?)
-        res.status(400).send(err)
-      })
   }
 
   if (galaxpayHook.confirmHash) {
@@ -63,12 +58,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
           return Transaction
         } else {
           console.log('> Create Transaction in Firebase')
-          return {}
+          return false
         }
       })
       .then(data => {
-        console.log('> ', data)
-        if (data === {}) {
+        if (!data) {
           createDocFireBase()
         }
       })
