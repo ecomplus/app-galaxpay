@@ -15,10 +15,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const TransactionId = galaxpayHook.Transaction.galaxPayId
   console.log('> Galaxy WebHook ', type)
   const collectionSubscription = admin.firestore().collection('subscriptions')
-  const collectionTransaction = admin.firestore().collection('transaction')
+  const collectionTransaction = admin.firestore().collection('transactions')
 
   const addTransactionFireBase = ({ Transaction }) => {
-    admin.firestore().collection('transaction').doc(Transaction.galaxPayId)
+    console.log('> GalaxPayId ', Transaction.galaxPayId)
+    console.log('> Trasaction', Transaction)
+    admin.firestore().collection('transactions').doc(Transaction.galaxPayId)
       .set({ Transaction })
       .catch(console.error)
   }
@@ -45,21 +47,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
   if (galaxpayHook.confirmHash) {
     console.log('> ', galaxpayHook.confirmHash)
   }
+
   if (type === 'transaction.updateStatus') {
     res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
     console.log('> Find Collection Transaction')
-    console.log('> Collection ', collectionTransaction)
     const transaction = collectionTransaction.doc(String(TransactionId))
-    console.log('> Exists', transaction)
     transaction.get()
       .then((documentSnapshot) => {
         const Transaction = documentSnapshot.data()
         if (documentSnapshot.exists && Transaction) {
           // compare status, if status paid, create new order, thinking ( only when order paid? )
-
+          console.log('> GET now')
         } else {
-          console.log('>Create Transaction in Firebase')
+          console.log('> Create Transaction in Firebase')
           createDocFireBase()
         }
       })
