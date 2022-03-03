@@ -7,6 +7,7 @@ module.exports = (accessToken, isSandbox) => {
     'Content-Type': 'application/json'
   }
   if (accessToken) {
+    console.log('> token ', accessToken)
     headers.Authorization = `Bearer ${accessToken}`
   }
 
