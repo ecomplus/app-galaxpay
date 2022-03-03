@@ -37,7 +37,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     }
     subscription.get()
       .then((documentSnapshot) => {
-        console.log('> test ', documentSnapshot.get())
+        console.log('> Test ', documentSnapshot)
         if (documentSnapshot.exists && documentSnapshot.get('store_id')) {
           const storeId = documentSnapshot.get('store_id')
           res.status(200).send('SUCCESS ', storeId)
