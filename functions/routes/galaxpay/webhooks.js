@@ -18,9 +18,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const collectionTransaction = admin.firestore().collection('transactions')
 
   const addTransactionFireBase = ({ Transaction }) => {
-    console.log('> GalaxPayId ', Transaction.galaxPayId)
     console.log('> Trasaction', Transaction)
-    admin.firestore().collection('transactions').doc(Transaction.galaxPayId)
+    console.log('> GalaxPayId ', Transaction.galaxPayId)
+    admin.firestore().collection('transactions').doc(String(Transaction.galaxPayId))
       .set({ Transaction })
       .catch(console.error)
   }
