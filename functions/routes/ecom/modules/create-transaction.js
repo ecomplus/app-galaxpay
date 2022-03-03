@@ -159,6 +159,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
               redirect_to_payment: redirectToPayment,
               transaction
             })
+
+            admin.firestore().collection('subscriptions').doc(orderId)
+            .set({
+              store_id: storeId,
+              order_number:params.order_number
+            })
+            .catch(console.error)
+
           })
           .catch(error => {
             console.log(error.response)

@@ -36,7 +36,6 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
     if (documentRef) {
       documentRef.get()
         .then((documentSnapshot) => {
-          console.log('> dif time ', (Date.now() - documentSnapshot.updateTime.toDate().getTime()))
           if (documentSnapshot.exists &&
             Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 9 * 60 * 1000 // access token expires in 10 minutes
           ) {
