@@ -31,19 +31,22 @@ exports.post = ({ appSdk, admin }, req, res) => {
   } else if (type === 'subscription.addTransaction') {
     const subscription = collectionSubscription.doc(subscriptionId)
     if (collectionTransaction) {
-      console.log('Collection Transaction OK')
+      console.log('Collection Transaction OK ', TransactionId)
     } else {
       console.log('Collection Transaction NOT FOUND')
     }
     subscription.get()
       .then((documentSnapshot) => {
-        console.log('> Test ', documentSnapshot)
-        if (documentSnapshot.exists && documentSnapshot.get('store_id')) {
+        console.log('> Test ', documentSnapshot.data())
+        if (documentSnapshot.exists) {
           const storeId = documentSnapshot.get('store_id')
           res.status(200).send('SUCCESS ', storeId)
         } else {
           res.status(404).send('NOT FOUND')
         }
+      })
+      .catch(() => {
+        res.status(404).send('NOT FOUND')
       })
   }
 }
