@@ -52,7 +52,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     console.log('> Exists', transaction)
     transaction.get()
       .then((documentSnapshot) => {
-        console.log('> Transaction Test ', documentSnapshot.data())
+        console.log('> Transactio Test ', documentSnapshot.data())
       })
       .catch(console.error)
   }
