@@ -32,11 +32,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
           addTransactionFireBase(galaxpayHook.Transaction)
           res.status(200).send('SUCCESS ', storeId)
         } else {
-          res.status(404).send('NOT FOUND')
+          res.status(404).send('NOT FOUND Doc Subscription in Firebase')
         }
       })
-      .catch(() => {
-        res.status(404).send('NOT FOUND')
+      .catch(err => {
+        console.error()
+        // thinking (this error code is correct?)
+        res.status(400).send(err)
       })
   }
 
@@ -52,7 +54,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
     console.log('> Exists', transaction)
     transaction.get()
       .then((documentSnapshot) => {
-        console.log('> Transactio Test ', documentSnapshot.data())
+        const Transaction = documentSnapshot.data()
+        if (documentSnapshot.exists && Transaction) {
+          // compare status, if status paid, create new order, thinking ( only when order paid? )
+
+        } else {
+          console.log('>Create Transaction in Firebase')
+          createDocFireBase()
+        }
       })
       .catch(console.error)
   }
