@@ -10,15 +10,24 @@ exports.post = ({ appSdk, admin }, req, res) => {
   // POST subscription.addTransaction add transation in subscription
 
   const galaxpayHook = req.body
-  console.log('> WebHook Active')
+  const type = galaxpayHook.event
+  const subscriptionId = galaxpayHook.Subscription.myId
+  console.log('> Galaxy WebHook ', type)
+  const collectionRef = admin.firestore().collection('subscriptions')
+
   console.log(galaxpayHook)
   if (galaxpayHook.confirmHash) {
     console.log('> ', galaxpayHook.confirmHash)
   }
-  if (galaxpayHook.event === 'transaction.updateStatus') {
+  if (type === 'transaction.updateStatus') {
     res.status(200)
-  } else if (galaxpayHook.event === 'subscription.addTransaction') {
-    
-    res.status(200)
+  } else if (type === 'subscription.addTransaction') {
+    const subscription = collectionRef.doc(subscriptionId)
+    console.log('> FireBase Subscription ', subscription)
+    if (subscription) {
+      res.status(200).send('SUCCESS')
+    } else {
+      res.status(404).send('NOT FOUND')
+    }
   }
 }
