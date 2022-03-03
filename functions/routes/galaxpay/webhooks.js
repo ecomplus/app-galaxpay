@@ -26,6 +26,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   }
 
   const createDocFireBase = () => {
+    console.log('> Function create')
     const subscription = collectionSubscription.doc(subscriptionId)
     subscription.get()
       .then((documentSnapshot) => {
@@ -59,8 +60,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
         if (documentSnapshot.exists && Transaction) {
           // compare status, if status paid, create new order, thinking ( only when order paid? )
           console.log('> GET now')
+          return Transaction
         } else {
           console.log('> Create Transaction in Firebase')
+          return {}
+        }
+      })
+      .then(data => {
+        console.log('> ', data)
+        if (data === {}) {
           createDocFireBase()
         }
       })
