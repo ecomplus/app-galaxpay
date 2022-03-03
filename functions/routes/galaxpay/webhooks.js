@@ -15,19 +15,21 @@ exports.post = ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type)
   const collectionRef = admin.firestore().collection('subscriptions')
 
-  console.log(galaxpayHook)
   if (galaxpayHook.confirmHash) {
     console.log('> ', galaxpayHook.confirmHash)
   }
   if (type === 'transaction.updateStatus') {
-    res.status(200)
+    res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
     const subscription = collectionRef.doc(subscriptionId)
-    console.log('> FireBase Subscription ', subscription)
-    if (subscription) {
-      res.status(200).send('SUCCESS')
-    } else {
-      res.status(404).send('NOT FOUND')
-    }
+    subscription.get()
+      .then((documentSnapshot) => {
+        console.log('> FireBase Subscription ', documentSnapshot)
+        if (documentSnapshot.exists) {
+          res.status(200).send('SUCCESS')
+        } else {
+          res.status(404).send('NOT FOUND')
+        }
+      })
   }
 }
