@@ -29,6 +29,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   if (type === 'transaction.updateStatus') {
     res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
+    console.log('> Find Collection Transaction')
     const transaction = collectionTransaction.doc(TransactionId)
     transaction.get()
       .then((documentSnapshot) => {
@@ -59,5 +60,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
             })
         }
       })
+      .catch(console.error)
   }
 }
