@@ -14,6 +14,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
   }
 
   this.preparing = new Promise((resolve, reject) => {
+
     const authenticate = (accessToken, isSandbox) => {
       self.axios = createAxios(accessToken, isSandbox)
       console.log('> accessToken: ', { accessToken })
@@ -36,8 +37,8 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
     if (documentRef) {
       documentRef.get()
         .then((documentSnapshot) => {
-          if (
-            documentSnapshot.exists &&
+          console.log('> dif time ', (Date.now() - documentSnapshot.updateTime.toDate().getTime()))
+          if (documentSnapshot.exists &&
             Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 9 * 60 * 1000 // access token expires in 10 minutes
           ) {
             authenticate(documentSnapshot.get('accessToken'), isSandbox)
