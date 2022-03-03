@@ -34,7 +34,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         if (documentSnapshot.exists && storeId) {
           const transaction = galaxpayHook.Transaction
           console.log('> ', transaction)
-          addTransactionFireBase(transaction)
+          addTransactionFireBase({ transaction })
           res.status(200).send('SUCCESS ', storeId)
         } else {
           res.status(404).send('NOT FOUND Doc Subscription in Firebase')
