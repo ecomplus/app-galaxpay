@@ -19,7 +19,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const collectionTransaction = admin.firestore().collection('transaction')
 
   const addTransactionFireBase = ({ Transaction }) => {
-    admin.firestore().collection('transation').doc(Transaction.galaxPayId)
+    admin.firestore().collection('transaction').doc(Transaction.galaxPayId)
       .set({ Transaction })
       .catch(console.error)
   }
@@ -48,17 +48,18 @@ exports.post = ({ appSdk, admin }, req, res) => {
     res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
     console.log('> Find Collection Transaction')
-    transaction = collectionTransaction.doc(TransactionId)
-    if (transaction) {
-      console.log('> Exists')
-      transaction.get()
-        .then((documentSnapshot) => {
-          console.log('> Transactio Test ', documentSnapshot.data())
-        })
-        .catch(console.error)
-    } else {
-      console.log('> Not Exists')
-      createDocFireBase()
-    }
+    console.log('> Collection ', collectionTransaction)
+    // transaction = collectionTransaction.doc(TransactionId)
+    // if (transaction) {
+    //   console.log('> Exists')
+    //   transaction.get()
+    //     .then((documentSnapshot) => {
+    //       console.log('> Transactio Test ', documentSnapshot.data())
+    //     })
+    //     .catch(console.error)
+    // } else {
+    //   console.log('> Not Exists')
+    //   createDocFireBase()
+    // }
   }
 }
