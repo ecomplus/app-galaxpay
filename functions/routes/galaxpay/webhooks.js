@@ -49,17 +49,17 @@ exports.post = ({ appSdk, admin }, req, res) => {
   } else if (type === 'subscription.addTransaction') {
     console.log('> Find Collection Transaction')
     console.log('> Collection ', collectionTransaction)
-    // transaction = collectionTransaction.doc(TransactionId)
-    // if (transaction) {
-    //   console.log('> Exists')
+    transaction = collectionTransaction.doc(String(TransactionId))
+    if (transaction) {
+      console.log('> Exists')
     //   transaction.get()
     //     .then((documentSnapshot) => {
     //       console.log('> Transactio Test ', documentSnapshot.data())
     //     })
     //     .catch(console.error)
-    // } else {
-    //   console.log('> Not Exists')
+    } else {
+      console.log('> Not Exists')
     //   createDocFireBase()
-    // }
+    }
   }
 }
