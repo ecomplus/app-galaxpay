@@ -29,24 +29,35 @@ exports.post = ({ appSdk, admin }, req, res) => {
   if (type === 'transaction.updateStatus') {
     res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
-    const subscription = collectionSubscription.doc(subscriptionId)
-    if (collectionTransaction) {
-      console.log('Collection Transaction OK ', TransactionId)
-    } else {
-      console.log('Collection Transaction NOT FOUND')
-    }
-    subscription.get()
+    const transaction = collectionTransaction.doc(TransactionId)
+    transaction.get()
       .then((documentSnapshot) => {
-        console.log('> Test ', documentSnapshot.data())
+        console.log('> Transactio Test ', documentSnapshot.data())
         if (documentSnapshot.exists) {
-          const storeId = documentSnapshot.get('store_id')
-          res.status(200).send('SUCCESS ', storeId)
+          console.log('> Exists')
         } else {
-          res.status(404).send('NOT FOUND')
+          console.log('> NOT Exists')
         }
-      })
-      .catch(() => {
-        res.status(404).send('NOT FOUND')
+
+        if (collectionTransaction) {
+          console.log('Collection Transaction OK ', TransactionId)
+        } else {
+          console.log('Collection Transaction NOT FOUND')
+          const subscription = collectionSubscription.doc(subscriptionId)
+          subscription.get()
+            .then((documentSnapshot) => {
+              const storeId = documentSnapshot.data().store_id
+              if (documentSnapshot.exists && storeId) {
+                addTransactionFireBase(galaxpayHook.Transaction)
+                res.status(200).send('SUCCESS ', storeId)
+              } else {
+                res.status(404).send('NOT FOUND')
+              }
+            })
+            .catch(() => {
+              res.status(404).send('NOT FOUND')
+            })
+        }
       })
   }
 }
