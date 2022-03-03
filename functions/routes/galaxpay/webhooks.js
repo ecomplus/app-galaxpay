@@ -13,7 +13,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const type = galaxpayHook.event
   const subscriptionId = galaxpayHook.Subscription.myId
   const TransactionId = galaxpayHook.Transaction.galaxPayId
-  let transaction
   console.log('> Galaxy WebHook ', type)
   const collectionSubscription = admin.firestore().collection('subscriptions')
   const collectionTransaction = admin.firestore().collection('transaction')
@@ -49,17 +48,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
   } else if (type === 'subscription.addTransaction') {
     console.log('> Find Collection Transaction')
     console.log('> Collection ', collectionTransaction)
-    transaction = collectionTransaction.doc(String(TransactionId))
-    if (transaction) {
-      console.log('> Exists')
-    //   transaction.get()
-    //     .then((documentSnapshot) => {
-    //       console.log('> Transactio Test ', documentSnapshot.data())
-    //     })
-    //     .catch(console.error)
-    } else {
-      console.log('> Not Exists')
-    //   createDocFireBase()
-    }
+    const transaction = collectionTransaction.doc(String(TransactionId))
+    console.log('> Exists', transaction)
+    transaction.get()
+      .then((documentSnapshot) => {
+        console.log('> Transaction Test ', documentSnapshot.data())
+      })
+      .catch(console.error)
   }
 }
