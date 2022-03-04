@@ -94,7 +94,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const resource = 'orders.json'
                 const method = 'POST'
                 const body = {
-                  amount: (GalaxPayTransaction.value / 100)
+                  amount: { total: (GalaxPayTransaction.value / 100) }
                 }
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
