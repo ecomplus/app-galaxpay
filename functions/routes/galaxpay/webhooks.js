@@ -21,28 +21,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const collectionSubscription = admin.firestore().collection('subscriptions')
   const collectionTransaction = admin.firestore().collection('transactions')
 
-  const createTransaction = (Transaction, orderNumber) => {
-    let transaction
-    // payment_method
-    transaction.status = {
-      updated_at: Transaction.datetimeLastSentToOperator || new Date().toISOString(),
-      current: parseStatus(Transaction.status)
-    }
-    const installment = Transaction.installment
-    transaction.notes = `${installment}ª Parcela da Assinatura: ${orderNumber}`
-
-    transaction._id = String(Transaction.galaxPayId)
-
-    transaction.intermediator = {
-      transaction_id: Transaction.tid,
-      transaction_code: Transaction.authorizationCode
-    }
-
-    transaction.amount = Transaction.value / 100
-
-    return transaction
-  }
-
   const addTransactionFireBase = (Transaction, storeId) => {
     console.log('>  Transaction ID ', Transaction.galaxPayId)
     admin.firestore().collection('transactions').doc(String(Transaction.galaxPayId))
@@ -106,14 +84,25 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const body = {
                   buyers: [buyer],
                   amount: { total: (GalaxPayTransaction.value / 100) },
-                  transactions: [createTransaction(GalaxPayTransaction, orderNumber)],
+                  transactions: [{
+                    _id: String(GalaxPayTransaction.galaxPayId),
+                    status: {
+                      updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
+                      current: parseStatus(Transaction.status)
+                    },
+                    notes: `${GalaxPayTransaction.installment}ª Parcela da Assinatura: ${orderNumber}`,
+                    intermediator: {
+                      transaction_id: GalaxPayTransaction.tid,
+                      transaction_code: GalaxPayTransaction.authorizationCode
+                    },
+                    amount: GalaxPayTransaction.value / 100
+                  }],
                   subscription_order: {
                     _id: subscriptionId,
                     number: parseInt(orderNumber)
                   },
                   notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
-                console.log('> body ', body)
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
                     console.log('> API ', apiResponse)
