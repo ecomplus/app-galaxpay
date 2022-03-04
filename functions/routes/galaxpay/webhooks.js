@@ -100,6 +100,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(apiResponse => {
                     console.log('> API ', apiResponse)
                   })
+                  .catch(err => {
+                    console.log(err)
+                  })
               }
             })
         } else {
