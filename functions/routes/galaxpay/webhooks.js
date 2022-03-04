@@ -95,13 +95,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const body = {
                   amount: (GalaxPayTransaction.value / 100)
                 }
-
-                appSdk.apiRequest(storeId, resource, method, body)
-                  .then(apiResponse => {
-                    console.log('> API', apiResponse)
-                    res.sendStatus(apiResponse === null ? 404 : 201)
-                  })
+                return appSdk.apiRequest(storeId, resource, method, body)
               }
+            })
+            .then(apiResponse => {
+              console.log('> API ', apiResponse)
             })
         }
       })
