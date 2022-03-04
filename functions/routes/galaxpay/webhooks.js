@@ -50,24 +50,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
   if (type === 'transaction.updateStatus') {
     res.status(200).send('SUCCESS')
   } else if (type === 'subscription.addTransaction') {
-    console.log('> Find Collection Transaction')
+    // find transactio in firebase
     const transaction = collectionTransaction.doc(String(TransactionId))
     transaction.get()
       .then((documentSnapshot) => {
         const Transaction = documentSnapshot.data()
-        if (documentSnapshot.exists && Transaction) {
-          // compare status, if status paid, create new order, thinking ( only when order paid?
-          return Transaction
-        } else {
-          console.log('> Create Transaction in Firebase')
-          return false
+        if (!documentSnapshot.exists || !Transaction) {
+          // create transaction in firebase and order API
+          const subscription = collectionSubscription.doc(subscriptionId)
+          subscription.get()
+            .then((documentSnapshot) => {
+              const storeId = documentSnapshot.data().store_id
+              res.status(200).send(`SUCCESS ${storeId}`)
+            })
         }
       })
-      .then(data => {
-        if (!data) {
-          createDocFireBase()
-        }
-      })
-      .catch(console.error)
   }
 }
