@@ -88,20 +88,26 @@ exports.post = ({ appSdk, admin }, req, res) => {
             .then((documentSnapshot) => {
               // find StoreId in subscription
               const storeId = documentSnapshot.data().store_id
+              const orderNumber = documentSnapshot.data().order_number
               if (documentSnapshot.exists && storeId) {
+                const buyer = { _id: GalaxPaySubscription.Customer.myId }
                 // create new orders in API
                 console.log('> Create Orders')
                 const resource = 'orders.json'
                 const method = 'POST'
                 const body = {
-                  amount: { total: (GalaxPayTransaction.value / 100) }
+                  buyers: [buyer],
+                  amount: { total: (GalaxPayTransaction.value / 100) },
+                  subscription_order: { _id: subscriptionId }
                 }
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
                     console.log('> API ', apiResponse)
+                    console.log('> _ID ', apiResponse.data._id)
                   })
                   .catch(err => {
                     console.log(err)
+                    res.sendStatus(400)
                   })
               }
             })
