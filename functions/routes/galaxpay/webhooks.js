@@ -16,11 +16,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const subscriptionId = GalaxPaySubscription.myId
   const GalaxPayTransaction = galaxpayHook.Transaction
   const TransactionId = GalaxPayTransaction.galaxPayId
-  
+
   console.log('> Galaxy WebHook ', type)
   const collectionSubscription = admin.firestore().collection('subscriptions')
   const collectionTransaction = admin.firestore().collection('transactions')
-
 
   const createTransaction = (Transaction, orderNumber) => {
     let transaction
