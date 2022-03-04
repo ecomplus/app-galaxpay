@@ -1,5 +1,6 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
+const parseStatus = require('../../../lib/payments/parse-status')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -11,11 +12,37 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const galaxpayHook = req.body
   const type = galaxpayHook.event
-  const subscriptionId = galaxpayHook.Subscription.myId
-  const TransactionId = galaxpayHook.Transaction.galaxPayId
+  const GalaxPaySubscription = galaxpayHook.Subscription
+  const subscriptionId = GalaxPaySubscription.myId
+  const GalaxPayTransaction = galaxpayHook.Transaction
+  const TransactionId = GalaxPayTransaction.galaxPayId
+  
   console.log('> Galaxy WebHook ', type)
   const collectionSubscription = admin.firestore().collection('subscriptions')
   const collectionTransaction = admin.firestore().collection('transactions')
+
+
+  const createTransaction = (Transaction, orderNumber) => {
+    let transaction
+    // payment_method
+    transaction.status = {
+      updated_at: Transaction.datetimeLastSentToOperator || new Date().toISOString(),
+      current: parseStatus(Transaction.status)
+    }
+    const installment = Transaction.installment
+    transaction.notes = `${installment}ª Parcela do Pedido: ${orderNumber}`
+
+    transaction._id = String(Transaction.galaxPayId)
+
+    transaction.intermediator = {
+      transaction_id: Transaction.tid,
+      transaction_code: Transaction.authorizationCode
+    }
+
+    transaction.amount = Transaction.value / 100
+
+    return transaction
+  }
 
   const addTransactionFireBase = (Transaction, storeId) => {
     console.log('>  Transaction ID ', Transaction.galaxPayId)
@@ -63,7 +90,18 @@ exports.post = ({ appSdk, admin }, req, res) => {
               // find StoreId in subscription
               const storeId = documentSnapshot.data().store_id
               if (documentSnapshot.exists && storeId) {
-                res.status(200).send(`SUCCESS ${storeId}`)
+                // create new orders in API
+                const resource = 'orders.json'
+                const method = 'POST'
+                const body = {
+                  amount: (GalaxPayTransaction.value / 100)
+                }
+
+                appSdk.apiRequest(storeId, resource, method, body)
+                  .then(apiResponse => {
+                    console.log('> API', apiResponse)
+                    res.sendStatus(apiResponse === null ? 404 : 201)
+                  })
               }
             })
         }

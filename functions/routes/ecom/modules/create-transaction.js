@@ -151,7 +151,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               current: parseStatus(data.Transactions[0].status)
             }
             const installment = data.Transactions[0].installment
-            transaction.notes = `Parcela ${installment} do Pedido: ${orderNumber}`
+            transaction.notes = `${installment}ª Parcela do Pedido: ${orderNumber}`
 
             transaction._id = String(data.Transactions[0].galaxPayId)
 
@@ -159,7 +159,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction_id: data.Transactions[0].tid,
               transaction_code: data.Transactions[0].authorizationCode
             }
-            console.log('> Transactio ', transaction)
 
             res.send({
               redirect_to_payment: redirectToPayment,
