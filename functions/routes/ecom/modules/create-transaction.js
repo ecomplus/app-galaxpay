@@ -150,8 +150,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
               current: parseStatus(data.Transactions[0].status)
             }
-            const installment = data.Transactions[0].installment
-            transaction.notes = `${installment}ª Parcela do Pedido: ${orderNumber}`
 
             transaction._id = String(data.Transactions[0].galaxPayId)
 
