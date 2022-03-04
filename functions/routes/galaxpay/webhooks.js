@@ -90,7 +90,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
               const storeId = documentSnapshot.data().store_id
               const orderNumber = documentSnapshot.data().order_number
               if (documentSnapshot.exists && storeId) {
-                const buyer = { _id: GalaxPaySubscription.Customer.myId }
+                const buyer = {
+                  _id: GalaxPaySubscription.Customer.myId,
+                  name: GalaxPaySubscription.Customer.name,
+                  mail_email: GalaxPaySubscription.Customer.emails[0],
+                  doc_number: GalaxPaySubscription.Customer.document
+                }
                 // create new orders in API
                 console.log('> Create Orders')
                 const resource = 'orders.json'
@@ -98,12 +103,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const body = {
                   buyers: [buyer],
                   amount: { total: (GalaxPayTransaction.value / 100) },
-                  subscription_order: { _id: subscriptionId }
+                  subscription_order: {
+                    _id: subscriptionId,
+                    number: orderNumber
+                  }
                 }
                 console.log('> body ', body)
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
-                    console.log('> _ID ', apiResponse.data)
+                    console.log('> API ', apiResponse)
+                    res.sendStatus(200)
                   })
                   .catch(err => {
                     console.log(err)
