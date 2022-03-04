@@ -95,12 +95,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   amount: { total: (GalaxPayTransaction.value / 100) },
                   transactions: [{
                     _id: String(GalaxPayTransaction.galaxPayId),
-                    payment_method: { code: parsePaymentMethod(GalaxPaySubscription.mainPaymentMethodId) },
-                    status: {
-                      updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
-                      current: parseStatus(GalaxPayTransaction.status)
-                    },
-                    notes: `${GalaxPayTransaction.installment}ª Parcela da Assinatura: ${orderNumber}`,
+                    payment_method: { code: parsePaymentMethod(GalaxPaySubscription.mainPaymentMethodId), name: GalaxPaySubscription.mainPaymentMethodId },
                     amount: GalaxPayTransaction.value / 100
                   }],
                   subscription_order: {
@@ -109,6 +104,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   },
                   notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
+                console.log('> BODY ', body)
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
                     console.log('> API ', apiResponse)
