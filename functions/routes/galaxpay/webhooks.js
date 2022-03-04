@@ -92,11 +92,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const body = {
                   buyers: [buyer],
                   amount: { total: (GalaxPayTransaction.value / 100) },
-                  transactions: [{
-                    _id: String(GalaxPayTransaction.galaxPayId),
-                    payment_method: { code: parsePaymentMethod(GalaxPaySubscription.mainPaymentMethodId), name: GalaxPaySubscription.mainPaymentMethodId },
-                    amount: GalaxPayTransaction.value / 100
-                  }],
                   subscription_order: {
                     _id: subscriptionId,
                     number: parseInt(orderNumber)
