@@ -55,32 +55,33 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 return false
               }
             })
-        }
-      })
-      .then(data => {
-        if (!data) {
-          console.log('>  Transaction ID ', data.galaxPayId)
-          admin.firestore().collection('transactions').doc(String(data.galaxPayId))
-            .set(data)
-            .then((data) => {
-              console.log('> ok ', data)
-              return data
+            .then(data => {
+              if (!data) {
+                console.log('>  Transaction ID ', data.galaxPayId)
+                admin.firestore().collection('transactions').doc(String(data.galaxPayId))
+                  .set(data)
+                  .then((data) => {
+                    console.log('> ok ', data)
+                    return data
+                  })
+                  .then((data) => {
+                    if (!data) {
+                      res.status(200).send('SUCCESS')
+                    } else {
+                      res.status(404).send('NOT FOUND!')
+                    }
+                  })
+                  .catch((err) => {
+                    console.error()
+                    res.status(404).send(`NOT FOUND!  ${err}`)
+                  })
+              }
             })
-            .catch(() => {
-              return false
+            .catch((err) => {
+              console.error()
+              res.status(404).send(`NOT FOUND!  ${err}`)
             })
         }
-      })
-      .then((data) => {
-        if (!data) {
-          res.status(200).send('SUCCESS')
-        } else {
-          res.status(404).send('NOT FOUND!')
-        }
-      })
-      .catch((err) => {
-        console.error()
-        res.status(404).send(`NOT FOUND!  ${err}`)
       })
   }
 }
