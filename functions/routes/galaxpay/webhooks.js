@@ -17,10 +17,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const collectionSubscription = admin.firestore().collection('subscriptions')
   const collectionTransaction = admin.firestore().collection('transactions')
 
-  const addTransactionFireBase = (Transaction) => {
+  const addTransactionFireBase = (Transaction, storeId) => {
     console.log('>  Transaction ID ', Transaction.galaxPayId)
     admin.firestore().collection('transactions').doc(String(Transaction.galaxPayId))
       .set(Transaction)
+      .then((data) => {
+        console.log('> dados ', data)
+        res.status(200).send(`SUCCESS  ${storeId}`)
+      })
       .catch(console.error)
   }
 
@@ -32,8 +36,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const storeId = documentSnapshot.data().store_id
         if (documentSnapshot.exists && storeId) {
           const transaction = galaxpayHook.Transaction
-          res.status(200).send(`SUCCESS  ${storeId}`)
-          addTransactionFireBase(transaction)
+          addTransactionFireBase(transaction, storeId)
         } else {
           res.status(404).send('NOT FOUND Doc Subscription in Firebase')
         }
