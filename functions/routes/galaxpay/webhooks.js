@@ -101,10 +101,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       current: parseStatus(GalaxPayTransaction.status)
                     },
                     notes: `${GalaxPayTransaction.installment}ª Parcela da Assinatura: ${orderNumber}`,
-                    intermediator: {
-                      transaction_id: GalaxPayTransaction.tid,
-                      transaction_code: GalaxPayTransaction.authorizationCode
-                    },
                     amount: GalaxPayTransaction.value / 100
                   }],
                   subscription_order: {
