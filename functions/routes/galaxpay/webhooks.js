@@ -92,9 +92,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               if (documentSnapshot.exists && storeId) {
                 const buyer = {
                   _id: GalaxPaySubscription.Customer.myId,
-                  name: GalaxPaySubscription.Customer.name,
-                  main_email: GalaxPaySubscription.Customer.emails[0],
-                  doc_number: GalaxPaySubscription.Customer.document
+                  name: GalaxPaySubscription.Customer.name
                 }
                 // create new orders in API
                 console.log('> Create Orders')
@@ -105,7 +103,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   amount: { total: (GalaxPayTransaction.value / 100) },
                   subscription_order: {
                     _id: subscriptionId,
-                    number: orderNumber
+                    number: parseInt(orderNumber)
                   }
                 }
                 console.log('> body ', body)
