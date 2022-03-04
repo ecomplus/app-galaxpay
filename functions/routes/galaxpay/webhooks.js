@@ -31,6 +31,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .catch(console.error)
   }
+  const parsePaymentMethod = (code) => {
+    switch( code ){
+      case 'boleto':
+        return 'banking_billet'
+      case 'creditCard':
+        return 'credit_card'
+    }
+    return 'other'
+  }
 
   const createDocFireBase = () => {
     console.log('> Function create')
@@ -86,6 +95,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   amount: { total: (GalaxPayTransaction.value / 100) },
                   transactions: [{
                     _id: String(GalaxPayTransaction.galaxPayId),
+                    payment_method: { code: parsePaymentMethod(GalaxPaySubscription.mainPaymentMethodId) },
                     status: {
                       updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
                       current: parseStatus(GalaxPayTransaction.status)
