@@ -93,7 +93,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const buyer = {
                   _id: GalaxPaySubscription.Customer.myId,
                   name: GalaxPaySubscription.Customer.name,
-                  mail_email: GalaxPaySubscription.Customer.emails[0],
+                  main_email: GalaxPaySubscription.Customer.emails[0],
                   doc_number: GalaxPaySubscription.Customer.document
                 }
                 // create new orders in API
