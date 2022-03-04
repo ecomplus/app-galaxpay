@@ -103,8 +103,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 console.log('> body ', body)
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
-                    console.log('> API ', apiResponse)
-                    console.log('> _ID ', apiResponse.data._id)
+                    console.log('> _ID ', apiResponse.data)
                   })
                   .catch(err => {
                     console.log(err)
