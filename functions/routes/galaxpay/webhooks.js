@@ -29,7 +29,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       current: parseStatus(Transaction.status)
     }
     const installment = Transaction.installment
-    transaction.notes = `${installment}ª Parcela do Pedido: ${orderNumber}`
+    transaction.notes = `${installment}ª Parcela da Assinatura: ${orderNumber}`
 
     transaction._id = String(Transaction.galaxPayId)
 
@@ -93,8 +93,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const name = GalaxPaySubscription.Customer.name.split(' ')
                 const buyer = {
                   _id: GalaxPaySubscription.Customer.myId,
-                  name: { given_name: name[0] },
-                  main_email: GalaxPaySubscription.Customer.emails[0]
+                  name: { given_name: name[0], family_name: name[name.length - 1] },
+                  display_name: name[0],
+                  main_email: GalaxPaySubscription.Customer.emails[0],
+                  doc_number: GalaxPaySubscription.Customer.document
                 }
                 // create new orders in API
                 const installment = GalaxPayTransaction.installment
@@ -104,11 +106,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const body = {
                   buyers: [buyer],
                   amount: { total: (GalaxPayTransaction.value / 100) },
+                  transactions: [createTransaction(GalaxPayTransaction, orderNumber)],
                   subscription_order: {
                     _id: subscriptionId,
                     number: parseInt(orderNumber)
                   },
-                  notes: `${installment} Parcela da Assinatura ${orderNumber}`
+                  notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
                 console.log('> body ', body)
                 appSdk.apiRequest(storeId, resource, method, body)
