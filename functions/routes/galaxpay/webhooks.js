@@ -18,29 +18,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const collectionTransaction = admin.firestore().collection('transactions')
 
   const addTransactionFireBase = (Transaction) => {
-    console.log('>  Transaction ID ', Transaction.galaxPayId)
-    admin.firestore().collection('transactions').doc(String(Transaction.galaxPayId))
-      .set(Transaction)
-      .then(() => {
-        console.log('> ok')
-      })
-      .catch(console.error)
-  }
-
-  const createDocFireBase = () => {
-    console.log('> Function create')
-    const subscription = collectionSubscription.doc(subscriptionId)
-    subscription.get()
-      .then((documentSnapshot) => {
-        const storeId = documentSnapshot.data().store_id
-        if (documentSnapshot.exists && storeId) {
-          const transaction = galaxpayHook.Transaction
-          res.status(200).send(`SUCCESS  ${storeId}`)
-          addTransactionFireBase(transaction)
-        } else {
-          res.status(404).send('NOT FOUND Doc Subscription in Firebase')
-        }
-      })
+    
   }
 
   if (galaxpayHook.confirmHash) {
@@ -65,9 +43,44 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .then(data => {
         if (!data) {
-          createDocFireBase()
+          console.log('> Function create')
+          const subscription = collectionSubscription.doc(subscriptionId)
+          subscription.get()
+            .then((documentSnapshot) => {
+              const storeId = documentSnapshot.data().store_id
+              if (documentSnapshot.exists && storeId) {
+                const transaction = galaxpayHook.Transaction
+                return transaction
+              } else {
+                return false
+              }
+            })
         }
       })
-      .catch(console.error)
+      .then(data => {
+        if (!data) {
+          console.log('>  Transaction ID ', data.galaxPayId)
+          admin.firestore().collection('transactions').doc(String(data.galaxPayId))
+            .set(data)
+            .then((data) => {
+              console.log('> ok ', data)
+              return data
+            })
+            .catch(() => {
+              return false
+            })
+        }
+      })
+      .then((data) => {
+        if (!data) {
+          res.status(200).send('SUCCESS')
+        } else {
+          res.status(404).send('NOT FOUND!')
+        }
+      })
+      .catch((err) => {
+        console.error()
+        res.status(404).send(`NOT FOUND!  ${err}`)
+      })
   }
 }
