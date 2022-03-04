@@ -1,6 +1,6 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
-const parseStatus = require('../../../lib/payments/parse-status')
+const parseStatus = require('../../lib/payments/parse-status')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -95,7 +95,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const body = {
                   amount: (GalaxPayTransaction.value / 100)
                 }
+                return appSdk.apiRequest(storeId, resource, method, body)
               }
+            })
+            .then(apiResponse => {
+              console.log('> API ', apiResponse)
             })
         }
       })
