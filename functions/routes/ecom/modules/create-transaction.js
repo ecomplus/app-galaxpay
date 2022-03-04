@@ -23,6 +23,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
 
   const orderId = params.order_id
+  const orderNumber = params.order_number
   const { amount, buyer, payer, to, items, type } = params
   console.log('> Transaction #', storeId, orderId)
 
@@ -62,7 +63,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   },
   {
     tagName: 'order_number',
-    tagValue: params.order_number
+    tagValue: orderNumber
   }]
 
   const galaxpayCustomer = {
@@ -149,11 +150,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
               current: parseStatus(data.Transactions[0].status)
             }
+            const installment = data.Transactions[0].installment
+            transaction.notes = `Parcela ${installment} do Pedido: ${orderNumber}`
+
+            transaction._id = String(data.Transactions[0].galaxPayId)
 
             transaction.intermediator = {
-              transaction_id: data.tid,
-              transaction_code: data.authorizationCode
+              transaction_id: data.Transactions[0].tid,
+              transaction_code: data.Transactions[0].authorizationCode
             }
+            console.log('> Transactio ', transaction)
 
             res.send({
               redirect_to_payment: redirectToPayment,

@@ -60,8 +60,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
           const subscription = collectionSubscription.doc(subscriptionId)
           subscription.get()
             .then((documentSnapshot) => {
+              // find StoreId in subscription
               const storeId = documentSnapshot.data().store_id
-              res.status(200).send(`SUCCESS ${storeId}`)
+              if (documentSnapshot.exists && storeId) {
+                res.status(200).send(`SUCCESS ${storeId}`)
+              }
             })
         }
       })
