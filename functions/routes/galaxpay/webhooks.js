@@ -90,17 +90,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
               const storeId = documentSnapshot.data().store_id
               if (documentSnapshot.exists && storeId) {
                 // create new orders in API
+                console.log('> Create Orders')
                 const resource = 'orders.json'
                 const method = 'POST'
                 const body = {
                   amount: (GalaxPayTransaction.value / 100)
                 }
-                return appSdk.apiRequest(storeId, resource, method, body)
+                appSdk.apiRequest(storeId, resource, method, body)
+                  .then(apiResponse => {
+                    console.log('> API ', apiResponse)
+                  })
               }
             })
-            .then(apiResponse => {
-              console.log('> API ', apiResponse)
-            })
+        } else {
+          console.log('> Exists docs')
         }
       })
   }
