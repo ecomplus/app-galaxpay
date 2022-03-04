@@ -100,6 +100,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   amount: { total: (GalaxPayTransaction.value / 100) },
                   subscription_order: { _id: subscriptionId }
                 }
+                console.log('> body ', body)
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
                     console.log('> API ', apiResponse)
