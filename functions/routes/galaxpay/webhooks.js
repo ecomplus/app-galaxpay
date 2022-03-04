@@ -91,8 +91,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               const orderNumber = documentSnapshot.data().order_number
               if (documentSnapshot.exists && storeId) {
                 const buyer = {
-                  _id: GalaxPaySubscription.Customer.myId,
-                  name: GalaxPaySubscription.Customer.name
+                  _id: GalaxPaySubscription.Customer.myId
                 }
                 // create new orders in API
                 console.log('> Create Orders')
