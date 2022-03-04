@@ -88,7 +88,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     _id: String(GalaxPayTransaction.galaxPayId),
                     status: {
                       updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
-                      current: parseStatus(Transaction.status)
+                      current: parseStatus(GalaxPayTransaction.status)
                     },
                     notes: `${GalaxPayTransaction.installment}ª Parcela da Assinatura: ${orderNumber}`,
                     intermediator: {
