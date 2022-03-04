@@ -90,9 +90,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
               const storeId = documentSnapshot.data().store_id
               const orderNumber = documentSnapshot.data().order_number
               if (documentSnapshot.exists && storeId) {
+                const name = GalaxPaySubscription.Customer.name.split(' ')
                 const buyer = {
                   _id: GalaxPaySubscription.Customer.myId,
-                  name: GalaxPaySubscription.Customer.name
+                  name: { given_name: name[0] },
+                  main_email: GalaxPaySubscription.Customer.emails[0]
                 }
                 // create new orders in API
                 const installment = GalaxPayTransaction.installment
