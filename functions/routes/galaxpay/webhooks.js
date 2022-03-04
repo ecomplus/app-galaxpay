@@ -21,6 +21,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
     console.log('>  Transaction ID ', Transaction.galaxPayId)
     admin.firestore().collection('transactions').doc(String(Transaction.galaxPayId))
       .set(Transaction)
+      .then(() => {
+        console.log('> ok')
+      })
       .catch(console.error)
   }
 
@@ -53,8 +56,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       .then((documentSnapshot) => {
         const Transaction = documentSnapshot.data()
         if (documentSnapshot.exists && Transaction) {
-          // compare status, if status paid, create new order, thinking ( only when order paid? )
-          console.log('> GET now')
+          // compare status, if status paid, create new order, thinking ( only when order paid?
           return Transaction
         } else {
           console.log('> Create Transaction in Firebase')
