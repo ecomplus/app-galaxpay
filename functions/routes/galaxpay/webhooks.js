@@ -1,6 +1,7 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
 const parseStatus = require('../../lib/payments/parse-status')
+const getGalaxPayId = require('../../lib/galaxpay/use-galaxpayId')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -52,9 +53,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 // create new orders in API
                 const installment = GalaxPayTransaction.installment
                 console.log('> Create Order')
+                const transaction = {
+                  _id: String(getGalaxPayId(GalaxPayTransaction.galaxPayId)),
+                  payment_method: { code: 'credit_card' },
+                  status: {
+                    updated_at: new Date().toISOString(),
+                    current: parseStatus(GalaxPayTransaction.status)
+                  },
+                  notes: `${GalaxPayTransaction.installment}ª Parcela da Assinatura: ${orderNumber}`,
+                  amount: GalaxPayTransaction.value / 100
+                }
                 const body = {
                   buyers: [buyer],
                   amount: { total: (GalaxPayTransaction.value / 100) },
+                  transactions: [transaction],
                   subscription_order: {
                     _id: subscriptionId,
                     number: parseInt(orderNumber)
