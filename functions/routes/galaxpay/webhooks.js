@@ -1,7 +1,7 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
 const parseStatus = require('../../lib/payments/parse-status')
-const getGalaxPayId = require('../../lib/galaxpay/use-galaxpayId')
+const getGalaxPayId = require('../../lib/galaxpay/parseId-to-ecom')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -27,7 +27,26 @@ exports.post = ({ appSdk, admin }, req, res) => {
   }
 
   if (type === 'transaction.updateStatus') {
-    res.status(200).send('SUCCESS')
+    const transaction = collectionTransaction.doc(String(TransactionId))
+    transaction.get()
+      .then((documentSnapshot) => {
+        const Transaction = documentSnapshot.data()
+        if (documentSnapshot.exists && Transaction) {
+          const transactionStatus = Transaction.status
+          const orderId = Transaction.orderId
+          if (transactionStatus !== GalaxPayTransaction.status) {
+            console.log('> Order id ', orderId)
+            // update payment
+            // appSdk.apiRequest(storeId, 'orders/${orderId}/payments_history.json, 'PATCH', body)
+
+            res.sendStatus(200)
+          } else {
+            console.log('>Status Equal ', GalaxPayTransaction)
+            res.sendStatus(500)
+          }
+        }
+        // verify in API ?
+      })
   } else if (type === 'subscription.addTransaction') {
     // find transactio in firebase
     const transaction = collectionTransaction.doc(String(TransactionId))
@@ -42,7 +61,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               // find StoreId in subscription
               const storeId = documentSnapshot.data().store_id
               const orderNumber = documentSnapshot.data().order_number
-              const items = documentSnapshot.data().items
+              // const items = documentSnapshot.data().items // need _id all items
               const paymentMethod = documentSnapshot.data().payment_method
               if (documentSnapshot.exists && storeId) {
                 const name = GalaxPaySubscription.Customer.name.split(' ')
@@ -57,7 +76,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const installment = GalaxPayTransaction.installment
                 console.log('> Create Order')
                 const transaction = {
-                  _id: String(getGalaxPayId(GalaxPayTransaction.galaxPayId)),
+                  _id: String(getGalaxPayId(TransactionId)),
                   payment_method: paymentMethod,
                   status: {
                     updated_at: new Date().toISOString(),
@@ -76,11 +95,23 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   },
                   notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
-                console.log('> BODY ', body)
+                // TODO: verify transaction exists in firebase, if exists, order exists in API
                 appSdk.apiRequest(storeId, 'orders.json', 'POST', body)
                   .then(apiResponse => {
-                    console.log('> API ', apiResponse)
+                    console.log('> API', apiResponse)
+                    console.log('> ', apiResponse._id)
                     res.sendStatus(200)
+                    // save new transaction in firebase
+                    admin.firestore().collection('transactions').doc(String(TransactionId))
+                      .set({
+                        transaction_id: TransactionId,
+                        status: GalaxPayTransaction.status,
+                        tid: GalaxPayTransaction.tid,
+                        subscriptionMyId: GalaxPayTransaction.subscriptionMyId,
+                        authorizationCode: GalaxPayTransaction.authorizationCode,
+                        orderId: apiResponse._id
+                      })
+                      .catch(console.error)
                   })
                   .catch(err => {
                     console.log(err)

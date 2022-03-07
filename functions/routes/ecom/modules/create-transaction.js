@@ -1,7 +1,7 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 const errorHandling = require('../../../lib/store-api/error-handling')
 const parseStatus = require('../../../lib/payments/parse-status')
-const getGalaxPayId = require('../../../lib/galaxpay/use-galaxpayId')
+const parseId = require('../../../lib/galaxpay/parseId-to-ecom')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -145,18 +145,19 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction.payment_link = data.paymentLink
             }
 
-            console.log('> Status ', parseStatus(data.Transactions[0].status))
+            const transactionGalaxPay = data.Transactions[0]
+            console.log('> Status ', parseStatus(transactionGalaxPay.status))
 
             transaction.status = {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
-              current: parseStatus(data.Transactions[0].status)
+              current: parseStatus(transactionGalaxPay.status)
             }
 
-            transaction._id = String(getGalaxPayId(data.Transactions[0].galaxPayId))
+            transaction._id = String(parseId(transactionGalaxPay.galaxPayId))
 
             transaction.intermediator = {
-              transaction_id: data.Transactions[0].tid,
-              transaction_code: data.Transactions[0].authorizationCode
+              transaction_id: transactionGalaxPay.tid,
+              transaction_code: transactionGalaxPay.authorizationCode
             }
 
             res.send({
@@ -164,8 +165,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction
             })
 
-            admin.firestore().collection('transactions').doc(String(data.Transactions[0].galaxPayId))
-              .set(data.Transactions[0])
+            admin.firestore().collection('transactions').doc(String(transactionGalaxPay.galaxPayId))
+              .set({
+                transaction_id: transactionGalaxPay.galaxPayId,
+                status: transactionGalaxPay.status,
+                tid: transactionGalaxPay.tid,
+                subscriptionMyId: `${orderId}`,
+                authorizationCode: transactionGalaxPay.authorizationCode,
+                orderId: `${orderId}`
+              })
               .catch(console.error)
 
             admin.firestore().collection('subscriptions').doc(orderId)
