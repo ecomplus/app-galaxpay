@@ -101,8 +101,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 // TODO: verify transaction exists in firebase, if exists, order exists in API
                 appSdk.apiRequest(storeId, 'orders.json', 'POST', body)
                   .then(apiResponse => {
-                    console.log('> API ', apiResponse)
-                    console.log('> id ', apiResponse.data._id)
+                    console.log('> API ', apiResponse.data)
+                    console.log('> id ', apiResponse.data[0]._id)
                     // save new transaction in firebase
                     admin.firestore().collection('transactions').doc(String(TransactionId))
                       .set({
@@ -111,7 +111,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         tid: GalaxPayTransaction.tid,
                         subscriptionMyId: GalaxPayTransaction.subscriptionMyId,
                         authorizationCode: GalaxPayTransaction.authorizationCode,
-                        orderId: apiResponse.data._id
+                        orderId: apiResponse.data[0]._id
                       })
                       .catch(console.error)
                     res.sendStatus(200)
