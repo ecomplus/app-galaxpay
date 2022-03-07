@@ -45,7 +45,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               notification_code: type + ';' + galaxpayHook.webhookId,
               flags: ['GalaxPay']
             }
-            appSdk.apiRequest(storeId, `orders/${orderId}/payments_history.json`, 'PATCH', body)
+            appSdk.apiRequest(storeId, `orders/${orderId}/payments_history.json`, 'POST', body)
               .then(apiResponse => {
                 console.log('> UPDATE ', apiResponse)
                 res.sendStatus(200)
