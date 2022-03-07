@@ -197,6 +197,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
               message
             })
           })
+      } else if (type === 'payment') {
+        console.log('> Test payment ')
       }
     })
 }

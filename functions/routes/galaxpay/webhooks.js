@@ -1,6 +1,7 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
 const parseStatus = require('../../lib/payments/parse-status')
+const createTransaction = require('../ecom/modules/create-transaction')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -32,7 +33,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       .catch(console.error)
   }
   const parsePaymentMethod = (code) => {
-    switch( code ){
+    switch (code) {
       case 'boleto':
         return 'banking_billet'
       case 'creditCard':
@@ -101,12 +102,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     _id: subscriptionId,
                     number: parseInt(orderNumber)
                   },
-                  transactions: [transaction],
                   notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
                 console.log('> BODY ', body)
                 appSdk.apiRequest(storeId, resource, method, body)
                   .then(apiResponse => {
+                    createTransaction({appSdk,admin},req, res)
+                      .then(() => {
+                        console.log('>> TEST OK')
+                      })
                     console.log('> API ', apiResponse)
                     res.sendStatus(200)
                   })
