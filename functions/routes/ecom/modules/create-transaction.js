@@ -173,8 +173,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 store_id: storeId,
                 order_number: params.order_number,
                 payment_method: params.payment_method,
-                items: items,
-                buyer
+                items: items
               })
               .catch(console.error)
           })
