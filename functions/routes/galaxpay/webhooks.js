@@ -1,7 +1,6 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
 const parseStatus = require('../../lib/payments/parse-status')
-const createTransaction = require('../ecom/modules/create-transaction')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -21,41 +20,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type)
   const collectionSubscription = admin.firestore().collection('subscriptions')
   const collectionTransaction = admin.firestore().collection('transactions')
-
-  const addTransactionFireBase = (Transaction, storeId) => {
-    console.log('>  Transaction ID ', Transaction.galaxPayId)
-    admin.firestore().collection('transactions').doc(String(Transaction.galaxPayId))
-      .set(Transaction)
-      .then((data) => {
-        console.log('> dados ', data)
-        res.status(200).send(`SUCCESS  ${storeId}`)
-      })
-      .catch(console.error)
-  }
-  const parsePaymentMethod = (code) => {
-    switch (code) {
-      case 'boleto':
-        return 'banking_billet'
-      case 'creditCard':
-        return 'credit_card'
-    }
-    return 'other'
-  }
-
-  const createDocFireBase = () => {
-    console.log('> Function create')
-    const subscription = collectionSubscription.doc(subscriptionId)
-    subscription.get()
-      .then((documentSnapshot) => {
-        const storeId = documentSnapshot.data().store_id
-        if (documentSnapshot.exists && storeId) {
-          const transaction = galaxpayHook.Transaction
-          addTransactionFireBase(transaction, storeId)
-        } else {
-          res.status(404).send('NOT FOUND Doc Subscription in Firebase')
-        }
-      })
-  }
 
   if (galaxpayHook.confirmHash) {
     console.log('> ', galaxpayHook.confirmHash)
@@ -85,16 +49,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   main_email: GalaxPaySubscription.Customer.emails[0],
                   doc_number: GalaxPaySubscription.Customer.document
                 }
-                const transaction = {
-                  _id: new Date().getTime().toString(),
-                  payment_method: { code: 'credit_card' },
-                  amount: (GalaxPayTransaction.value / 100)
-                }
                 // create new orders in API
                 const installment = GalaxPayTransaction.installment
-                console.log('> Create Orders')
-                const resource = 'orders.json'
-                const method = 'POST'
+                console.log('> Create Order')
                 const body = {
                   buyers: [buyer],
                   amount: { total: (GalaxPayTransaction.value / 100) },
@@ -105,12 +62,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
                 console.log('> BODY ', body)
-                appSdk.apiRequest(storeId, resource, method, body)
+                appSdk.apiRequest(storeId, 'orders.json', 'POST', body)
                   .then(apiResponse => {
-                    createTransaction({appSdk,admin},req, res)
-                      .then(() => {
-                        console.log('>> TEST OK')
-                      })
                     console.log('> API ', apiResponse)
                     res.sendStatus(200)
                   })
@@ -120,8 +73,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
               }
             })
-        } else {
-          console.log('> Exists docs')
         }
       })
   }
