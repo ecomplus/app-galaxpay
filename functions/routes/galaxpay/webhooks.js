@@ -44,6 +44,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
             console.log('>Status Equal ', GalaxPayTransaction)
             res.sendStatus(500)
           }
+        } else {
+          console.log('> Not Found Document')
+          res.sendStatus(400)
         }
         // verify in API ?
       })
@@ -100,7 +103,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(apiResponse => {
                     console.log('> API', apiResponse)
                     console.log('> ', apiResponse._id)
-                    res.sendStatus(200)
                     // save new transaction in firebase
                     admin.firestore().collection('transactions').doc(String(TransactionId))
                       .set({
@@ -112,6 +114,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         orderId: apiResponse._id
                       })
                       .catch(console.error)
+                    res.sendStatus(200)
                   })
                   .catch(err => {
                     console.log(err)
