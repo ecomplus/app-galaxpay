@@ -64,7 +64,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     current: parseStatus(GalaxPayTransaction.status)
                   },
                   notes: `${GalaxPayTransaction.installment}ª Parcela da Assinatura: ${orderNumber}`,
-                  items,
                   amount: GalaxPayTransaction.value / 100
                 }
                 const body = {
