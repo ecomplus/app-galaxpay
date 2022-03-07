@@ -84,6 +84,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   main_email: GalaxPaySubscription.Customer.emails[0],
                   doc_number: GalaxPaySubscription.Customer.document
                 }
+                const transaction = {
+                  _id: new Date().getTime().toString(),
+                  payment_method: { code: 'credit_card' },
+                  amount: (GalaxPayTransaction.value / 100)
+                }
                 // create new orders in API
                 const installment = GalaxPayTransaction.installment
                 console.log('> Create Orders')
@@ -96,6 +101,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     _id: subscriptionId,
                     number: parseInt(orderNumber)
                   },
+                  transactions: [transaction],
                   notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
                 console.log('> BODY ', body)
