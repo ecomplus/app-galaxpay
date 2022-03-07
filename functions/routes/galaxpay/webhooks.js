@@ -42,25 +42,22 @@ exports.post = ({ appSdk, admin }, req, res) => {
               // find StoreId in subscription
               const storeId = documentSnapshot.data().store_id
               const orderNumber = documentSnapshot.data().order_number
+              const buyer = documentSnapshot.data().buyer
+              const items = documentSnapshot.data().items
+              const paymentMethod = documentSnapshot.data().payment_method
               if (documentSnapshot.exists && storeId) {
-                const name = GalaxPaySubscription.Customer.name.split(' ')
-                const buyer = {
-                  _id: GalaxPaySubscription.Customer.myId,
-                  name: { given_name: name[0] },
-                  main_email: GalaxPaySubscription.Customer.emails[0],
-                  doc_number: GalaxPaySubscription.Customer.document
-                }
                 // create new orders in API
                 const installment = GalaxPayTransaction.installment
                 console.log('> Create Order')
                 const transaction = {
                   _id: String(getGalaxPayId(GalaxPayTransaction.galaxPayId)),
-                  payment_method: { code: 'credit_card' },
+                  payment_method: paymentMethod,
                   status: {
                     updated_at: new Date().toISOString(),
                     current: parseStatus(GalaxPayTransaction.status)
                   },
                   notes: `${GalaxPayTransaction.installment}ª Parcela da Assinatura: ${orderNumber}`,
+                  items,
                   amount: GalaxPayTransaction.value / 100
                 }
                 const body = {

@@ -1,6 +1,7 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 const errorHandling = require('../../../lib/store-api/error-handling')
 const parseStatus = require('../../../lib/payments/parse-status')
+const getGalaxPayId = require('../../../lib/galaxpay/use-galaxpayId')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -151,7 +152,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               current: parseStatus(data.Transactions[0].status)
             }
 
-            transaction._id = String(data.Transactions[0].galaxPayId)
+            transaction._id = String(getGalaxPayId(data.Transactions[0].galaxPayId))
 
             transaction.intermediator = {
               transaction_id: data.Transactions[0].tid,
@@ -163,10 +164,17 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction
             })
 
+            admin.firestore().collection('transactions').doc(String(data.Transactions[0].galaxPayId))
+              .set(data.Transactions[0])
+              .catch(console.error)
+
             admin.firestore().collection('subscriptions').doc(orderId)
               .set({
                 store_id: storeId,
-                order_number: params.order_number
+                order_number: params.order_number,
+                payment_method: params.payment_method,
+                items: items,
+                buyer
               })
               .catch(console.error)
           })
