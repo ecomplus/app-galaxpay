@@ -172,7 +172,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 tid: transactionGalaxPay.tid,
                 subscriptionMyId: `${orderId}`,
                 authorizationCode: transactionGalaxPay.authorizationCode,
-                orderId: `${orderId}`
+                orderId: `${orderId}`,
+                storeId
               })
               .catch(console.error)
 

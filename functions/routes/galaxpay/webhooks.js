@@ -1,7 +1,7 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
 const parseStatus = require('../../lib/payments/parse-status')
-const getGalaxPayId = require('../../lib/galaxpay/parseId-to-ecom')
+const parseId = require('../../lib/galaxpay/parseId-to-ecom')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -34,12 +34,26 @@ exports.post = ({ appSdk, admin }, req, res) => {
         if (documentSnapshot.exists && Transaction) {
           const transactionStatus = Transaction.status
           const orderId = Transaction.orderId
+          const storeId = Transaction.storeId
           if (transactionStatus !== GalaxPayTransaction.status) {
             console.log('> Order id ', orderId)
             // update payment
-            // appSdk.apiRequest(storeId, 'orders/${orderId}/payments_history.json, 'PATCH', body)
-
-            res.sendStatus(200)
+            const body = {
+              date_time: new Date().toISOString(),
+              status: parseStatus(GalaxPayTransaction.status),
+              transaction_id: String(parseId(TransactionId)),
+              notification_code: type + ';' + galaxpayHook.webhookId,
+              flags: ['GalaxPay']
+            }
+            appSdk.apiRequest(storeId, `orders/${orderId}/payments_history.json`, 'PATCH', body)
+              .then(apiResponse => {
+                console.log('> UPDATE ', apiResponse)
+                res.sendStatus(200)
+              })
+              .catch(err => {
+                console.error(err)
+                res.sendStatus(500)
+              })
           } else {
             console.log('>Status Equal ', GalaxPayTransaction)
             res.sendStatus(500)
@@ -79,7 +93,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 const installment = GalaxPayTransaction.installment
                 console.log('> Create Order')
                 const transaction = {
-                  _id: String(getGalaxPayId(TransactionId)),
+                  _id: String(parseId(TransactionId)),
                   payment_method: paymentMethod,
                   status: {
                     updated_at: new Date().toISOString(),
@@ -109,7 +123,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         tid: GalaxPayTransaction.tid,
                         subscriptionMyId: GalaxPayTransaction.subscriptionMyId,
                         authorizationCode: GalaxPayTransaction.authorizationCode,
-                        orderId: response.data._id
+                        orderId: response.data._id,
+                        storeId: storeId
                       })
                       .catch(console.error)
                     res.sendStatus(200)
