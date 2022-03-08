@@ -125,7 +125,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   //   }
                   // ]
                   const body = {
-                    _id: parseId(GalaxPayTransaction.galaxPayId),
+                    // _id: parseId(GalaxPayTransaction.galaxPayId),
                     opened_at: new Date().toISOString(),
                     buyers,
                     channel_type,
