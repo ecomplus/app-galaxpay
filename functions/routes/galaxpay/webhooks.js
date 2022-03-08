@@ -51,12 +51,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
               const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
               findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                 .then(({ response }) => {
-                  const { result } = response.data
-                  if (!result.length) {
-                    console.log('> Not found Transaction in API')
-                    res.sendStatus(400)
-                  }
-                  console.log('> result ', result)
+                  return new Promise((resolve, reject) => {
+                    const { result } = response.data
+                    if (!result.length) {
+                      console.log('> Not found Transaction in API')
+                      reject(new Error())
+                    }
+                    resolve({ result })
+                  })
+                })
+                .then(({ result }) => {
                   const order = result[0]
                   if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
                     console.log('> equals Status')
@@ -71,31 +75,59 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       notification_code: type + ';' + galaxpayHook.webhookId,
                       flags: ['GalaxPay']
                     }
-                    appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
-                      .then(apiResponse => {
-                        body = {
-                          intermediator: {
-                            transaction_id: GalaxPayTransaction.tid || '',
-                            transaction_code: GalaxPayTransaction.authorizationCode || ''
-                          }
-                        }
-                        appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
-                          .then(apiResponse => {
-                            console.log('> UPDATE Transaction OK')
-                            res.sendStatus(200)
-                          })
-                          .catch((err) => {
-                            console.log('> ERRO UPDATE Transaction')
-                            console.error(err)
-                            res.sendStatus(500)
-                          })
-                      })
-                      .catch(err => {
-                        console.error(err)
-                        res.sendStatus(500)
-                      })
+                    return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                   }
                 })
+                .then(apiResponse => {
+                  console.log('> ', apiResponse)
+                  const body = {
+                    intermediator: {
+                      transaction_id: GalaxPayTransaction.tid || '',
+                      transaction_code: GalaxPayTransaction.authorizationCode || ''
+                    }
+                  }
+                  // appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
+                })
+                  // console.log('> result ', result)
+                  // const order = result[0]
+                  // if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
+                  //   console.log('> equals Status')
+                  //   res.sendStatus(200)
+                  // } else {
+                  //   console.log('> Order id ', order._id)
+                  //   // update payment
+                  //   let body = {
+                  //     date_time: new Date().toISOString(),
+                  //     status: parseStatus(GalaxPayTransaction.status),
+                  //     transaction_id: transactionId,
+                  //     notification_code: type + ';' + galaxpayHook.webhookId,
+                  //     flags: ['GalaxPay']
+                  //   }
+                  //   appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
+                  //     .then(apiResponse => {
+                  //       body = {
+                  //         intermediator: {
+                  //           transaction_id: GalaxPayTransaction.tid || '',
+                  //           transaction_code: GalaxPayTransaction.authorizationCode || ''
+                  //         }
+                  //       }
+                  //       appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
+                  //         .then(apiResponse => {
+                  //           console.log('> UPDATE Transaction OK')
+                  //           res.sendStatus(200)
+                  //         })
+                  //         .catch((err) => {
+                  //           console.log('> ERRO UPDATE Transaction')
+                  //           console.error(err)
+                  //           res.sendStatus(500)
+                  //         })
+                  //     })
+                  //     .catch(err => {
+                  //       console.error(err)
+                  //       res.sendStatus(500)
+                  //     })
+                  // }
+                // })
                 .catch(err => {
                   console.error(err)
                   res.sendStatus(500)
