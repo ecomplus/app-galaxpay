@@ -48,6 +48,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
             .then(auth => {
+              let order
               const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
               findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                 .then(({ response }) => {
@@ -61,14 +62,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
                 })
                 .then(({ result }) => {
-                  const order = result[0]
+                  order = result[0]
                   if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
                     console.log('> equals Status')
                     res.sendStatus(200)
                   } else {
                     console.log('> Order id ', order._id)
                     // update payment
-                    let body = {
+                    const body = {
                       date_time: new Date().toISOString(),
                       status: parseStatus(GalaxPayTransaction.status),
                       transaction_id: transactionId,
@@ -86,48 +87,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       transaction_code: GalaxPayTransaction.authorizationCode || ''
                     }
                   }
-                  // appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
+                  return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
                 })
-                  // console.log('> result ', result)
-                  // const order = result[0]
-                  // if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
-                  //   console.log('> equals Status')
-                  //   res.sendStatus(200)
-                  // } else {
-                  //   console.log('> Order id ', order._id)
-                  //   // update payment
-                  //   let body = {
-                  //     date_time: new Date().toISOString(),
-                  //     status: parseStatus(GalaxPayTransaction.status),
-                  //     transaction_id: transactionId,
-                  //     notification_code: type + ';' + galaxpayHook.webhookId,
-                  //     flags: ['GalaxPay']
-                  //   }
-                  //   appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
-                  //     .then(apiResponse => {
-                  //       body = {
-                  //         intermediator: {
-                  //           transaction_id: GalaxPayTransaction.tid || '',
-                  //           transaction_code: GalaxPayTransaction.authorizationCode || ''
-                  //         }
-                  //       }
-                  //       appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
-                  //         .then(apiResponse => {
-                  //           console.log('> UPDATE Transaction OK')
-                  //           res.sendStatus(200)
-                  //         })
-                  //         .catch((err) => {
-                  //           console.log('> ERRO UPDATE Transaction')
-                  //           console.error(err)
-                  //           res.sendStatus(500)
-                  //         })
-                  //     })
-                  //     .catch(err => {
-                  //       console.error(err)
-                  //       res.sendStatus(500)
-                  //     })
-                  // }
-                // })
+                .then(apiResponse => {
+                  console.log('> UPDATE Transaction OK')
+                  res.sendStatus(200)
+                })
                 .catch(err => {
                   console.error(err)
                   res.sendStatus(500)
