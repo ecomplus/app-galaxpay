@@ -20,6 +20,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type)
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
+  const findOrderByTransactionId = (appSdk, storeId, auth, transactionId) => {
+    return new Promise((resolve, reject) => {
+      appSdk.apiRequest(storeId, `/orders.json?transactions._id=${transactionId}`, 'GET', null, auth)
+        .then(({ response }) => {
+          console.log('> OK PROMISSE')
+          resolve(response)
+        })
+        .catch((err) => {
+          console.log('> ERRO PROMISSE')
+          reject(err)
+        })
+    })
+  }
+
   if (galaxpayHook.confirmHash) {
     console.log('> ', galaxpayHook.confirmHash)
   }
@@ -94,6 +108,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
             .then(auth => {
+              // Get Original Order
               appSdk.apiRequest(storeId, `/orders/${subscriptionId}.json`, 'GET', null, auth)
                 .then(({ response }) => {
                   console.log('> Create new Order ')
@@ -108,24 +123,23 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const shipping_method_label = oldOrder.shipping_method_label
                   const payment_method_label = oldOrder.payment_method_label
                   const originalTransaction = oldOrder.transactions[0]
-                  // const transactions = [
-                  //   {
-                  //     amount: originalTransaction.amount,
-                  //     status: {
-                  //       updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
-                  //       current: parseStatus(GalaxPayTransaction.status)
-                  //     },
-                  //     intermediator: {
-                  //       transaction_id: GalaxPayTransaction.tid || null,
-                  //       transaction_code: GalaxPayTransaction.authorizationCode || null
-                  //     },
-                  //     payment_method: originalTransaction.payment_method,
-                  //     app: originalTransaction.app,
-                  //     _id: parseId(GalaxPayTransaction.galaxPayId)
-                  //   }
-                  // ]
+                  const transactions = [
+                    {
+                      amount: originalTransaction.amount,
+                      status: {
+                        updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
+                        current: parseStatus(GalaxPayTransaction.status)
+                      },
+                      intermediator: {
+                        transaction_id: GalaxPayTransaction.tid || null,
+                        transaction_code: GalaxPayTransaction.authorizationCode || null
+                      },
+                      payment_method: originalTransaction.payment_method,
+                      app: originalTransaction.app,
+                      _id: parseId(GalaxPayTransaction.galaxPayId)
+                    }
+                  ]
                   const body = {
-                    // _id: parseId(GalaxPayTransaction.galaxPayId),
                     opened_at: new Date().toISOString(),
                     buyers,
                     channel_type,
@@ -133,6 +147,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     amount,
                     shipping_method_label,
                     payment_method_label,
+                    transactions,
                     subscription_order: {
                       _id: subscriptionId,
                       number: parseInt(orderNumber)
@@ -140,10 +155,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                   }
                   console.log('>body ', body)
-
-                  appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
+                  const transactionId = parseId(GalaxPayTransaction.galaxPayId)
+                  findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                     .then(({ response }) => {
-                      console.log('> *Created new order')
+                      console.log('> response ', response)
                       res.sendStatus(200)
                     })
                     .catch((err) => {
