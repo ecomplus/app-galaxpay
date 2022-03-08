@@ -24,8 +24,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders.json?transactions._id=${transactionId}`, 'GET', null, auth)
         .then(({ response }) => {
-          console.log('> OK PROMISSE')
-          resolve(response)
+          console.log('> OK PROMISSE ', response.result)
+          resolve({ response })
         })
         .catch((err) => {
           console.log('> ERRO PROMISSE')
