@@ -39,7 +39,30 @@ exports.post = ({ appSdk, admin }, req, res) => {
   }
 
   if (type === 'transaction.updateStatus') {
-    res.sendStatus(200)
+    const subscription = collectionSubscription.doc(subscriptionId)
+    subscription.get()
+      .then((documentSnapshot) => {
+      // find StoreId in subscription
+        const storeId = documentSnapshot.data().storeId
+        const orderNumber = documentSnapshot.data().orderNumber
+        const transactionId = documentSnapshot.data().transactionId
+        if (documentSnapshot.exists && storeId) {
+          appSdk.getAuth(storeId)
+            .then(auth => {
+              const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
+              findOrderByTransactionId(appSdk, storeId, auth, transactionId)
+                .then(({ response }) => {
+                  const { result } = response.data
+                  if (!result.length) {
+                    console.log('> Not found Transaction in API')
+                    res.sendStatus(400)
+                  }
+                  console.log('> result ', result)
+                  res.sendStatus(200)
+                })
+            })
+        }
+      })
     // const transaction = collectionTransaction.doc(String(GalaxPayTransaction.galaxPayId))
     // transaction.get()
     //   .then((documentSnapshot) => {
