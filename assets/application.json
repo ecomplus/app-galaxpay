@@ -28,7 +28,8 @@
     "customers": [],
     "orders": [
       "GET",
-      "POST"
+      "POST",
+      "PATCH"
     ],
     "carts": [],
     "orders/fulfillments": [],
