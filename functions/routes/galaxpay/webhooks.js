@@ -74,7 +74,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
             res.sendStatus(200)
           }
         } else {
-          console.log('> Not Found Document')
+          console.log('> Not Found Transaction')
           res.sendStatus(400)
         }
       })
@@ -90,10 +90,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
           subscription.get()
             .then((documentSnapshot) => {
               // find StoreId in subscription
-              const storeId = documentSnapshot.data().store_id
-              const orderNumber = documentSnapshot.data().order_number
+              const storeId = documentSnapshot.data().storeId
+              const orderNumber = documentSnapshot.data().orderNumber
               // const items = documentSnapshot.data().items // need _id all items
-              const paymentMethod = documentSnapshot.data().payment_method
+              const paymentMethod = documentSnapshot.data().paymentMethod
               if (documentSnapshot.exists && storeId) {
                 const name = GalaxPaySubscription.Customer.name.split(' ')
                 const buyer = {
@@ -146,6 +146,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.log(err)
                     res.sendStatus(500)
                   })
+              } else {
+                console.log('> Not found Subscription')
+                res.sendStatus(400)
               }
             })
         } else {
