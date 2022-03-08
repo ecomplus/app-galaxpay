@@ -96,7 +96,54 @@ exports.post = ({ appSdk, admin }, req, res) => {
             .then(auth => {
               appSdk.apiRequest(storeId, `orders/${subscriptionId}.json`, 'GET', null, auth)
                 .then(({ response }) => {
-                  console.log('> ', response.data)
+                  console.log('> Create new Order ')
+                  const installment = GalaxPayTransaction.installment
+                  const oldOrder = response.data
+                  const buyers = oldOrder.buyers
+                  // const items // tem id
+                  const channel_type = oldOrder.channel_type
+                  const domain = oldOrder.domain
+                  const amount = oldOrder.amount
+                  // const shipping_lines // tem id
+                  const shipping_method_label = oldOrder.shipping_method_label
+                  const payment_method_label = oldOrder.payment_method_label
+                  const originalTransaction = oldOrder.transactions[0]
+                  // const transactions = [
+                  //   {
+                  //     amount: originalTransaction.amount,
+                  //     status: {
+                  //       updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
+                  //       current: parseStatus(GalaxPayTransaction.status)
+                  //     },
+                  //     intermediator: {
+                  //       transaction_id: GalaxPayTransaction.tid || null,
+                  //       transaction_code: GalaxPayTransaction.authorizationCode || null
+                  //     },
+                  //     payment_method: originalTransaction.payment_method,
+                  //     app: originalTransaction.app,
+                  //     _id: parseId(GalaxPayTransaction.galaxPayId)
+                  //   }
+                  // ]
+                  const body = {
+                    _id: parseId(GalaxPayTransaction.galaxPayId),
+                    opened_at: new Date().toISOString(),
+                    buyers,
+                    channel_type,
+                    domain,
+                    amount,
+                    shipping_method_label,
+                    payment_method_label,
+                    subscription_order: {
+                      _id: subscriptionId,
+                      number: parseInt(orderNumber)
+                    },
+                    notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
+                  }
+                  appSdk.apiRequest(storeId, 'orders.json', 'POST', body)
+                    .then((apiResponse) => {
+                      console.log('> Created new order')
+                      res.sendStatus(200)
+                    })
                 })
             })
         } else {

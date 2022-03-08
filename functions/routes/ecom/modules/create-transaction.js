@@ -139,7 +139,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
             return data.data.Subscription
           })
           .then((data) => {
-            console.log('> Subscription  ', data)
+            console.log('> New Subscription')
 
             if (data.mainPaymentMethodId === 'boleto') {
               transaction.payment_link = data.paymentLink
