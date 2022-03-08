@@ -119,7 +119,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const channel_type = oldOrder.channel_type
                   const domain = oldOrder.domain
                   const amount = oldOrder.amount
-                  // const shipping_lines // tem id
+                  const shipping_lines = oldOrder.shipping_lines
                   const shipping_method_label = oldOrder.shipping_method_label
                   const payment_method_label = oldOrder.payment_method_label
                   const originalTransaction = oldOrder.transactions[0]
@@ -142,6 +142,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const body = {
                     opened_at: new Date().toISOString(),
                     items,
+                    shipping_lines,
                     buyers,
                     channel_type,
                     domain,
