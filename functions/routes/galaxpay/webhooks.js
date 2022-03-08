@@ -75,10 +75,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                       .then(apiResponse => {
                         body = {
-                          status: {
-                            updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
-                            current: parseStatus(GalaxPayTransaction.status)
-                          },
                           intermediator: {
                             transaction_id: GalaxPayTransaction.tid || '',
                             transaction_code: GalaxPayTransaction.authorizationCode || ''
