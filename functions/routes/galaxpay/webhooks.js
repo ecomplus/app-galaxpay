@@ -115,7 +115,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const installment = GalaxPayTransaction.installment
                   const oldOrder = response.data
                   const buyers = oldOrder.buyers
-                  // const items // tem id
+                  const items = oldOrder.items
                   const channel_type = oldOrder.channel_type
                   const domain = oldOrder.domain
                   const amount = oldOrder.amount
@@ -141,6 +141,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   ]
                   const body = {
                     opened_at: new Date().toISOString(),
+                    items,
                     buyers,
                     channel_type,
                     domain,
@@ -154,7 +155,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     },
                     notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                   }
-                  const transactionId = parseId(GalaxPayTransaction.galaxPayId)
+                  const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
                   findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                     .then(({ response }) => {
                       const { result } = response.data
