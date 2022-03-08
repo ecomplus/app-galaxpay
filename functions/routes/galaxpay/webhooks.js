@@ -141,10 +141,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   }
                   console.log('>body ', body)
 
-                  appSdk.apiRequest(storeId, '/orders.json', 'POST', body)
-                    .then((apiResponse) => {
+                  appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
+                    .then(({ response }) => {
                       console.log('> *Created new order')
                       res.sendStatus(200)
+                    })
+                    .catch((err) => {
+                      console.error(err)
+                      res.sendStatus(500)
                     })
                 })
             })
