@@ -74,20 +74,18 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     }
                     appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                       .then(apiResponse => {
-                        const status = {
-                          updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
-                          current: parseStatus(GalaxPayTransaction.status)
-                        }
-                        const intermediator = {
-                          transaction_id: GalaxPayTransaction.tid || '',
-                          transaction_code: GalaxPayTransaction.authorizationCode || ''
-                        }
                         body = {
-                          status,
-                          intermediator
+                          status: {
+                            updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
+                            current: parseStatus(GalaxPayTransaction.status)
+                          },
+                          intermediator: {
+                            transaction_id: GalaxPayTransaction.tid || '',
+                            transaction_code: GalaxPayTransaction.authorizationCode || ''
+                          }
                         }
                         appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
-                          .then(() => {
+                          .then(apiResponse => {
                             console.log('> UPDATE Transaction OK')
                             res.sendStatus(200)
                           })
