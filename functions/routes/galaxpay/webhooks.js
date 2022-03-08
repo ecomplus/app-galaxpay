@@ -131,12 +131,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         current: parseStatus(GalaxPayTransaction.status)
                       },
                       intermediator: {
-                        transaction_id: GalaxPayTransaction.tid || null,
-                        transaction_code: GalaxPayTransaction.authorizationCode || null
+                        transaction_id: GalaxPayTransaction.tid || '',
+                        transaction_code: GalaxPayTransaction.authorizationCode || ''
                       },
                       payment_method: originalTransaction.payment_method,
                       app: originalTransaction.app,
-                      _id: parseId(GalaxPayTransaction.galaxPayId)
+                      _id: String(parseId(GalaxPayTransaction.galaxPayId))
                     }
                   ]
                   const body = {
