@@ -24,7 +24,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders.json?transactions._id=${transactionId}`, 'GET', null, auth)
         .then(({ response }) => {
-          console.log('> OK PROMISSE ', response.result)
+          console.log('> OK PROMISSE ')
           resolve({ response })
         })
         .catch((err) => {
@@ -154,12 +154,24 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     },
                     notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                   }
-                  console.log('>body ', body)
                   const transactionId = parseId(GalaxPayTransaction.galaxPayId)
                   findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                     .then(({ response }) => {
-                      console.log('> response ', response)
-                      res.sendStatus(200)
+                      const { result } = response.data
+                      if (!result.length) {
+                        appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
+                          .then(({ response }) => {
+                            console.log('> *Created new order')
+                            res.sendStatus(200)
+                          })
+                          .catch((err) => {
+                            console.error(err)
+                            res.sendStatus(500)
+                          })
+                      } else {
+                        // Order Exists
+                        res.sendStatus(200)
+                      }
                     })
                     .catch((err) => {
                       console.error(err)
