@@ -167,7 +167,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             admin.firestore().collection('transactions').doc(String(transactionGalaxPay.galaxPayId))
               .set({
-                transaction_id: transactionGalaxPay.galaxPayId,
+                transactionId: transactionGalaxPay.galaxPayId,
                 status: transactionGalaxPay.status,
                 tid: transactionGalaxPay.tid,
                 subscriptionMyId: `${orderId}`,
@@ -179,9 +179,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             admin.firestore().collection('subscriptions').doc(orderId)
               .set({
-                store_id: storeId,
-                order_number: params.order_number,
-                payment_method: params.payment_method,
+                storeId,
+                orderNumber: params.order_number,
+                paymentMethod: params.payment_method,
                 items: items
               })
               .catch(console.error)

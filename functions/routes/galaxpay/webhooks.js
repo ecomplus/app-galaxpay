@@ -35,6 +35,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
           const transactionStatus = Transaction.status
           const orderId = Transaction.orderId
           const storeId = Transaction.storeId
+          const subscriptionMyId = Transaction.subscriptionMyId
           if (transactionStatus !== GalaxPayTransaction.status) {
             console.log('> Order id ', orderId)
             // update payment
@@ -48,24 +49,37 @@ exports.post = ({ appSdk, admin }, req, res) => {
             appSdk.apiRequest(storeId, `orders/${orderId}/payments_history.json`, 'POST', body)
               .then(apiResponse => {
                 console.log('> UPDATE ', apiResponse)
-                res.sendStatus(200)
+                // update status in firebase
+                admin.firestore().collection('transactions').doc(String(TransactionId))
+                  .set({
+                    transactionId: TransactionId,
+                    status: GalaxPayTransaction.status,
+                    tid: GalaxPayTransaction.tid,
+                    subscriptionMyId,
+                    authorizationCode: GalaxPayTransaction.authorizationCode,
+                    orderId,
+                    storeId
+                  })
+                  .then(() => {
+                    // appSdk.apiRequest(storeId, `orders/${orderId}/payments_history.json`, 'POST', body)
+                    res.sendStatus(200)
+                  })
+                  .catch(console.error)
               })
               .catch(err => {
                 console.error(err)
                 res.sendStatus(500)
               })
           } else {
-            console.log('>Status Equal ', GalaxPayTransaction)
-            res.sendStatus(500)
+            res.sendStatus(200)
           }
         } else {
           console.log('> Not Found Document')
           res.sendStatus(400)
         }
-        // verify in API ?
       })
   } else if (type === 'subscription.addTransaction') {
-    // find transactio in firebase
+    // find transaction in firebase
     const transaction = collectionTransaction.doc(String(TransactionId))
     transaction.get()
       .then((documentSnapshot) => {
@@ -112,13 +126,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   },
                   notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                 }
-                // TODO: verify transaction exists in firebase, if exists, order exists in API
                 appSdk.apiRequest(storeId, 'orders.json', 'POST', body)
                   .then(({ response }) => {
                     // save new transaction in firebase
                     admin.firestore().collection('transactions').doc(String(TransactionId))
                       .set({
-                        transaction_id: TransactionId,
+                        transactionId: TransactionId,
                         status: GalaxPayTransaction.status,
                         tid: GalaxPayTransaction.tid,
                         subscriptionMyId: GalaxPayTransaction.subscriptionMyId,
@@ -131,10 +144,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
                   .catch(err => {
                     console.log(err)
-                    res.sendStatus(400)
+                    res.sendStatus(500)
                   })
               }
             })
+        } else {
+          res.sendStatus(200)
         }
       })
   }
