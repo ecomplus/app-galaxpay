@@ -24,11 +24,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders.json?transactions._id=${transactionId}`, 'GET', null, auth)
         .then(({ response }) => {
-          console.log('> OK PROMISSE ')
           resolve({ response })
         })
         .catch((err) => {
-          console.log('> ERRO PROMISSE')
           reject(err)
         })
     })
@@ -44,8 +42,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
       .then((documentSnapshot) => {
       // find StoreId in subscription
         const storeId = documentSnapshot.data().storeId
-        const orderNumber = documentSnapshot.data().orderNumber
-        const transactionId = documentSnapshot.data().transactionId
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -60,11 +56,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   console.log('> result ', result)
                   const order = result[0]
                   if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
-                    console.log('> equals Status')
+                    // status equals, weboook and API updated
                     res.sendStatus(200)
                   } else {
-                    console.log('> Order id ', order._id)
-                    // update payment
                     let body = {
                       date_time: new Date().toISOString(),
                       status: parseStatus(GalaxPayTransaction.status),
@@ -72,6 +66,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       notification_code: type + ';' + galaxpayHook.webhookId,
                       flags: ['GalaxPay']
                     }
+                    // create payment history in API
                     appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                       .then(apiResponse => {
                         body = {
@@ -80,13 +75,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                             transaction_code: GalaxPayTransaction.authorizationCode || ''
                           }
                         }
+                        // update order transaction
                         appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
                           .then(apiResponse => {
-                            console.log('> UPDATE Transaction OK')
                             res.sendStatus(200)
                           })
                           .catch((err) => {
-                            console.log('> ERRO UPDATE Transaction')
                             console.error(err)
                             res.sendStatus(500)
                           })
@@ -114,7 +108,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
   } else if (type === 'subscription.addTransaction') {
     // find transaction in firebase
-    // create transaction in firebase and order API
     const subscription = collectionSubscription.doc(subscriptionId)
     subscription.get()
       .then((documentSnapshot) => {
@@ -178,6 +171,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     .then(({ response }) => {
                       const { result } = response.data
                       if (!result.length) {
+                        // create new order in API
                         appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
                           .then(({ response }) => {
                             console.log('> *Created new order')
