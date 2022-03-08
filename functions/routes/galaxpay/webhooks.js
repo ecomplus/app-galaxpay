@@ -94,7 +94,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
             .then(auth => {
-              appSdk.apiRequest(storeId, `orders/${subscriptionId}.json`, 'GET', null, auth)
+              appSdk.apiRequest(storeId, `/orders/${subscriptionId}.json`, 'GET', null, auth)
                 .then(({ response }) => {
                   console.log('> Create new Order ')
                   const installment = GalaxPayTransaction.installment
@@ -139,9 +139,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     },
                     notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                   }
-                  appSdk.apiRequest(storeId, 'orders.json', 'POST', body)
+                  console.log('>body ', body)
+
+                  appSdk.apiRequest(storeId, '/orders.json', 'POST', body)
                     .then((apiResponse) => {
-                      console.log('> Created new order')
+                      console.log('> *Created new order')
                       res.sendStatus(200)
                     })
                 })
