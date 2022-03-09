@@ -51,7 +51,6 @@ exports.post = ({ appSdk }, req, res) => {
           })
           .then(({ response }) => {
             const order = response.data
-            const oldStatus = order.status
             galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
               .then((data) => {
                 console.log(`> ${order._id} Cancelled`)
@@ -60,7 +59,7 @@ exports.post = ({ appSdk }, req, res) => {
               .catch(() => {
                 // case error cancell GalaxPay, not cancelled in API
                 const body = {
-                  status: oldStatus
+                  status: 'open'
                 }
                 console.log('> Back  status')
                 appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, autorization)
