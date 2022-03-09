@@ -24,11 +24,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders.json?transactions._id=${transactionId}`, 'GET', null, auth)
         .then(({ response }) => {
-          // console.log('> OK PROMISSE ')
           resolve({ response })
         })
         .catch((err) => {
-          // console.log('> ERRO PROMISSE')
           reject(err)
         })
     })
@@ -38,11 +36,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders/${orderId}.json?fields=transactions,financial_status`, 'GET', null, auth)
         .then(({ response }) => {
-          // console.log('> OK PROMISSE ')
           resolve({ response })
         })
         .catch((err) => {
-          // console.log('> ERRO PROMISSE')
           reject(err)
         })
     })
@@ -149,7 +145,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
 
                   .then(apiResponse => {
-                    console.log('> UPDATE Transaction OK')
+                    // console.log('> UPDATE Transaction OK')
                     res.sendStatus(200)
                   })
                   .catch(err => {
@@ -166,11 +162,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .catch(err => {
         console.error(err)
-        res.status(500).send('Error Internal')
+        res.sendStatus(500)
       })
   } else if (type === 'subscription.addTransaction') {
     // find transaction in firebase
-    // create transaction in firebase and order API
     const subscription = collectionSubscription.doc(subscriptionId)
     subscription.get()
       .then((documentSnapshot) => {

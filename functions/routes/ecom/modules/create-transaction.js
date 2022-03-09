@@ -146,7 +146,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
             }
 
             const transactionGalaxPay = data.Transactions[0]
-            console.log('> Status ', parseStatus(transactionGalaxPay.status))
 
             transaction.status = {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
@@ -200,8 +199,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
               message
             })
           })
-      } else if (type === 'payment') {
-        console.log('> Test payment ')
       }
     })
 }
