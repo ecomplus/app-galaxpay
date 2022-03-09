@@ -61,11 +61,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
                         reject(new Error())
+                      } else {
+                        resolve({ result })
                       }
-                      resolve({ result })
                     })
                   })
                   .then(({ result }) => {
+                    console.log('> new result ', result)
                     order = result[0]
                     if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
                       // console.log('> Equals Status')
@@ -155,7 +157,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       },
                       payment_method: originalTransaction.payment_method,
                       app: originalTransaction.app,
-                      _id: String(parseId(GalaxPayTransaction.galaxPayId))
+                      _id: String(parseId(GalaxPayTransaction.galaxPayId)),
+                      notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                     }
                   ]
                   body = {
