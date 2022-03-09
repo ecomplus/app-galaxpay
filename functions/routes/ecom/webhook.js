@@ -38,19 +38,47 @@ exports.post = ({ appSdk }, req, res) => {
       const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
+        let autorization
         console.log('> Cancell Subscription ')
         galaxpayAxios.preparing
           .then(() => {
-            galaxpayAxios.axios.delete(`/subscriptions/${resourceId}/myId`)
+            return appSdk.getAuth(storeId)
+          })
+          .then(auth => {
+            // Get Original Order
+            autorization = auth
+            return appSdk.apiRequest(storeId, `/orders/${resourceId}.json`, 'GET', null, auth)
+          })
+          .then(({ response }) => {
+            const order = response.data
+            const oldStatus = order.status
+            galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
               .then((data) => {
-                console.log(`> ${resourceId} Cancelled`)
-                //
+                console.log(`> ${order._id} Cancelled`)
                 res.send(ECHO_SUCCESS)
               })
+              .catch(() => {
+                // case error cancell GalaxPay, not cancelled in API
+                const body = {
+                  status: oldStatus
+                }
+                console.log('> Back  status')
+                appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, autorization)
+                  .then(() => {
+                    res.send(ECHO_SUCCESS)
+                  })
+                  .catch((err) => {
+                    res.status(500)
+                    const { message } = err
+                    res.send({
+                      error: ECHO_API_ERROR,
+                      message
+                    })
+                  })
+              })
           })
-      }
+      }// if
     })
-
     .catch(err => {
       if (err.name === SKIP_TRIGGER_NAME) {
         // trigger ignored by app configuration
