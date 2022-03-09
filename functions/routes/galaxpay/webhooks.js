@@ -57,7 +57,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(({ response }) => {
                     return new Promise((resolve, reject) => {
                       const { result } = response.data
-                      if (!result.length) {
+                      console.log('> result ', result)
+                      if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
                         reject(new Error())
                       }
