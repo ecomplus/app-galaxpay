@@ -69,7 +69,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(({ result }) => {
                     console.log('> new result ', result)
                     order = result[0]
-                    if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
+                    if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
                       // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
