@@ -51,6 +51,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               let order
               const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
               setTimeout(() => {
+                console.log('> Await ')
                 findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   .then(({ response }) => {
                     return new Promise((resolve, reject) => {
@@ -65,7 +66,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(({ result }) => {
                     order = result[0]
                     if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
-                      console.log('> equals Status')
+                      console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
                       console.log('> Order id ', order._id)
@@ -81,7 +82,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     }
                   })
                   .then(apiResponse => {
-                    console.log('> ', apiResponse)
+                    console.log('>  create Payment')
                     const body = {
                       intermediator: {
                         transaction_id: GalaxPayTransaction.tid || '',
@@ -98,7 +99,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.error(err)
                     res.sendStatus(500)
                   })
-              }, 2000)
+              }, 3000)
             })
             .catch(err => {
               console.error(err)
