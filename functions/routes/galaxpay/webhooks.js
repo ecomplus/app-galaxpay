@@ -97,7 +97,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
                   .catch(err => {
                     console.error(err)
-                    res.sendStatus(500)
+                    res.status(500).send({ msg: 'Error Internal' })
                   })
               }, 3500)
             })
@@ -109,7 +109,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .catch(err => {
         console.error(err)
-        res.sendStatus(500)
+        res.status(500).send({ msg: 'Error Internal' })
       })
   } else if (type === 'subscription.addTransaction') {
     // find transaction in firebase
@@ -186,7 +186,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       })
                       .catch((err) => {
                         console.error(err)
-                        res.sendStatus(500)
+                        res.status(500).send({ msg: 'Error Internal' })
                       })
                   } else {
                     // Order Exists
@@ -195,7 +195,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 })
                 .catch((err) => {
                   console.error(err)
-                  res.sendStatus(500)
+                  res.status(500).send({ msg: 'Error Internal' })
                 })
             })
             .catch(() => {
@@ -208,7 +208,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .catch(err => {
         console.error(err)
-        res.sendStatus(500)
+        res.status(500).send({ msg: 'Error Internal' })
       })
   }
 }
