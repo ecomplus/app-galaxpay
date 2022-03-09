@@ -3,6 +3,7 @@ module.exports = (hashLogin, isSandbox) => new Promise((resolve, reject) => {
   // https://docs.galaxpay.com.br/auth/token
   let accessToken
   const axios = require('./create-axios')(accessToken, isSandbox)
+  console.log('> AXIO ', axios)
   const request = isRetry => {
     axios.post('/token', {
       grant_type: 'authorization_code',
