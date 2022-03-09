@@ -36,7 +36,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const findOrderById = (appSdk, storeId, auth, orderId) => {
     return new Promise((resolve, reject) => {
-      appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
+      appSdk.apiRequest(storeId, `/orders/${orderId}.json?fields=transactions,financial_status`, 'GET', null, auth)
         .then(({ response }) => {
           // console.log('> OK PROMISSE ')
           resolve({ response })
@@ -70,6 +70,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(({ response }) => {
                     console.log('> order? ', response)
                     order = response.data
+                    console.log('> order ', order)
                     if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
                       // console.log('> Equals Status')
                       res.sendStatus(200)
@@ -85,6 +86,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       // }
                       // return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                     }
+                    res.sendStatus(200)
                   })
               } else {
                 const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
