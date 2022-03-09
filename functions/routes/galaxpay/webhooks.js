@@ -34,6 +34,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
     })
   }
 
+  const findOrderById = (appSdk, storeId, auth, orderId) => {
+    return new Promise((resolve, reject) => {
+      appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
+        .then(({ response }) => {
+          // console.log('> OK PROMISSE ')
+          resolve({ response })
+        })
+        .catch((err) => {
+          // console.log('> ERRO PROMISSE')
+          reject(err)
+        })
+    })
+  }
+
   if (galaxpayHook.confirmHash) {
     console.log('> ', galaxpayHook.confirmHash)
   }
@@ -46,13 +60,34 @@ exports.post = ({ appSdk, admin }, req, res) => {
         // find StoreId in subscription
         const storeId = documentSnapshot.data().storeId
         const orderNumber = documentSnapshot.data().orderNumber
+        const transactionId = documentSnapshot.data().transactionId
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
             .then(auth => {
               let order
-              const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-              setTimeout(() => {
-                console.log('> Await ')
+              let transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
+              if (transactionId === GalaxPayTransaction.galaxPayId) {
+                findOrderById(appSdk, storeId, auth, subscriptionId)
+                  .then(({ response }) => {
+                    console.log('> order? ', response)
+                    order = response.data
+                    if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
+                      // console.log('> Equals Status')
+                      res.sendStatus(200)
+                    } else {
+                      // console.log('> Order id ')
+                      // update payment
+                      const body = {
+                        date_time: new Date().toISOString(),
+                        status: parseStatus(GalaxPayTransaction.status),
+                        transaction_id: transactionId,
+                        notification_code: type + ';' + galaxpayHook.webhookId,
+                        flags: ['GalaxPay']
+                      }
+                      // return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
+                    }
+                  })
+              } else {
                 findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   .then(({ response }) => {
                     return new Promise((resolve, reject) => {
@@ -103,7 +138,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.error(err)
                     res.status(500).send('Error Internal')
                   })
-              }, 1000)
+              }
             })
             .catch(err => {
               console.error(err)
@@ -161,6 +196,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                     }
                   ]
+                  const financial_status = {
+                    updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
+                    current: parseStatus(GalaxPayTransaction.status)
+                  }
                   body = {
                     opened_at: new Date().toISOString(),
                     items,
@@ -172,6 +211,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     shipping_method_label,
                     payment_method_label,
                     transactions,
+                    financial_status,
                     subscription_order: {
                       _id: subscriptionId,
                       number: parseInt(orderNumber)
