@@ -65,7 +65,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
           appSdk.getAuth(storeId)
             .then(auth => {
               let order
-              let transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
               if (transactionId === GalaxPayTransaction.galaxPayId) {
                 findOrderById(appSdk, storeId, auth, subscriptionId)
                   .then(({ response }) => {
@@ -77,18 +76,19 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     } else {
                       // console.log('> Order id ')
                       // update payment
-                      const body = {
-                        date_time: new Date().toISOString(),
-                        status: parseStatus(GalaxPayTransaction.status),
-                        transaction_id: transactionId,
-                        notification_code: type + ';' + galaxpayHook.webhookId,
-                        flags: ['GalaxPay']
-                      }
+                      // const body = {
+                      //   date_time: new Date().toISOString(),
+                      //   status: parseStatus(GalaxPayTransaction.status),
+                      //   transaction_id: transactionId,
+                      //   notification_code: type + ';' + galaxpayHook.webhookId,
+                      //   flags: ['GalaxPay']
+                      // }
                       // return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                     }
                   })
               } else {
-                findOrderByTransactionId(appSdk, storeId, auth, transactionId)
+                const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
+                findOrderByTransactionId(appSdk, storeId, auth, transaction_id)
                   .then(({ response }) => {
                     return new Promise((resolve, reject) => {
                       const { result } = response.data
@@ -113,7 +113,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const body = {
                         date_time: new Date().toISOString(),
                         status: parseStatus(GalaxPayTransaction.status),
-                        transaction_id: transactionId,
+                        transaction_id: transaction_id,
                         notification_code: type + ';' + galaxpayHook.webhookId,
                         flags: ['GalaxPay']
                       }
@@ -128,7 +128,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         transaction_code: GalaxPayTransaction.authorizationCode || ''
                       }
                     }
-                    return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
+                    return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transaction_id}.json`, 'PATCH', body, auth)
                   })
                   .then(apiResponse => {
                     console.log('> UPDATE Transaction OK')
@@ -218,8 +218,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     },
                     notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                   }
-                  const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-                  return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
+                  const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
+                  return findOrderByTransactionId(appSdk, storeId, auth, transaction_id)
                 })
                 .then(({ response }) => {
                   const { result } = response.data
