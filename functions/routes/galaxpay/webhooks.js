@@ -170,37 +170,36 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                   }
                   const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-                  findOrderByTransactionId(appSdk, storeId, auth, transactionId)
-                    .then(({ response }) => {
-                      const { result } = response.data
-                      if (!result.length) {
-                        appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
-                          .then(({ response }) => {
-                            console.log('> *Created new order')
-                            res.sendStatus(200)
-                          })
-                          .catch((err) => {
-                            console.error(err)
-                            res.sendStatus(500)
-                          })
-                      } else {
-                        // Order Exists
-                        res.sendStatus(200)
-                      }
-                    })
-                    .catch((err) => {
-                      console.error(err)
-                      res.sendStatus(500)
-                    })
+                  return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                 })
-                .catch(err => {
+                .then(({ response }) => {
+                  const { result } = response.data
+                  if (!result.length) {
+                    appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
+                      .then(({ response }) => {
+                        console.log('> *Created new order')
+                        res.sendStatus(200)
+                      })
+                      .catch((err) => {
+                        console.error(err)
+                        res.sendStatus(500)
+                      })
+                  } else {
+                    // Order Exists
+                    res.sendStatus(200)
+                  }
+                })
+                .catch((err) => {
                   console.error(err)
                   res.sendStatus(500)
                 })
             })
+            .catch(()=> {
+              res.sendStatus(401)
+            })
         } else {
           console.log('> Not Found Subscritpion or Transaction exists')
-          res.sendStatus(400)
+          res.sendStatus(404)
         }
       })
       .catch(err => {
