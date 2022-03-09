@@ -122,6 +122,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
           appSdk.getAuth(storeId)
             .then(auth => {
               // Get Original Order
+              let body
               appSdk.apiRequest(storeId, `/orders/${subscriptionId}.json`, 'GET', null, auth)
                 .then(({ response }) => {
                   console.log('> Create new Order ')
@@ -152,7 +153,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       _id: String(parseId(GalaxPayTransaction.galaxPayId))
                     }
                   ]
-                  const body = {
+                  body = {
                     opened_at: new Date().toISOString(),
                     items,
                     shipping_lines,
@@ -194,7 +195,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   res.sendStatus(500)
                 })
             })
-            .catch(()=> {
+            .catch(() => {
               res.sendStatus(401)
             })
         } else {
