@@ -43,7 +43,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     subscription.get()
       .then((documentSnapshot) => {
         console.log('> Update Status')
-      // find StoreId in subscription
+        // find StoreId in subscription
         const storeId = documentSnapshot.data().storeId
         const orderNumber = documentSnapshot.data().orderNumber
         if (documentSnapshot.exists && storeId) {
@@ -99,7 +99,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
                   .catch(err => {
                     console.error(err)
-                    res.status(500).send({ msg: 'Error Internal' })
+                    res.status(500).send('Error Internal')
                   })
               }, 1000)
             })
@@ -111,7 +111,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .catch(err => {
         console.error(err)
-        res.status(500).send({ msg: 'Error Internal' })
+        res.status(500).send('Error Internal')
       })
   } else if (type === 'subscription.addTransaction') {
     // find transaction in firebase
@@ -188,7 +188,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       })
                       .catch((err) => {
                         console.error(err)
-                        res.status(500).send({ msg: 'Error Internal' })
+                        res.status(500).send('Error Internal')
                       })
                   } else {
                     // Order Exists
@@ -197,7 +197,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 })
                 .catch((err) => {
                   console.error(err)
-                  res.status(500).send({ msg: 'Error Internal' })
+                  res.status(500).send('Error Internal')
                 })
             })
             .catch(() => {
@@ -210,7 +210,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .catch(err => {
         console.error(err)
-        res.status(500).send({ msg: 'Error Internal' })
+        res.status(500).send('Error Internal')
       })
   }
 }
