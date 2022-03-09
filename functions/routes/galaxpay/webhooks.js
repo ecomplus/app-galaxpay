@@ -2,6 +2,7 @@ const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
 const parseStatus = require('../../lib/payments/parse-status')
 const parseId = require('../../lib/galaxpay/parseId-to-ecom')
+const { reject } = require('firebase-tools/lib/utils')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -50,7 +51,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
             .then(auth => {
               let order
               const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-              findOrderByTransactionId(appSdk, storeId, auth, transactionId)
+              return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                  resolve(findOrderByTransactionId(appSdk, storeId, auth, transactionId))
+                }, 2000)
+              })
                 .then(({ response }) => {
                   return new Promise((resolve, reject) => {
                     const { result } = response.data
@@ -92,10 +97,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 .then(apiResponse => {
                   console.log('> UPDATE Transaction OK')
                   res.sendStatus(200)
-                })
-                .catch(err => {
-                  console.error(err)
-                  res.sendStatus(500)
                 })
             })
             .catch(err => {
