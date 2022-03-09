@@ -50,53 +50,55 @@ exports.post = ({ appSdk, admin }, req, res) => {
             .then(auth => {
               let order
               const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-              findOrderByTransactionId(appSdk, storeId, auth, transactionId)
-                .then(({ response }) => {
-                  return new Promise((resolve, reject) => {
-                    const { result } = response.data
-                    if (!result.length) {
-                      console.log('> Not found Transaction in API')
-                      reject(new Error())
-                    }
-                    resolve({ result })
+              setTimeout(() => {
+                findOrderByTransactionId(appSdk, storeId, auth, transactionId)
+                  .then(({ response }) => {
+                    return new Promise((resolve, reject) => {
+                      const { result } = response.data
+                      if (!result.length) {
+                        console.log('> Not found Transaction in API')
+                        reject(new Error())
+                      }
+                      resolve({ result })
+                    })
                   })
-                })
-                .then(({ result }) => {
-                  order = result[0]
-                  if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
-                    console.log('> equals Status')
-                    res.sendStatus(200)
-                  } else {
-                    console.log('> Order id ', order._id)
-                    // update payment
+                  .then(({ result }) => {
+                    order = result[0]
+                    if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
+                      console.log('> equals Status')
+                      res.sendStatus(200)
+                    } else {
+                      console.log('> Order id ', order._id)
+                      // update payment
+                      const body = {
+                        date_time: new Date().toISOString(),
+                        status: parseStatus(GalaxPayTransaction.status),
+                        transaction_id: transactionId,
+                        notification_code: type + ';' + galaxpayHook.webhookId,
+                        flags: ['GalaxPay']
+                      }
+                      return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
+                    }
+                  })
+                  .then(apiResponse => {
+                    console.log('> ', apiResponse)
                     const body = {
-                      date_time: new Date().toISOString(),
-                      status: parseStatus(GalaxPayTransaction.status),
-                      transaction_id: transactionId,
-                      notification_code: type + ';' + galaxpayHook.webhookId,
-                      flags: ['GalaxPay']
+                      intermediator: {
+                        transaction_id: GalaxPayTransaction.tid || '',
+                        transaction_code: GalaxPayTransaction.authorizationCode || ''
+                      }
                     }
-                    return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
-                  }
-                })
-                .then(apiResponse => {
-                  console.log('> ', apiResponse)
-                  const body = {
-                    intermediator: {
-                      transaction_id: GalaxPayTransaction.tid || '',
-                      transaction_code: GalaxPayTransaction.authorizationCode || ''
-                    }
-                  }
-                  return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
-                })
-                .then(apiResponse => {
-                  console.log('> UPDATE Transaction OK')
-                  res.sendStatus(200)
-                })
-                .catch(err => {
-                  console.error(err)
-                  res.sendStatus(500)
-                })
+                    return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
+                  })
+                  .then(apiResponse => {
+                    console.log('> UPDATE Transaction OK')
+                    res.sendStatus(200)
+                  })
+                  .catch(err => {
+                    console.error(err)
+                    res.sendStatus(500)
+                  })'
+              }, 2000)
             })
             .catch(err => {
               console.error(err)
