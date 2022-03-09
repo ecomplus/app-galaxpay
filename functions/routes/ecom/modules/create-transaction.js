@@ -71,7 +71,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     myId: buyer.customer_id,
     name: buyer.fullname,
     document: buyer.doc_number,
-    email: buyer.email,
+    emails: [buyer.email],
     phones: [parseInt(`${buyer.phone.number}`, 10)]
   }
 
