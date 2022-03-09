@@ -100,7 +100,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.error(err)
                     res.status(500).send({ msg: 'Error Internal' })
                   })
-              }, 3500)
+              }, 1000)
             })
             .catch(err => {
               console.error(err)
