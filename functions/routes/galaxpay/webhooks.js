@@ -68,25 +68,25 @@ exports.post = ({ appSdk, admin }, req, res) => {
               if (transactionId === GalaxPayTransaction.galaxPayId) {
                 findOrderById(appSdk, storeId, auth, subscriptionId)
                   .then(({ response }) => {
-                    console.log('> order? ', response)
                     order = response.data
                     console.log('> order ', order)
                     if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
-                      // console.log('> Equals Status')
+                      console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
-                      // console.log('> Order id ')
+                      console.log('> Transaction ', order.transactions[0])
                       // update payment
-                      // const body = {
-                      //   date_time: new Date().toISOString(),
-                      //   status: parseStatus(GalaxPayTransaction.status),
-                      //   transaction_id: transactionId,
-                      //   notification_code: type + ';' + galaxpayHook.webhookId,
-                      //   flags: ['GalaxPay']
-                      // }
+                      const body = {
+                        date_time: new Date().toISOString(),
+                        status: parseStatus(GalaxPayTransaction.status),
+                        transaction_id: order.transactions[0]._id,
+                        notification_code: type + ';' + galaxpayHook.webhookId,
+                        flags: ['GalaxPay']
+                      }
+                      console.log('> body ', body)
                       // return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
+                      res.sendStatus(200)
                     }
-                    res.sendStatus(200)
                   })
               } else {
                 const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
