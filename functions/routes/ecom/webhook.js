@@ -61,9 +61,9 @@ exports.post = ({ appSdk }, req, res) => {
                 const body = {
                   status: 'open'
                 }
-                console.log('> Back  status')
+                console.log(`> Back  status  ${order._id}`)
                 appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, autorization)
-                  .then(() => {
+                  .then(({ response }) => {
                     res.send(ECHO_SUCCESS)
                   })
                   .catch((err) => {
