@@ -24,11 +24,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders.json?transactions._id=${transactionId}`, 'GET', null, auth)
         .then(({ response }) => {
-          console.log('> OK PROMISSE ')
+          // console.log('> OK PROMISSE ')
           resolve({ response })
         })
         .catch((err) => {
-          console.log('> ERRO PROMISSE')
+          // console.log('> ERRO PROMISSE')
           reject(err)
         })
     })
@@ -42,6 +42,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     const subscription = collectionSubscription.doc(subscriptionId)
     subscription.get()
       .then((documentSnapshot) => {
+        console.log('> Update Status')
       // find StoreId in subscription
         const storeId = documentSnapshot.data().storeId
         const orderNumber = documentSnapshot.data().orderNumber
@@ -51,7 +52,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               let order
               const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
               setTimeout(() => {
-                // console.log('> Await ')
+                console.log('> Await ')
                 findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   .then(({ response }) => {
                     return new Promise((resolve, reject) => {
@@ -66,7 +67,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(({ result }) => {
                     order = result[0]
                     if (order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
-                      console.log('> Equals Status')
+                      // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
                       // console.log('> Order id ')
@@ -82,7 +83,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     }
                   })
                   .then(apiResponse => {
-                    // console.log('>  create Payment History')
+                    console.log('>  create Payment History')
                     const body = {
                       intermediator: {
                         transaction_id: GalaxPayTransaction.tid || '',
@@ -92,7 +93,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
                   })
                   .then(apiResponse => {
-                    // console.log('> UPDATE Transaction OK')
+                    console.log('> UPDATE Transaction OK')
                     res.sendStatus(200)
                   })
                   .catch(err => {
@@ -181,7 +182,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   if (!result.length) {
                     appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
                       .then(({ response }) => {
-                        // console.log('> Created new order API')
+                        console.log('> Created new order API')
                         res.sendStatus(200)
                       })
                       .catch((err) => {
