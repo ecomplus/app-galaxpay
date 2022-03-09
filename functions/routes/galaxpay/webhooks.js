@@ -99,7 +99,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.error(err)
                     res.sendStatus(500)
                   })
-              }, 3000)
+              }, 3500)
             })
             .catch(err => {
               console.error(err)
