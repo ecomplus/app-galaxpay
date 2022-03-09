@@ -56,7 +56,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     const subscription = collectionSubscription.doc(subscriptionId)
     subscription.get()
       .then((documentSnapshot) => {
-        console.log('> Update Status')
+        // console.log('> Update Status')
         // find StoreId in subscription
         const storeId = documentSnapshot.data().storeId
         const orderNumber = documentSnapshot.data().orderNumber
@@ -70,9 +70,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 findOrderById(appSdk, storeId, auth, subscriptionId)
                   .then(({ response }) => {
                     order = response.data
-                    console.log('> order ', order)
+                    // console.log('> order ', order)
                     if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
-                      console.log('> Equals Status')
+                      // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
                       // update payment
@@ -86,7 +86,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       }
                       return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                         .then(apiResponse => {
-                          console.log('>  create Payment History')
+                          // console.log('>  create Payment History')
                           const body = {
                             intermediator: {
                               transaction_id: GalaxPayTransaction.tid || '',
@@ -96,12 +96,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                           return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transaction_id}.json`, 'PATCH', body, auth)
                         })
                         .then(apiResponse => {
-                          console.log('> UPDATE Transaction OK')
+                          // console.log('> UPDATE Transaction OK')
                           res.sendStatus(200)
                         })
                         .catch(err => {
                           console.error(err)
-                          res.status(500).send('Error Internal')
+                          res.sendStatus(500)
                         })
                     }
                   })
@@ -111,7 +111,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(({ response }) => {
                     return new Promise((resolve, reject) => {
                       const { result } = response.data
-                      console.log('> result ', result)
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
                         reject(new Error())
@@ -121,7 +120,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     })
                   })
                   .then(({ result }) => {
-                    console.log('> new result ', result)
                     order = result[0]
                     if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
                       // console.log('> Equals Status')
@@ -140,7 +138,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     }
                   })
                   .then(apiResponse => {
-                    console.log('>  create Payment History')
+                    // console.log('>  create Payment History')
                     const body = {
                       intermediator: {
                         transaction_id: GalaxPayTransaction.tid || '',
@@ -156,7 +154,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
                   .catch(err => {
                     console.error(err)
-                    res.status(500).send('Error Internal')
+                    res.sendStatus(500)
                   })
               }
             })
@@ -246,12 +244,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   if (!result.length) {
                     appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
                       .then(({ response }) => {
-                        console.log('> Created new order API')
+                        // console.log('> Created new order API')
                         res.sendStatus(200)
                       })
                       .catch((err) => {
                         console.error(err)
-                        res.status(500).send('Error Internal')
+                        res.sendStatus(500)
                       })
                   } else {
                     // Order Exists
@@ -260,7 +258,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 })
                 .catch((err) => {
                   console.error(err)
-                  res.status(500).send('Error Internal')
+                  res.sendStatus(500)
                 })
             })
             .catch(() => {
@@ -273,7 +271,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       })
       .catch(err => {
         console.error(err)
-        res.status(500).send('Error Internal')
+        res.sendStatus(500)
       })
   }
 }

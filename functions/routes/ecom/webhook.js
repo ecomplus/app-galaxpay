@@ -77,7 +77,7 @@ exports.post = ({ appSdk }, req, res) => {
                   })
               })
           })
-      }// if
+      }
     })
     .catch(err => {
       if (err.name === SKIP_TRIGGER_NAME) {
