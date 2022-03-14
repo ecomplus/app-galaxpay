@@ -161,19 +161,24 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction_code: transactionGalaxPay.authorizationCode
             }
 
-            const periodicity = {
-              quantity: appData.plan_recurrence.quantity,
-              periodicity: appData.plan_recurrence.periodicity
+            const fieldQuantity = {
+              field: 'quantity',
+              value: `${appData.plan_recurrence.quantity}`
             }
 
-            // let quantity = installment
-            // if (periodicity.quantity !== 0) {
-            //   quantity = `${installment}/${periodicity.quantity}`
-            // }
+            const fieldPeriodicity = {
+              field: 'periodicity',
+              value: `${appData.plan_recurrence.periodicity}`
+            }
 
-            // transaction.notes = `${quantity} do Pedido ${orderNumber}`
+            let quantity = installment
+            if (appData.plan_recurrence.quantity !== 0) {
+              quantity = `${installment}/${appData.plan_recurrence.quantity}`
+            }
 
-            transaction.flags = [JSON.stringify(periodicity)]
+            transaction.notes = `${quantity} do Pedido ${orderNumber}`
+
+            transaction.custom_fields = [fieldPeriodicity, fieldQuantity]
 
             res.send({
               redirect_to_payment: redirectToPayment,
