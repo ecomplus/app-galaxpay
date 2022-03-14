@@ -240,7 +240,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     current: parseStatus(GalaxPayTransaction.status)
                   }
                   body = {
-                    opened_at: data_created || new Date().toISOString(),
+                    opened_at: data_created,
                     items,
                     shipping_lines,
                     buyers,
