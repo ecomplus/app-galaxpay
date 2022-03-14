@@ -166,12 +166,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
               periodicity: appData.plan_recurrence.periodicity
             }
 
-            let quantity = installment
-            if (periodicity.quantity !== 0) {
-              quantity = `${installment}/${periodicity.quantity}`
-            }
+            // let quantity = installment
+            // if (periodicity.quantity !== 0) {
+            //   quantity = `${installment}/${periodicity.quantity}`
+            // }
 
-            transaction.notes = `${quantity} do Pedido ${orderNumber}`
+            // transaction.notes = `${quantity} do Pedido ${orderNumber}`
 
             transaction.flags = [JSON.stringify(periodicity)]
 
