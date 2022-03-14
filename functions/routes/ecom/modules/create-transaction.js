@@ -176,7 +176,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               quantity = `${installment}/${appData.plan_recurrence.quantity}`
             }
 
-            transaction.notes = `${quantity} do Pedido ${orderNumber}`
+            transaction.notes = `Parcela ${quantity} do Pedido ${orderNumber}`
 
             transaction.custom_fields = [fieldPeriodicity, fieldQuantity]
 

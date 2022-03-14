@@ -145,8 +145,23 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
 
                   .then(apiResponse => {
-                    // console.log('> UPDATE Transaction OK')
-                    res.sendStatus(200)
+                    if (parseStatus(GalaxPayTransaction.status) === 'voided') {
+                      const body = {
+                        status: 'cancelled'
+                      }
+                      appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, auth)
+                        .then(({ response }) => {
+                          // console.log('> UPDATE ORDER OK')
+                          res.sendStatus(200)
+                        })
+                        .catch(err => {
+                          console.error(err)
+                          res.sendStatus(500)
+                        })
+                    } else {
+                      // console.log('> UPDATE Transaction OK')
+                      res.sendStatus(200)
+                    }
                   })
                   .catch(err => {
                     console.error(err)
@@ -193,6 +208,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const payment_method_label = oldOrder.payment_method_label
                   const originalTransaction = oldOrder.transactions[0]
                   let quantity = installment
+                  let custom_fields = originalTransaction.custom_fields
+                  let fieldQuantity = custom_fields[0]
+                  let fieldPeriodicity = custom_fields[1]
+
+                  if (fieldQuantity !== '0') {
+                    quantity = `${installment}/${fieldQuantity}`
+                  }
 
                   const transactions = [
                     {
@@ -209,7 +231,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       app: originalTransaction.app,
                       _id: String(parseId(GalaxPayTransaction.galaxPayId)),
                       custom_fields: originalTransaction.custom_fields,
-                      notes: `${quantity} do Pedido ${orderNumber}`
+                      notes: `Parcela ${quantity} do Pedido ${orderNumber}`
                     }
                   ]
                   const financial_status = {
@@ -217,7 +239,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     current: parseStatus(GalaxPayTransaction.status)
                   }
                   body = {
-                    opened_at: new Date().toISOString(),
+                    opened_at: GalaxPayTransaction.payday || new Date().toISOString(),
                     items,
                     shipping_lines,
                     buyers,
