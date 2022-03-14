@@ -210,6 +210,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   let quantity = installment
                   let custom_fields = originalTransaction.custom_fields
                   const data_created = new Date(GalaxPayTransaction.payday).toISOString()
+                  const fieldPeriodicity = custom_fields[0]
+                  const fieldQuantity = custom_fields[1]
 
                   if (fieldQuantity.value !== '0') {
                     quantity = `${installment}/${fieldQuantity.value}`
