@@ -56,7 +56,8 @@ exports.post = ({ appSdk }, req, res) => {
                 console.log(`> ${order._id} Cancelled`)
                 res.send(ECHO_SUCCESS)
               })
-              .catch(() => {
+              .catch((err) => {
+                console.error(err)
                 // case error cancell GalaxPay, not cancelled in API
                 const body = {
                   status: 'open'
