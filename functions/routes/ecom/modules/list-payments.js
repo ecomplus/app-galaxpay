@@ -74,7 +74,7 @@ exports.post = ({ appSdk }, req, res) => {
       if (!methodConfig.disable) {
         const isCreditCard = paymentMethod === 'credit_card'
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
-        let periodicity
+        let periodicity = appData.plan_recurrence.periodicity
         switch (appData.plan_recurrence.periodicity) {
           case 'weekly':
             periodicity = 'Semanal '
@@ -101,7 +101,7 @@ exports.post = ({ appSdk }, req, res) => {
 
         const quantity = appData.plan_recurrence.quantity === 0 ? 'por tempo indeterminado no ' : appData.plan_recurrence.quantity + ' vezes no '
         if (type === 'recurrence' && appData.galaxpay_subscription_label) {
-          label = appData.galaxpay_subscription_label + ' ' + periodicity + quantity + ' ' + label
+          label = appData.galaxpay_subscription_label + ' ' + periodicity + ' ' + label
         }
         const gateway = {
           label,
