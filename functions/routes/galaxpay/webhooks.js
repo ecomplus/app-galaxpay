@@ -206,6 +206,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       payment_method: originalTransaction.payment_method,
                       app: originalTransaction.app,
                       _id: String(parseId(GalaxPayTransaction.galaxPayId)),
+                      flags: originalTransaction.flags,
                       notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
                     }
                   ]

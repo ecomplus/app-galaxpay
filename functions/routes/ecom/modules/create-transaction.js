@@ -159,6 +159,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction_code: transactionGalaxPay.authorizationCode
             }
 
+            const flag = {
+              quantity: appData.plan_recurrence.quantity,
+              periodicity: appData.plan_recurrence.periodicity
+            }
+
+            transaction.flags = [JSON.stringify(flag)]
+
             res.send({
               redirect_to_payment: redirectToPayment,
               transaction

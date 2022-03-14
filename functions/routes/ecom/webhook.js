@@ -38,7 +38,7 @@ exports.post = ({ appSdk }, req, res) => {
       const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
-        let autorization
+        let authorization
         console.log('> Cancell Subscription ')
         galaxpayAxios.preparing
           .then(() => {
@@ -46,7 +46,7 @@ exports.post = ({ appSdk }, req, res) => {
           })
           .then(auth => {
             // Get Original Order
-            autorization = auth
+            authorization = auth
             return appSdk.apiRequest(storeId, `/orders/${resourceId}.json`, 'GET', null, auth)
           })
           .then(({ response }) => {
@@ -62,7 +62,7 @@ exports.post = ({ appSdk }, req, res) => {
                   status: 'open'
                 }
                 console.log(`> Back  status  ${order._id}`)
-                appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, autorization)
+                appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
                   .then(({ response }) => {
                     res.send(ECHO_SUCCESS)
                   })
