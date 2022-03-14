@@ -209,10 +209,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const originalTransaction = oldOrder.transactions[0]
                   let quantity = installment
                   let custom_fields = originalTransaction.custom_fields
+                  const data_created = new Date(GalaxPayTransaction.payday).toISOString()
 
-                  // if (fieldQuantity.value !== '0') {
-                  //   quantity = `${installment}/${fieldQuantity.value}`
-                  // }
+                  if (fieldQuantity.value !== '0') {
+                    quantity = `${installment}/${fieldQuantity.value}`
+                  }
 
                   const transactions = [
                     {
@@ -228,7 +229,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       payment_method: originalTransaction.payment_method,
                       app: originalTransaction.app,
                       _id: String(parseId(GalaxPayTransaction.galaxPayId)),
-                      notes: `Parcela ${quantity} do Pedido ${orderNumber}`
+                      notes: `Parcela ${quantity} do Pedido ${orderNumber}`,
+                      custom_fields: originalTransaction.custom_fields
                     }
                   ]
                   const financial_status = {
@@ -236,7 +238,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     current: parseStatus(GalaxPayTransaction.status)
                   }
                   body = {
-                    opened_at: new Date().toISOString(),
+                    opened_at: data_created || new Date().toISOString(),
                     items,
                     shipping_lines,
                     buyers,
