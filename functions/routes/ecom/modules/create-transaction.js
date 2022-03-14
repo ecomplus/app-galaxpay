@@ -147,6 +147,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             const transactionGalaxPay = data.Transactions[0]
 
+            const installment = transactionGalaxPay.installment
+
             transaction.status = {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
               current: parseStatus(transactionGalaxPay.status)
@@ -159,12 +161,19 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction_code: transactionGalaxPay.authorizationCode
             }
 
-            const flag = {
+            const periodicity = {
               quantity: appData.plan_recurrence.quantity,
               periodicity: appData.plan_recurrence.periodicity
             }
 
-            transaction.flags = [JSON.stringify(flag)]
+            let quantity = installment
+            if (periodicity.quantity !== 0) {
+              quantity = `${installment}/${periodicity.quantity}`
+            }
+
+            transaction.notes = `${quantity} do Pedido ${orderNumber}`
+
+            transaction.flags = [JSON.stringify(periodicity)]
 
             res.send({
               redirect_to_payment: redirectToPayment,

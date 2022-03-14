@@ -192,6 +192,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const shipping_method_label = oldOrder.shipping_method_label
                   const payment_method_label = oldOrder.payment_method_label
                   const originalTransaction = oldOrder.transactions[0]
+                  let quantity = installment
+                  const periodicity = JSON.parse(originalTransaction.flags[0])
+                  if (periodicity.quantity !== 0) {
+                    quantity = `${installment}/${periodicity.quantity}`
+                  }
                   const transactions = [
                     {
                       amount: originalTransaction.amount,
@@ -207,7 +212,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       app: originalTransaction.app,
                       _id: String(parseId(GalaxPayTransaction.galaxPayId)),
                       flags: originalTransaction.flags,
-                      notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
+                      notes: `${quantity} do Pedido ${orderNumber}`
                     }
                   ]
                   const financial_status = {

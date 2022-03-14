@@ -99,7 +99,6 @@ exports.post = ({ appSdk }, req, res) => {
             break
         }
 
-        const quantity = appData.plan_recurrence.quantity === 0 ? 'por tempo indeterminado no ' : appData.plan_recurrence.quantity + ' vezes no '
         if (type === 'recurrence' && appData.galaxpay_subscription_label) {
           label = appData.galaxpay_subscription_label + ' ' + periodicity + ' ' + label
         }
