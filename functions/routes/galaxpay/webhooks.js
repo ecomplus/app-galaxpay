@@ -236,7 +236,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     current: parseStatus(GalaxPayTransaction.status)
                   }
                   body = {
-                    opened_at: GalaxPayTransaction.payday || new Date().toISOString(),
+                    opened_at: new Date().toISOString(),
                     items,
                     shipping_lines,
                     buyers,
