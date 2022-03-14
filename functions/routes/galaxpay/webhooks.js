@@ -212,9 +212,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   let fieldPeriodicity = custom_fields[0]
                   let fieldQuantity = custom_fields[1]
 
-                  if (fieldQuantity.value !== '0') {
-                    quantity = `${installment}/${fieldQuantity.value}`
-                  }
+                  // if (fieldQuantity.value !== '0') {
+                  //   quantity = `${installment}/${fieldQuantity.value}`
+                  // }
 
                   const transactions = [
                     {
