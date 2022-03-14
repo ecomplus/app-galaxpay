@@ -212,8 +212,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   let fieldQuantity = custom_fields[0]
                   let fieldPeriodicity = custom_fields[1]
 
-                  if (fieldQuantity !== '0') {
-                    quantity = `${installment}/${fieldQuantity}`
+                  if (fieldQuantity.value !== '0') {
+                    quantity = `${installment}/${fieldQuantity.value}`
                   }
 
                   const transactions = [
@@ -254,7 +254,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       _id: subscriptionId,
                       number: parseInt(orderNumber)
                     },
-                    notes: `${installment}ª Parcela da Assinatura ${orderNumber}`
+                    notes: `Parcela ${quantity} do Pedido ${orderNumber}`
                   }
                   const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
                   return findOrderByTransactionId(appSdk, storeId, auth, transaction_id)
