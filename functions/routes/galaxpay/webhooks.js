@@ -209,8 +209,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const originalTransaction = oldOrder.transactions[0]
                   let quantity = installment
                   let custom_fields = originalTransaction.custom_fields
-                  let fieldQuantity = custom_fields[0]
-                  let fieldPeriodicity = custom_fields[1]
+                  let fieldPeriodicity = custom_fields[0]
+                  let fieldQuantity = custom_fields[1]
 
                   if (fieldQuantity.value !== '0') {
                     quantity = `${installment}/${fieldQuantity.value}`
