@@ -74,8 +74,34 @@ exports.post = ({ appSdk }, req, res) => {
       if (!methodConfig.disable) {
         const isCreditCard = paymentMethod === 'credit_card'
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
+        let periodicity
+        switch (appData.plan_recurrence.periodicity) {
+          case 'weekly':
+            periodicity = 'Semanal '
+            break
+          case 'biweekly':
+            periodicity = 'Quinzenal '
+            break
+          case 'monthly':
+            periodicity = 'Mensal '
+            break
+          case 'bimonthly':
+            periodicity = 'Bimestral '
+            break
+          case 'quarterly':
+            periodicity = 'Trimestral '
+            break
+          case 'biannual':
+            periodicity = 'Semestral '
+            break
+          case 'yearly':
+            periodicity = 'Anual '
+            break
+        }
+
+        const quantity = appData.plan_recurrence.quantity === 0 ? 'por tempo indeterminado no ' : appData.plan_recurrence.quantity + ' vezes no '
         if (type === 'recurrence' && appData.galaxpay_subscription_label) {
-          label = appData.galaxpay_subscription_label + ' ' + appData.plan_recurrence.periodicity + ' ' + label
+          label = appData.galaxpay_subscription_label + ' ' + periodicity + quantity + ' ' + label
         }
         const gateway = {
           label,
