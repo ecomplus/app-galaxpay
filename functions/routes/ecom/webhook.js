@@ -62,19 +62,21 @@ exports.post = ({ appSdk }, req, res) => {
                 const body = {
                   status: 'open'
                 }
-                console.log(`> Back  status  ${order._id}`)
-                appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
-                  .then(({ response }) => {
-                    res.send(ECHO_SUCCESS)
-                  })
-                  .catch((err) => {
-                    res.status(500)
-                    const { message } = err
-                    res.send({
-                      error: ECHO_API_ERROR,
-                      message
+                if (!order.subscription_order) {
+                  console.log(`> Back  status  ${order._id}`)
+                  appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
+                    .then(({ response }) => {
+                      res.send(ECHO_SUCCESS)
                     })
-                  })
+                    .catch((err) => {
+                      res.status(500)
+                      const { message } = err
+                      res.send({
+                        error: ECHO_API_ERROR,
+                        message
+                      })
+                    })
+                }
               })
           })
       }
