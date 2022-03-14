@@ -210,6 +210,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   let quantity = installment
                   let custom_fields = originalTransaction.custom_fields
                   const data_created = new Date(GalaxPayTransaction.payday).toISOString()
+                  console.log('> date created ', data_created)
                   const fieldPeriodicity = custom_fields[0]
                   const fieldQuantity = custom_fields[1]
 
