@@ -66,7 +66,7 @@
         "title": "Galaxpay Sandbox",
         "description": "Galaxpay API sandbox env"
       },
-      "hide": false
+      "hide": true
     },
     "galaxpay_public_token": {
       "schema": {
@@ -75,7 +75,7 @@
         "title": "Galax Public Token",
         "description": "Seu Public Token para Tokenização de Cartão, disponivél no Dashbord do GalaxPay, sessão de modulos, configuração de WebServices"
       },
-      "hide": true
+      "hide": false
     },
     "galaxpay_subscription_label": {
       "schema": {
@@ -85,7 +85,7 @@
         "description": "Exibido para os clientes junto ao nome da forma de pagamento",
         "default": "Assinatura"
       },
-      "hide": true
+      "hide": false
     },
     "credit_card": {
       "schema": {
