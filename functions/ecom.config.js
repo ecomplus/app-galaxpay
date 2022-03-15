@@ -162,7 +162,7 @@ const app = {
         title: 'Galaxpay Sandbox',
         description: 'Galaxpay API sandbox env'
       },
-      hide: false
+      hide: true
     },
     galaxpay_public_token: {
       schema: {
@@ -171,7 +171,7 @@ const app = {
         title: 'Galax Public Token',
         description: 'Seu Public Token para Tokenização de Cartão, disponivél no Dashbord do GalaxPay, sessão de modulos, configuração de WebServices'
       },
-      hide: true
+      hide: false
     },
     galaxpay_subscription_label: {
       schema: {
@@ -181,7 +181,7 @@ const app = {
         description: 'Exibido para os clientes junto ao nome da forma de pagamento',
         default: 'Assinatura'
       },
-      hide: true
+      hide: false
     },
     credit_card: {
       schema: {
@@ -291,21 +291,22 @@ const app = {
         description: 'Configurações para cobranças por recorrência'
       },
       hide: false
-    }
+    },
 
     /**
      * JSON schema based fields to be configured by merchant and saved to app `data` / `hidden_data`, such as:
 
-     webhook_uri: {
-       schema: {
-         type: 'string',
-         maxLength: 255,
-         format: 'uri',
-         title: 'Notifications URI',
-         description: 'Unique notifications URI available on your Custom App dashboard'
-       },
-       hide: true
-     },
+    webhook_uri: {
+      schema: {
+        type: 'string',
+        maxLength: 255,
+        format: 'uri',
+        title: 'Notifications URI',
+        description: 'Unique notifications URI available on your Custom App dashboard'
+      },
+      hide: true
+    }
+
      token: {
        schema: {
          type: 'string',
