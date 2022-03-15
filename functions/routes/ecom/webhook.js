@@ -79,7 +79,7 @@ exports.post = ({ appSdk }, req, res) => {
               })
           })
       } else if (trigger.resource === 'applications') {
-        console.log('> test ', trigger.body.hidden_data)
+        console.log('> test ', trigger.body)
       }
     })
     .catch(err => {
