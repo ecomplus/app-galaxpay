@@ -81,15 +81,30 @@ exports.post = ({ appSdk }, req, res) => {
               })
           })
       } else if (trigger.resource === 'applications') {
-        console.log('> test ', trigger.body)
-        console.log('> base ', baseUri)
+        console.log('> Edit Application')
 
         const body = {
           url: `${baseUri}/galaxpay/webhooks`,
           events: ['subscription.addTransaction', 'transaction.updateStatus']
         }
 
-        console.log('> body ', body)
+        galaxpayAxios.preparing
+          .then(() => {
+            return galaxpayAxios.axios.put('/webhooks', body)
+          })
+          .then(({ response }) => {
+            console.log('> Success edit webhook')
+            res.send(ECHO_SUCCESS)
+          })
+          .catch((err) => {
+            console.error(err)
+            res.status(500)
+            const { message } = err
+            res.send({
+              error: ECHO_API_ERROR,
+              message
+            })
+          })
       }
     })
     .catch(err => {
