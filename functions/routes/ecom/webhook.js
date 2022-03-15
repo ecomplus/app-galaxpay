@@ -4,6 +4,8 @@ const getAppData = require('./../../lib/store-api/get-app-data')
 // Auth GalaxPay
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
+const { baseUri } = require('../../__env')
+
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
 const ECHO_SKIP = 'SKIP'
@@ -80,6 +82,14 @@ exports.post = ({ appSdk }, req, res) => {
           })
       } else if (trigger.resource === 'applications') {
         console.log('> test ', trigger.body)
+        console.log('> base ', baseUri)
+
+        const body = {
+          url: `${baseUri}/galaxpay/webhooks`,
+          events: ['subscription.addTransaction', 'transaction.updateStatus']
+        }
+
+        console.log('> body ', body)
       }
     })
     .catch(err => {
