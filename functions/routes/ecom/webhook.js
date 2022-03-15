@@ -38,6 +38,7 @@ exports.post = ({ appSdk }, req, res) => {
 
       /* DO YOUR CUSTOM STUFF HERE */
       const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+      console.log('> Test body ', trigger.body)
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
         let authorization
