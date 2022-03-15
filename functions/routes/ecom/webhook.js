@@ -38,7 +38,6 @@ exports.post = ({ appSdk }, req, res) => {
 
       /* DO YOUR CUSTOM STUFF HERE */
       const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
-      console.log('> Test body ', trigger.body)
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
         let authorization
@@ -54,33 +53,37 @@ exports.post = ({ appSdk }, req, res) => {
           })
           .then(({ response }) => {
             const order = response.data
-            galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
-              .then((data) => {
-                console.log(`> ${order._id} Cancelled`)
-                res.send(ECHO_SUCCESS)
-              })
-              .catch((err) => {
-                console.error(err)
-                // case error cancell GalaxPay, not cancelled in API
-                if (!order.subscription_order) {
-                  const body = {
-                    status: 'open'
-                  }
-                  console.log(`> Back  status  ${order._id}`)
-                  appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
-                    .then(({ response }) => {
-                      res.send(ECHO_SUCCESS)
-                    })
-                    .catch((err) => {
-                      res.status(500)
-                      const { message } = err
-                      res.send({
-                        error: ECHO_API_ERROR,
-                        message
+            if (order.status !== 'cancelled') {
+              galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
+                .then((data) => {
+                  console.log(`> ${order._id} Cancelled`)
+                  res.send(ECHO_SUCCESS)
+                })
+                .catch((err) => {
+                  console.error(err)
+                  // case error cancell GalaxPay, not cancelled in API
+                  if (!order.subscription_order) {
+                    const body = {
+                      status: 'open'
+                    }
+                    console.log(`> Back  status  ${order._id}`)
+                    appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
+                      .then(({ response }) => {
+                        res.send(ECHO_SUCCESS)
                       })
-                    })
-                }
-              })
+                      .catch((err) => {
+                        res.status(500)
+                        const { message } = err
+                        res.send({
+                          error: ECHO_API_ERROR,
+                          message
+                        })
+                      })
+                  }
+                })
+            } else {
+              res.send(ECHO_SUCCESS)
+            }
           })
       } else if (trigger.resource === 'applications') {
         console.log('> Edit Application')
