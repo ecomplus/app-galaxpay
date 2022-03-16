@@ -248,7 +248,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       _id: subscriptionId,
                       number: parseInt(orderNumber)
                     },
-                    notes: `Parcela ${quantity} do Pedido #${orderNumber}, referente à `
+                    notes: `Pedido #${quantity} referente à ${subscriptionLabel} ${periodicity}`
                   }
                   const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
                   return findOrderByTransactionId(appSdk, storeId, auth, transaction_id)

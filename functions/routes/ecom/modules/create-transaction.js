@@ -1,7 +1,6 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 const errorHandling = require('../../../lib/store-api/error-handling')
-const parseStatus = require('../../../lib/payments/parse-status')
-const parseId = require('../../../lib/galaxpay/parse-to-ecom')
+const { parseId, parseStatus } = require('../../../lib/galaxpay/parse-to-ecom')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -153,8 +152,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
               current: parseStatus(transactionGalaxPay.status)
             }
-
-            transaction._id = String(parseId(transactionGalaxPay.galaxPayId))
 
             transaction.intermediator = {
               transaction_id: transactionGalaxPay.tid,
