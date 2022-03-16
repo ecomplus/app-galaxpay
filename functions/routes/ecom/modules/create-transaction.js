@@ -24,6 +24,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const orderId = params.order_id
   const orderNumber = params.order_number
+  const orderStatus = params.order_status
   const { amount, buyer, payer, to, items, type } = params
   console.log('> Transaction #', storeId, orderId)
 
@@ -167,6 +168,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               .set({
                 subscriptionLabel: appData.galaxpay_subscription_label,
                 storeId,
+                status: orderStatus,
                 orderNumber: params.order_number,
                 transactionId: transactionGalaxPay.galaxPayId
               })

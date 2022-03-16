@@ -11,7 +11,7 @@ const ECHO_SUCCESS = 'SUCCESS'
 const ECHO_SKIP = 'SKIP'
 const ECHO_API_ERROR = 'STORE_API_ERR'
 
-exports.post = ({ appSdk }, req, res) => {
+exports.post = ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
   const { storeId } = req
 
@@ -36,8 +36,10 @@ exports.post = ({ appSdk }, req, res) => {
         throw err
       }
 
+      
       /* DO YOUR CUSTOM STUFF HERE */
       const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+      const collectionSubscription = admin.firestore().collection('subscriptions')
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
         let authorization
@@ -54,37 +56,57 @@ exports.post = ({ appSdk }, req, res) => {
           .then(({ response }) => {
             console.log('> Cancell Subscription ')
             const order = response.data
-            if (order.status !== 'cancelled') {
-              galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
-                .then((data) => {
-                  console.log(`> ${order._id} Cancelled`)
-                  res.send(ECHO_SUCCESS)
-                })
-                .catch((err) => {
-                  console.error(err)
-                  // case error cancell GalaxPay, not cancelled in API
-                  if (!order.subscription_order) {
-                    const body = {
-                      status: 'open'
-                    }
-                    console.log(`> Back  status  ${order._id}`)
-                    appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
-                      .then(({ response }) => {
-                        res.send(ECHO_SUCCESS)
-                      })
-                      .catch((err) => {
-                        res.status(500)
-                        const { message } = err
-                        res.send({
-                          error: ECHO_API_ERROR,
-                          message
-                        })
-                      })
+            const subscription = collectionSubscription.doc(order._id)
+            subscription.get()
+              .then((documentSnapshot) => {
+                return new Promise((resolve, reject) => {
+                  const storeId = documentSnapshot.data().storeId
+                  const status = documentSnapshot.data().status
+                  if (documentSnapshot.exists && storeId) {
+                    resolve({ status, order })
+                  } else {
+                    reject(new Error())
                   }
                 })
-            } else {
-              res.send(ECHO_SUCCESS)
-            }
+              })
+              .then(({ status, order }) => {
+                if (status !== 'cancelled') {
+                  galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
+                    .then((data) => {
+                      console.log(`> ${order._id} Cancelled`)
+                      res.send(ECHO_SUCCESS)
+                      admin.firestore().collection('subscriptions').doc(order._id)
+                        .set({
+                          status: 'cancelled'
+                        })
+                        .catch(console.error)
+                    })
+                    .catch((err) => {
+                      console.error(err)
+                      // case error cancell GalaxPay, not cancelled in API
+                      if (!order.subscription_order) {
+                        const body = {
+                          status: 'open'
+                        }
+                        console.log(`> Back  status  ${order._id}`)
+                        appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
+                          .then(({ response }) => {
+                            res.send(ECHO_SUCCESS)
+                          })
+                          .catch((err) => {
+                            res.status(500)
+                            const { message } = err
+                            res.send({
+                              error: ECHO_API_ERROR,
+                              message
+                            })
+                          })
+                      }
+                    })
+                } else {
+                  res.send(ECHO_SUCCESS)
+                }
+              })
           })
       } else if (trigger.resource === 'applications') {
         console.log('> Edit Application')
