@@ -41,7 +41,7 @@ exports.post = ({ appSdk }, req, res) => {
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
         let authorization
-        console.log('> Cancell Subscription ')
+
         galaxpayAxios.preparing
           .then(() => {
             return appSdk.getAuth(storeId)
@@ -52,6 +52,7 @@ exports.post = ({ appSdk }, req, res) => {
             return appSdk.apiRequest(storeId, `/orders/${resourceId}.json`, 'GET', null, auth)
           })
           .then(({ response }) => {
+            console.log('> Cancell Subscription ')
             const order = response.data
             if (order.status !== 'cancelled') {
               galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
