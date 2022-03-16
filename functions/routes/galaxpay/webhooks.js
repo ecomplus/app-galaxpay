@@ -232,6 +232,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   if (transactions[0].payment_method === 'banking_billet') {
                     transactions[0].payment_link = GalaxPaySubscription.paymentLink
                   }
+
                   const financial_status = {
                     updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
                     current: parseStatus(GalaxPayTransaction.status)
