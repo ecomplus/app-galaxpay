@@ -229,7 +229,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     }
                   ]
 
-                  if (transactions[0].payment_method === 'banking_billet') {
+                  if (transactions[0].payment_method.code === 'banking_billet') {
                     transactions[0].payment_link = GalaxPaySubscription.paymentLink
                   }
 
