@@ -78,7 +78,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       admin.firestore().collection('subscriptions').doc(order._id)
                         .set({
                           status: 'cancelled'
-                        })
+                        }, { merge: true })
                         .catch(console.error)
                     })
                     .catch((err) => {
