@@ -1,7 +1,6 @@
 const getAppData = require('../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('../../lib/galaxpay/create-access')
-const parseStatus = require('../../lib/payments/parse-status')
-const parseId = require('../../lib/galaxpay/parseId-to-ecom')
+const { parseId, parseStatus, parsePeriodicity } = require('../../lib/galaxpay/parse-to-ecom')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -188,6 +187,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const storeId = documentSnapshot.data().storeId
         const orderNumber = documentSnapshot.data().orderNumber
         const transactionId = documentSnapshot.data().transactionId
+        const subscriptionLabel = documentSnapshot.data().subscriptionLabel
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -207,16 +207,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const shipping_method_label = oldOrder.shipping_method_label
                   const payment_method_label = oldOrder.payment_method_label
                   const originalTransaction = oldOrder.transactions[0]
-                  let quantity = installment
-                  let custom_fields = originalTransaction.custom_fields
-                  const data_created = new Date(GalaxPayTransaction.payday).toISOString()
-                  console.log('> date created ', data_created)
-                  const fieldPeriodicity = custom_fields[0]
-                  const fieldQuantity = custom_fields[1]
-
-                  if (fieldQuantity.value !== '0') {
-                    quantity = `${installment}/${fieldQuantity.value}`
-                  }
+                  const quantity = installment
+                  const periodicity = parsePeriodicity(GalaxPaySubscription.periodicity)
 
                   const transactions = [
                     {
@@ -241,7 +233,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     current: parseStatus(GalaxPayTransaction.status)
                   }
                   body = {
-                    opened_at: data_created,
+                    opened_at: new Date().toISOString(),
                     items,
                     shipping_lines,
                     buyers,
@@ -256,7 +248,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       _id: subscriptionId,
                       number: parseInt(orderNumber)
                     },
-                    notes: `Parcela ${quantity} do Pedido ${orderNumber}`
+                    notes: `Parcela ${quantity} do Pedido #${orderNumber}, referente à `
                   }
                   const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
                   return findOrderByTransactionId(appSdk, storeId, auth, transaction_id)

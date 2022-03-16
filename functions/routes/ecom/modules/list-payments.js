@@ -1,6 +1,7 @@
 const { baseUri } = require('../../../__env')
 const fs = require('fs')
 const path = require('path')
+const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
 exports.post = ({ appSdk }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -74,30 +75,7 @@ exports.post = ({ appSdk }, req, res) => {
       if (!methodConfig.disable) {
         const isCreditCard = paymentMethod === 'credit_card'
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
-        let periodicity = appData.plan_recurrence.periodicity
-        switch (appData.plan_recurrence.periodicity) {
-          case 'weekly':
-            periodicity = 'Semanal '
-            break
-          case 'biweekly':
-            periodicity = 'Quinzenal '
-            break
-          case 'monthly':
-            periodicity = 'Mensal '
-            break
-          case 'bimonthly':
-            periodicity = 'Bimestral '
-            break
-          case 'quarterly':
-            periodicity = 'Trimestral '
-            break
-          case 'biannual':
-            periodicity = 'Semestral '
-            break
-          case 'yearly':
-            periodicity = 'Anual '
-            break
-        }
+        const periodicity = parsePeriodicity(appData.plan_recurrence.periodicity)
 
         if (type === 'recurrence' && appData.galaxpay_subscription_label) {
           label = appData.galaxpay_subscription_label + ' ' + periodicity + ' ' + label

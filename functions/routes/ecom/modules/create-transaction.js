@@ -1,7 +1,7 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 const errorHandling = require('../../../lib/store-api/error-handling')
 const parseStatus = require('../../../lib/payments/parse-status')
-const parseId = require('../../../lib/galaxpay/parseId-to-ecom')
+const parseId = require('../../../lib/galaxpay/parse-to-ecom')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -102,7 +102,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions = {
       myId: `${orderId}`, // requered
       value: Math.floor(finalAmount * 100),
-      quantity: appData.plan_recurrence.quantity,
+      quantity: 0, //  recorrence quantity, non-zero case, recurrence limited by value
       periodicity: appData.plan_recurrence.periodicity,
       firstPayDayDate: new Date().toISOString().split('T')[0], // requered
       // additionalInfo: '', // optional
@@ -161,25 +161,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction_code: transactionGalaxPay.authorizationCode
             }
 
-            const fieldQuantity = {
-              field: 'quantity',
-              value: `${appData.plan_recurrence.quantity}`
-            }
-
-            const fieldPeriodicity = {
-              field: 'periodicity',
-              value: `${appData.plan_recurrence.periodicity}`
-            }
-
-            let quantity = installment
-            if (appData.plan_recurrence.quantity !== 0) {
-              quantity = `${installment}/${appData.plan_recurrence.quantity}`
-            }
-
-            transaction.notes = `Parcela ${quantity} do Pedido ${orderNumber}`
-
-            transaction.custom_fields = [fieldPeriodicity, fieldQuantity]
-
             res.send({
               redirect_to_payment: redirectToPayment,
               transaction
@@ -187,6 +168,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             admin.firestore().collection('subscriptions').doc(orderId)
               .set({
+                subscriptionLabel: appData.galaxpay_subscription_label,
                 storeId,
                 orderNumber: params.order_number,
                 transactionId: transactionGalaxPay.galaxPayId
