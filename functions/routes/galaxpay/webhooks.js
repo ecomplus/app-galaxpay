@@ -224,10 +224,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       payment_method: originalTransaction.payment_method,
                       app: originalTransaction.app,
                       _id: String(parseId(GalaxPayTransaction.galaxPayId)),
-                      notes: `Parcela ${quantity} do Pedido ${orderNumber}`,
+                      notes: `Parcela #${quantity} referente à ${subscriptionLabel} ${periodicity}`,
                       custom_fields: originalTransaction.custom_fields
                     }
                   ]
+
+                  if (transactions[0].payment_method === 'banking_billet') {
+                    transactions[0].payment_link = GalaxPaySubscription.paymentLink
+                  }
                   const financial_status = {
                     updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
                     current: parseStatus(GalaxPayTransaction.status)
