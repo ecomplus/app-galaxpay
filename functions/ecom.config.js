@@ -294,7 +294,7 @@ const app = {
     },
     plans: {
       schema: {
-        title: 'Planos de Recorrência (Não Disponivél)',
+        title: 'Planos de Recorrência - (Não Disponivél)',
         description: 'Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponivél para uso',
         type: 'array',
         maxItems: 10,
