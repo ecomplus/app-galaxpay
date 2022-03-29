@@ -57,8 +57,29 @@ const parseStatus = (status) => {
   return 'unknown'
 }
 
+const parsePeriodicityGalaxPay = (periodicity) => {
+  switch (periodicity) {
+    case 'Semanal':
+      return 'weekly '
+    case 'Quinzenal':
+      return 'biweekly '
+    case 'Mensal':
+      return 'monthly '
+    case 'Bimestral':
+      return 'bimonthly '
+    case 'Trimestral':
+      return 'quarterly '
+    case 'Semestral':
+      return 'biannual '
+    case 'Anual':
+      return 'yearly '
+  }
+  return periodicity
+}
+
 module.exports = {
   parseId,
   parsePeriodicity,
+  parsePeriodicityGalaxPay,
   parseStatus
 }

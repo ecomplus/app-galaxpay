@@ -268,15 +268,15 @@ const app = {
           periodicity: {
             type: 'string',
             enum: [
-              'weekly',
-              'biweekly',
-              'monthly',
-              'bimonthly',
-              'quarterly',
-              'biannual',
-              'yearly'
+              'Semanal',
+              'Quinzenal',
+              'Mensal',
+              'Bimestral',
+              'Trimestral',
+              'Semestral',
+              'Anual'
             ],
-            default: 'monthly',
+            default: 'Mensal',
             title: 'Periodicidade da recorrência',
             description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
           },
@@ -292,6 +292,69 @@ const app = {
       },
       hide: false
     },
+    plans: {
+      schema: {
+        title: 'Planos de Recorrência',
+        description: 'Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponivél para uso',
+        type: 'array',
+        maxItems: 10,
+        items: {
+          title: 'Plano',
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            disable: {
+              type: 'boolean',
+              default: true,
+              title: 'Desabilitar plano',
+              description: 'Desabilitar esse plano'
+            },
+            periodicity: {
+              type: 'string',
+              enum: [
+                'Semanal',
+                'Quinzenal',
+                'Mensal',
+                'Bimestral',
+                'Trimestral',
+                'Semestral',
+                'Anual'
+              ],
+              default: 'Mensal',
+              title: 'Periodicidade da recorrência',
+              description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
+            },
+            quantity: {
+              type: 'number',
+              default: 0,
+              title: 'Quantidade da recorrência',
+              description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0'
+            },
+            discount: {
+              title: 'Desconto',
+              type: 'object',
+              required: [
+                'value'
+              ],
+              properties: {
+                percentage: {
+                  type: 'boolean',
+                  default: false,
+                  title: 'Desconto percentual'
+                },
+                value: {
+                  type: 'number',
+                  minimum: -99999999,
+                  maximum: 99999999,
+                  title: 'Valor do desconto',
+                  description: 'Valor percentual/fixo do desconto ou acréscimo (negativo)'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
     /**
      * JSON schema based fields to be configured by merchant and saved to app `data` / `hidden_data`, such as:

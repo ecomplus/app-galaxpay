@@ -76,7 +76,7 @@ exports.post = ({ appSdk }, req, res) => {
       if (!methodConfig.disable) {
         const isCreditCard = paymentMethod === 'credit_card'
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
-        const periodicity = parsePeriodicity(appData.plan_recurrence.periodicity)
+        const periodicity = appData.plan_recurrence.periodicity
 
         if (type === 'recurrence' && appData.galaxpay_subscription_label) {
           label = appData.galaxpay_subscription_label + ' ' + periodicity + ' ' + label

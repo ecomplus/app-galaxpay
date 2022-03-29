@@ -1,6 +1,6 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 const errorHandling = require('../../../lib/store-api/error-handling')
-const { parseId, parseStatus } = require('../../../lib/galaxpay/parse-to-ecom')
+const { parseId, parseStatus, parsePeriodicityGalaxPay } = require('../../../lib/galaxpay/parse-to-ecom')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -102,7 +102,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       myId: `${orderId}`, // requered
       value: Math.floor(finalAmount * 100),
       quantity: 0, //  recorrence quantity, non-zero case, recurrence limited by value
-      periodicity: appData.plan_recurrence.periodicity,
+      periodicity: parsePeriodicityGalaxPay(appData.plan_recurrence.periodicity),
       firstPayDayDate: new Date().toISOString().split('T')[0], // requered
       // additionalInfo: '', // optional
       mainPaymentMethodId: 'creditcard',
@@ -121,7 +121,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       myId: `${orderId}`, // requered
       value: Math.floor(finalAmount * 100),
       quantity: appData.plan_recurrence.quantity,
-      periodicity: appData.plan_recurrence.periodicity,
+      periodicity: parsePeriodicityGalaxPay(appData.plan_recurrence.periodicity),
       firstPayDayDate: new Date().toISOString().split('T')[0], // requered
       // additionalInfo: '', // optional,  instructions banking billet?
       mainPaymentMethodId: 'boleto',
