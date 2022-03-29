@@ -79,7 +79,7 @@ exports.post = ({ appSdk }, req, res) => {
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
 
         const plans = handleGateway(appData)
-
+        console.log('> store ', storeId)
         plans.forEach(plan => {
           console.log('> test ', plan.periodicity)
         })
