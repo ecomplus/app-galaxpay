@@ -92,6 +92,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     const card = {
       hash: params.credit_card.hash
     }
+    console.log('> payment ', params.payment_method)
 
     const PaymentMethodCreditCard = {
       Card: card,

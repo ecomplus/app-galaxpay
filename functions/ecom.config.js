@@ -284,7 +284,7 @@ const app = {
             type: 'number',
             default: 0,
             title: 'Quantidade da recorrência',
-            description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0, OBS: Valores'
+            description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0.'
           },
         },
         title: 'Plano de recorrência',

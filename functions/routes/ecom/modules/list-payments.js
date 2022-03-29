@@ -70,7 +70,6 @@ exports.post = ({ appSdk }, req, res) => {
     paymentTypes.push('recurrence')
   }
 
-
   // setup payment gateway objects
   ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
     paymentTypes.forEach(type => {
