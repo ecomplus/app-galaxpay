@@ -29,14 +29,7 @@ const handlePlanTransction = (label, appData) => {
     }
     return plan
   } else if (appData.plans) {
-    console.log('> label ' + label)
-    for (let i = 0; i < appData.plans.length; i++) {
-      const planName = appData.plan[i].label ? appData.plan[i].label : 'Plano'
-      console.log(planName + ' ' + appData.plan[i].periodicity)
-      if (planName + ' ' + appData.plan[i].periodicity === label.trim()) {
-        return appData.plan[i]
-      }
-    }
+    return appData.plans.find((plan) => (plan.label ? plan.label : 'Plano' + ' ' + plan.periodicity) === label.trim())
   }
 }
 
