@@ -255,10 +255,47 @@ const app = {
       },
       hide: false
     },
+    plan_recurrence: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          disable: {
+            type: 'boolean',
+            title: 'Desabilitar plano de recorrência',
+            description: 'Desabilitar recorrência via Galaxpay'
+          },
+          periodicity: {
+            type: 'string',
+            enum: [
+              'Semanal',
+              'Quinzenal',
+              'Mensal',
+              'Bimestral',
+              'Trimestral',
+              'Semestral',
+              'Anual'
+            ],
+            default: 'Mensal',
+            title: 'Periodicidade da recorrência',
+            description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
+          },
+          quantity: {
+            type: 'number',
+            default: 0,
+            title: 'Quantidade da recorrência',
+            description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0, OBS: Valores'
+          },
+        },
+        title: 'Plano de recorrência',
+        description: 'Configurações para cobranças por recorrência'
+      },
+      hide: false
+    },
     plans: {
       schema: {
-        title: 'Planos de recorrência',
-        description: 'definir os tipos de planos para recorrência.',
+        title: 'Planos de Recorrência - (Não Disponivél)',
+        description: 'Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponivél para uso',
         type: 'array',
         maxItems: 10,
         items: {
