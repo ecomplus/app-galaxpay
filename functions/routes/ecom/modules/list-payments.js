@@ -66,9 +66,11 @@ exports.post = ({ appSdk }, req, res) => {
     code: 'galaxpay_app'
   }
   const paymentTypes = []
-  if ((appData.plan_recurrence && !appData.plan_recurrence.disable) || !appData.plans) {
+  if ((appData.plan_recurrence && !appData.plan_recurrence.disable) || appData.plans) {
     paymentTypes.push('recurrence')
   }
+
+  console.log('> plans ', appData.plans)
 
   // setup payment gateway objects
   ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
