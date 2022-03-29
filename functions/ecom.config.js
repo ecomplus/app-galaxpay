@@ -305,7 +305,7 @@ const app = {
           properties: {
             label: {
               type: 'string',
-              maxLength: 255,
+              maxLength: 100,
               title: 'Plano',
               description: 'Texto definir um nome para o plano'
             },
