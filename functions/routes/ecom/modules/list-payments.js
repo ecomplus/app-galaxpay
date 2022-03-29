@@ -1,7 +1,8 @@
-const { baseUri } = require('../../../__env')
+const { hostingUri } = require('../../../__env')
 const fs = require('fs')
 const path = require('path')
 const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
+
 exports.post = ({ appSdk }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -94,7 +95,7 @@ exports.post = ({ appSdk }, req, res) => {
 
         if (isCreditCard) {
           if (!gateway.icon) {
-            gateway.icon = `${baseUri}/credit-card.png`
+            gateway.icon = `${hostingUri}/credit-card.png`
           }
           // https://docs.galaxpay.com.br/tokenizacao-cartao-js
           gateway.js_client = {
