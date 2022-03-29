@@ -12,6 +12,8 @@ const handleGateway = (appData) => {
     gateways.push(plan)
   } else if (appData.plans) {
     appData.plans.forEach(plan => {
+      console.log('> handle')
+      console.log(plan)
       gateways.push(plan)
     })
   }
