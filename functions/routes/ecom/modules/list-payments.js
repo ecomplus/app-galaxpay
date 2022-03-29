@@ -66,7 +66,7 @@ exports.post = ({ appSdk }, req, res) => {
     code: 'galaxpay_app'
   }
   const paymentTypes = []
-  if (!appData.plan_recurrence.disable) {
+  if ((appData.plan_recurrence && !appData.plan_recurrence.disable) || !appData.plans) {
     paymentTypes.push('recurrence')
   }
 
