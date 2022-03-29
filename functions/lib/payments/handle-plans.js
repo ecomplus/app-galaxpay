@@ -2,9 +2,9 @@
 const handleGateway = (appData) => {
   let gateways = []
   if (appData.plan_recurrence && !appData.plan_recurrence.disable) {
-    const name = appData.galaxpay_subscription_label ? appData.galaxpay_subscription_label : ''
+    const label = appData.galaxpay_subscription_label ? appData.galaxpay_subscription_label : ''
     const plan = {
-      name,
+      label,
       periodicity: appData.plan_recurrence.periodicity,
       quantity: appData.plan_recurrence.quantity,
       discount: { percentage: false }
@@ -12,8 +12,6 @@ const handleGateway = (appData) => {
     gateways.push(plan)
   } else if (appData.plans) {
     appData.plans.forEach(plan => {
-      console.log('> handle')
-      console.log(plan)
       gateways.push(plan)
     })
   }

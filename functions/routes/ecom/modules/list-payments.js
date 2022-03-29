@@ -70,55 +70,55 @@ exports.post = ({ appSdk }, req, res) => {
     paymentTypes.push('recurrence')
   }
 
-  console.log('> plans ', appData.plans)
 
   // setup payment gateway objects
   ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
     paymentTypes.forEach(type => {
       const methodConfig = appData[paymentMethod] || {}
       if (!methodConfig.disable) {
-        const isCreditCard = paymentMethod === 'credit_card'
-        let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
-
         const plans = handleGateway(appData)
         console.log('> store ', storeId)
         plans.forEach(plan => {
           console.log('> test ', plan.periodicity)
-        })
 
-        const periodicity = parsePeriodicity(appData.plan_recurrence.periodicity)
+          const isCreditCard = paymentMethod === 'credit_card'
+          let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
 
-        if (type === 'recurrence' && appData.galaxpay_subscription_label) {
-          label = appData.galaxpay_subscription_label + ' ' + periodicity + ' ' + label
-        }
-        const gateway = {
-          label,
-          icon: methodConfig.icon,
-          text: methodConfig.text,
-          payment_method: {
-            code: paymentMethod,
-            name: `${label} - ${intermediator.name}`
-          },
-          type,
-          intermediator
-        }
+          const periodicity = parsePeriodicity(plan.periodicity)
+          const planName = plan.label ? plan.label : 'Plano'
 
-        if (isCreditCard) {
-          if (!gateway.icon) {
-            gateway.icon = `${hostingUri}/credit-card.png`
+          if (type === 'recurrence' && planName) {
+            label = planName + ' ' + periodicity + ' ' + label
           }
-          // https://docs.galaxpay.com.br/tokenizacao-cartao-js
-          gateway.js_client = {
-            script_uri: 'https://js.galaxpay.com.br/checkout.min.js',
-            onload_expression: `window._galaxPayPublicToken="${appData.galaxpay_public_token}";  window._galaxPaySandbox="${appData.galaxpay_sandbox}";` +
-              fs.readFileSync(path.join(__dirname, '../../../public/onload-expression.js'), 'utf8'),
-            cc_hash: {
-              function: '_galaxyHashcard',
-              is_promise: true
+          const gateway = {
+            label,
+            icon: methodConfig.icon,
+            text: methodConfig.text,
+            payment_method: {
+              code: paymentMethod,
+              name: `${label} - ${intermediator.name}`
+            },
+            type,
+            intermediator
+          }
+
+          if (isCreditCard) {
+            if (!gateway.icon) {
+              gateway.icon = `${hostingUri}/credit-card.png`
+            }
+            // https://docs.galaxpay.com.br/tokenizacao-cartao-js
+            gateway.js_client = {
+              script_uri: 'https://js.galaxpay.com.br/checkout.min.js',
+              onload_expression: `window._galaxPayPublicToken="${appData.galaxpay_public_token}";  window._galaxPaySandbox="${appData.galaxpay_sandbox}";` +
+                fs.readFileSync(path.join(__dirname, '../../../public/onload-expression.js'), 'utf8'),
+              cc_hash: {
+                function: '_galaxyHashcard',
+                is_promise: true
+              }
             }
           }
-        }
-        response.payment_gateways.push(gateway)
+          response.payment_gateways.push(gateway)
+        })
       }
     })
   })
