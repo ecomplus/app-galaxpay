@@ -93,9 +93,9 @@ exports.post = ({ appSdk }, req, res) => {
         }
 
         if (isCreditCard) {
-          // if (!gateway.icon) {
-          //   gateway.icon = `${baseUri}/credit-card.png`
-          // }
+          if (!gateway.icon) {
+            gateway.icon = `${baseUri}/credit-card.png`
+          }
           // https://docs.galaxpay.com.br/tokenizacao-cartao-js
           gateway.js_client = {
             script_uri: 'https://js.galaxpay.com.br/checkout.min.js',
