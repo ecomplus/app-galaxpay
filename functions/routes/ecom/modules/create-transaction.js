@@ -1,6 +1,7 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 const errorHandling = require('../../../lib/store-api/error-handling')
 const { parseId, parseStatus, parsePeriodicityGalaxPay } = require('../../../lib/galaxpay/parse-to-ecom')
+const { handlePlanTransction } = require('../../../lib/payments/handle-plans')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
    * Requests coming from Modules API have two object properties on body: `params` and `application`.
@@ -88,11 +89,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const finalAmount = transaction.amount
 
+  const methodConfigName = params.payment_method.code === 'credit_card' ? appData.credit_card.lable : appData.banking_billet.lable
+
+  const labelPaymentGateway = params.payment_method.name.replace('- GalaxPay', '').replace(methodConfigName, '').trim()
+
+  console.log('> payment ', labelPaymentGateway)
+
+  const plan = handlePlanTransction(labelPaymentGateway, appData)
+
+  console.log('> plan: ', plan)
+
   if (params.payment_method.code === 'credit_card') {
     const card = {
       hash: params.credit_card.hash
     }
-    console.log('> payment ', params.payment_method)
 
     const PaymentMethodCreditCard = {
       Card: card,

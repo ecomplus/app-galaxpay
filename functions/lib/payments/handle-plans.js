@@ -19,6 +19,21 @@ const handleGateway = (appData) => {
   return gateways
 }
 
+const handlePlanTransction = (label, appData) => {
+  if (appData.plan_recurrence && !appData.plan_recurrence.disable) {
+    const plan = {
+      label,
+      periodicity: appData.plan_recurrence.periodicity,
+      quantity: appData.plan_recurrence.quantity,
+      discount: { percentage: false }
+    }
+    return plan
+  } else if (appData.plans) {
+    return appData.plans.find((plan) => (plan.label + ' ' + plan.periodicity) === label)
+  }
+}
+
 module.exports = {
-  handleGateway
+  handleGateway,
+  handlePlanTransction
 }
