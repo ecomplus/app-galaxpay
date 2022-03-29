@@ -96,9 +96,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   console.log('> payment ', labelPaymentGateway)
 
-  const plan = handlePlanTransction(labelPaymentGateway, appData)
+  let plan = handlePlanTransction(labelPaymentGateway, appData)
 
   console.log('> plan: ', plan)
+
+  if (!plan && !appData.plan_recurrence && appData.plans) {
+    plan = appData.plans[0]
+  }
 
   if (params.payment_method.code === 'credit_card') {
     const card = {
@@ -114,7 +118,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       myId: `${orderId}`, // requered
       value: Math.floor(finalAmount * 100),
       quantity: 0, //  recorrence quantity, non-zero case, recurrence limited by value
-      periodicity: parsePeriodicityGalaxPay(appData.plan_recurrence.periodicity),
+      periodicity: parsePeriodicityGalaxPay(plan.periodicity),
       firstPayDayDate: new Date().toISOString().split('T')[0], // requered
       // additionalInfo: '', // optional
       mainPaymentMethodId: 'creditcard',
@@ -132,8 +136,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions = {
       myId: `${orderId}`, // requered
       value: Math.floor(finalAmount * 100),
-      quantity: appData.plan_recurrence.quantity,
-      periodicity: parsePeriodicityGalaxPay(appData.plan_recurrence.periodicity),
+      quantity: 0, //  recorrence quantity, non-zero case, recurrence limited by value
+      periodicity: parsePeriodicityGalaxPay(plan.periodicity),
       firstPayDayDate: new Date().toISOString().split('T')[0], // requered
       // additionalInfo: '', // optional,  instructions banking billet?
       mainPaymentMethodId: 'boleto',
