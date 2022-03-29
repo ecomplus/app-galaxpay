@@ -2,6 +2,7 @@ const { hostingUri } = require('../../../__env')
 const fs = require('fs')
 const path = require('path')
 const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
+const { handleGateway } = require('../../../lib/payments/handle-plans')
 
 exports.post = ({ appSdk }, req, res) => {
   /**
@@ -76,7 +77,14 @@ exports.post = ({ appSdk }, req, res) => {
       if (!methodConfig.disable) {
         const isCreditCard = paymentMethod === 'credit_card'
         let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
-        const periodicity = appData.plan_recurrence.periodicity
+
+        const plans = handleGateway(appData)
+
+        plans.forEach(plan => {
+          console.log('> test ', plan.periodicity)
+        })
+
+        const periodicity = parsePeriodicity(appData.plan_recurrence.periodicity)
 
         if (type === 'recurrence' && appData.galaxpay_subscription_label) {
           label = appData.galaxpay_subscription_label + ' ' + periodicity + ' ' + label

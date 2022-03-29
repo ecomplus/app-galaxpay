@@ -6,19 +6,19 @@ const parseId = (id) => {
 const parsePeriodicity = (periodicity) => {
   switch (periodicity) {
     case 'weekly':
-      return 'Semanal '
+      return 'Semanal'
     case 'biweekly':
-      return 'Quinzenal '
+      return 'Quinzenal'
     case 'monthly':
-      return 'Mensal '
+      return 'Mensal'
     case 'bimonthly':
-      return 'Bimestral '
+      return 'Bimestral'
     case 'quarterly':
-      return 'Trimestral '
+      return 'Trimestral'
     case 'biannual':
-      return 'Semestral '
+      return 'Semestral'
     case 'yearly':
-      return 'Anual '
+      return 'Anual'
   }
   return periodicity
 }
@@ -60,19 +60,19 @@ const parseStatus = (status) => {
 const parsePeriodicityGalaxPay = (periodicity) => {
   switch (periodicity) {
     case 'Semanal':
-      return 'weekly '
+      return 'weekly'
     case 'Quinzenal':
-      return 'biweekly '
+      return 'biweekly'
     case 'Mensal':
-      return 'monthly '
+      return 'monthly'
     case 'Bimestral':
-      return 'bimonthly '
+      return 'bimonthly'
     case 'Trimestral':
-      return 'quarterly '
+      return 'quarterly'
     case 'Semestral':
-      return 'biannual '
+      return 'biannual'
     case 'Anual':
-      return 'yearly '
+      return 'yearly'
   }
   return periodicity
 }
