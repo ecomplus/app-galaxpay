@@ -89,9 +89,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const finalAmount = transaction.amount
 
-  const methodConfigName = params.payment_method.code === 'credit_card' ? appData.credit_card.lable : appData.banking_billet.lable
+  const methodConfigName = params.payment_method.code === 'credit_card' ? appData.credit_card.label : appData.banking_billet.label
 
-  const labelPaymentGateway = params.payment_method.name.replace('- GalaxPay', '').replace(methodConfigName, '').trim()
+  let labelPaymentGateway = params.payment_method.name.replace('- GalaxPay', '')
+  labelPaymentGateway = labelPaymentGateway.replace(methodConfigName, '')
 
   console.log('> payment ', labelPaymentGateway)
 
