@@ -198,7 +198,7 @@
     },
     "plans": {
       "schema": {
-        "title": "Planos de Recorrência",
+        "title": "Planos",
         "description": "Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponivél para uso",
         "type": "array",
         "maxItems": 10,
