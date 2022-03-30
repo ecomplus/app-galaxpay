@@ -33,8 +33,7 @@ const handlePlanTransction = (label, appData) => {
   }
 }
 
-const discontPlan = (planName, discount, amount) => {
-  // const { discount } = config
+const discountPlan = (planName, discount, amount) => {
   if (discount && discount.value > 0) {
     let discountOption
     if (discount.apply_at !== 'freight') {
@@ -81,5 +80,6 @@ const discontPlan = (planName, discount, amount) => {
 
 module.exports = {
   handleGateway,
-  handlePlanTransction
+  handlePlanTransction,
+  discountPlan
 }

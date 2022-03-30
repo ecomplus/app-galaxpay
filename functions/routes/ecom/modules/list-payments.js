@@ -2,7 +2,7 @@ const { hostingUri } = require('../../../__env')
 const fs = require('fs')
 const path = require('path')
 const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
-const { handleGateway } = require('../../../lib/payments/handle-plans')
+const { handleGateway, discountPlan } = require('../../../lib/payments/handle-plans')
 
 exports.post = ({ appSdk }, req, res) => {
   /**
@@ -50,9 +50,7 @@ exports.post = ({ appSdk }, req, res) => {
   })
 
   */
-  const { payment_method } = params
-
-  console.log('> payment: ', payment_method)
+  let amount = params.amount || {}
 
   if (!appData.galaxpay_id || !appData.galaxpay_hash) {
     return res.status(409).send({
@@ -119,6 +117,10 @@ exports.post = ({ appSdk }, req, res) => {
               }
             }
           }
+          const discount = discountPlan(label, plan.discount, amount)
+          amount = discount.amount
+          gateway.discount = plan.discount
+          response.discount_option = discount.discountOption
           response.payment_gateways.push(gateway)
         })
       }
