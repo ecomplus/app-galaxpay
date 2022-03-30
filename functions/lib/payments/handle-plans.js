@@ -35,17 +35,14 @@ const handlePlanTransction = (label, appData) => {
 
 const discountPlan = (planName, discount, amount) => {
   if (discount && discount.value > 0) {
-    let discountOption
-    if (discount.apply_at !== 'freight') {
-      // default discount option
-      const { value } = discount
-      discountOption = {
-        label: planName,
-        value,
-        type: discount.percentage ? 'percentage' : 'fixed'
-      }
-      // response.discount_option
+    // default discount option
+    const { value } = discount
+    const discountOption = {
+      label: planName,
+      value,
+      type: discount.percentage ? 'percentage' : 'fixed'
     }
+    // response.discount_option
 
     if (amount.total) {
       // check amount value to apply discount
@@ -55,7 +52,9 @@ const discountPlan = (planName, discount, amount) => {
         delete discount.min_amount
 
         // fix local amount object
-        const maxDiscount = amount[discount.apply_at || 'subtotal']
+        const applyDiscount = discount.apply_at && discount.apply_at === 'frete' ? 'freight' : discount.apply_at
+
+        const maxDiscount = amount[applyDiscount || 'subtotal']
         let discountValue
         if (discount.percentage && discount.percentage === true) {
           discountValue = maxDiscount * discount.value / 100

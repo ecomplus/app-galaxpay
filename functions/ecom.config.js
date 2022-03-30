@@ -354,7 +354,7 @@ const app = {
                   enum: [
                     'total',
                     'subtotal',
-                    'freight'
+                    'frete'
                   ],
                   default: 'subtotal',
                   title: 'Aplicar desconto em',
