@@ -118,15 +118,14 @@ exports.post = ({ appSdk }, req, res) => {
             }
           }
 
-          // const discount = discountPlan(label, plan.discount, amount)
-          // console.log('> discount ', discount)
-          // if (discount) {
-          //   amount = discount.amount
-          //   gateway.discount = plan.discount
-          //   gateway.discount.type = discount.discountOption
-          //   response.discount_option = discount.discountOption
-          // }
-          // console.log('> discount ', gateway.discount)
+          const discount = discountPlan(label, plan.discount, amount)
+          if (discount) {
+            amount = discount.amount
+            gateway.discount = plan.discount
+            gateway.discount.type = discount.discountOption.type
+            response.discount_option = discount.discountOption
+          }
+          console.log('> discount ', gateway.discount)
           response.payment_gateways.push(gateway)
         })
       }
