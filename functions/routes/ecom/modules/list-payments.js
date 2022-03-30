@@ -118,9 +118,10 @@ exports.post = ({ appSdk }, req, res) => {
             }
           }
           const discount = discountPlan(label, plan.discount, amount)
-          amount = discount.amount
-          gateway.discount = plan.discount
-          response.discount_option = discount.discountOption
+          console.log('> discount ', discount)
+          // amount = discount.amount
+          // gateway.discount = plan.discount
+          // response.discount_option = discount.discountOption
           response.payment_gateways.push(gateway)
         })
       }
