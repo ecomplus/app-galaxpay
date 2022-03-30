@@ -72,14 +72,13 @@ exports.post = ({ appSdk }, req, res) => {
   }
 
   // setup payment gateway objects
-  const plans = handleGateway(appData)
-  plans.forEach(plan => {
-    ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
-      paymentTypes.forEach(type => {
-        const methodConfig = appData[paymentMethod] || {}
-        if (!methodConfig.disable) {
-          console.log('> store ', storeId)
-
+  ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
+    paymentTypes.forEach(type => {
+      const methodConfig = appData[paymentMethod] || {}
+      if (!methodConfig.disable) {
+        const plans = handleGateway(appData)
+        console.log('> store ', storeId)
+        plans.forEach(plan => {
           console.log('> test ', plan.periodicity)
 
           const isCreditCard = paymentMethod === 'credit_card'
@@ -129,8 +128,8 @@ exports.post = ({ appSdk }, req, res) => {
           }
           console.log('> discount ', gateway.discount)
           response.payment_gateways.push(gateway)
-        }
-      })
+        })
+      }
     })
   })
   res.send(response)
