@@ -50,6 +50,9 @@ exports.post = ({ appSdk }, req, res) => {
   })
 
   */
+  const { payment_method } = params
+
+  console.log('> payment: ', payment_method)
 
   if (!appData.galaxpay_id || !appData.galaxpay_hash) {
     return res.status(409).send({

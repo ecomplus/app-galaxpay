@@ -348,6 +348,17 @@ const app = {
                   maximum: 99999999,
                   title: 'Valor do desconto',
                   description: 'Valor percentual/fixo do desconto ou acréscimo (negativo)'
+                },
+                apply_at: {
+                  type: 'string',
+                  enum: [
+                    'total',
+                    'subtotal',
+                    'freight'
+                  ],
+                  default: 'subtotal',
+                  title: 'Aplicar desconto em',
+                  description: 'Em qual valor o desconto deverá ser aplicado no checkout'
                 }
               }
             }
