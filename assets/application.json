@@ -188,7 +188,7 @@
             "type": "number",
             "default": 0,
             "title": "Quantidade da recorrência",
-            "description": "Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0."
+            "description": "Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0. OBS.: Valores diferente de 0 (zero) não disponivél no momento"
           }
         },
         "title": "Plano de recorrência",
@@ -198,8 +198,8 @@
     },
     "plans": {
       "schema": {
-        "title": "Planos de Recorrência-(Não Disponivél)",
-        "description": "Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponivél para uso",
+        "title": "Planos de Recorrência - (Não Disponível)",
+        "description": "Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponível para uso",
         "type": "array",
         "maxItems": 10,
         "items": {
