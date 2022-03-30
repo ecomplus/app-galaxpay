@@ -57,7 +57,7 @@ const discountPlan = (planName, discount, amount) => {
         // fix local amount object
         const maxDiscount = amount[discount.apply_at || 'subtotal']
         let discountValue
-        if (discount.percentage) {
+        if (discount.percentage && discount.percentage === true) {
           discountValue = maxDiscount * discount.value / 100
         } else {
           discountValue = discount.value
