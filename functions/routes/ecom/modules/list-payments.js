@@ -117,12 +117,13 @@ exports.post = ({ appSdk }, req, res) => {
               }
             }
           }
-          console.log('> amount ', amount)
+
           const discount = discountPlan(label, plan.discount, amount)
           console.log('> discount ', discount)
           if (discount) {
             amount = discount.amount
             gateway.discount = plan.discount
+            gateway.discount.type = discount.discountOption.type
             response.discount_option = discount.discountOption
           }
           response.payment_gateways.push(gateway)
