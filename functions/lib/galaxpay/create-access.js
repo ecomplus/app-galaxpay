@@ -1,5 +1,6 @@
 const createAxios = require('./create-axios')
 const auth = require('./create-authorization')
+const { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
 
 module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 'galaxpay_tokens') {
   const self = this
@@ -18,15 +19,22 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
       .doc(`${firestoreColl}/${hashLogin}`)
   }
 
-  if (docPartner) {
-    docPartner.get()
-      .then((documentSnapshot) => {
-        const idGalaxpayPartner = documentSnapshot.data().galaxpayId
-        const hashGalaxpayPartner = documentSnapshot.data().galaxpayHash
-        if (documentSnapshot.exists && idGalaxpayPartner && hashGalaxpayPartner) {
-          hashPartner = Buffer.from(`${idGalaxpayPartner}:${hashGalaxpayPartner}`).toString('base64')
-        }
-      })
+  if (ID_GALAXPAY_PARTNER && HASH_GALAXPAY_PARTNER) {
+    console.log('> id_gl ', ID_GALAXPAY_PARTNER, ' hash ', HASH_GALAXPAY_PARTNER)
+    hashPartner = Buffer.from(`${ID_GALAXPAY_PARTNER}:${HASH_GALAXPAY_PARTNER}`).toString('base64')
+  } else {
+    if (docPartner) {
+      docPartner.get()
+        .then((documentSnapshot) => {
+          const idGalaxpayPartner = documentSnapshot.data().galaxpayId
+          const hashGalaxpayPartner = documentSnapshot.data().galaxpayHash
+          if (documentSnapshot.exists && idGalaxpayPartner && hashGalaxpayPartner) {
+            process.env.ID_GALAXPAY_PARTNER = idGalaxpayPartner
+            process.env.HASH_GALAXPAY_PARTNER = hashGalaxpayPartner
+            hashPartner = Buffer.from(`${idGalaxpayPartner}:${hashGalaxpayPartner}`).toString('base64')
+          }
+        })
+    }
   }
 
   this.preparing = new Promise((resolve, reject) => {
