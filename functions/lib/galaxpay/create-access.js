@@ -8,8 +8,8 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
 
   const hashLogin = Buffer.from(`${galaxpayId}:${galaxpayHash}`).toString('base64')
 
-  let firestorePartner = 'galaxpay_partners'
-  let docPartner = require('firebase-admin').firestore().doc(`${firestorePartner}/ecomplus`)
+  const firestorePartner = 'galaxpay_partners'
+  const docPartner = require('firebase-admin').firestore().doc(`${firestorePartner}/ecomplus`)
   let hashPartner
 
   if (firestoreColl) {
@@ -21,18 +21,11 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
   if (docPartner) {
     docPartner.get()
       .then((documentSnapshot) => {
-        return new Promise((resolve, reject) => {
-          const idGalaxpayPartner = documentSnapshot.data().galaxpayId
-          const hashGalaxpayPartner = documentSnapshot.data().galaxpayHash
-          if (documentSnapshot.exists && idGalaxpayPartner && hashGalaxpayPartner) {
-            resolve({ idGalaxpayPartner, hashGalaxpayPartner })
-          } else {
-            reject(new Error())
-          }
-        })
-      })
-      .then(({ idGalaxpayPartner, hashGalaxpayPartner }) => {
-        hashPartner = Buffer.from(`${idGalaxpayPartner}:${hashGalaxpayPartner}`).toString('base64')
+        const idGalaxpayPartner = documentSnapshot.data().galaxpayId
+        const hashGalaxpayPartner = documentSnapshot.data().galaxpayHash
+        if (documentSnapshot.exists && idGalaxpayPartner && hashGalaxpayPartner) {
+          hashPartner = Buffer.from(`${idGalaxpayPartner}:${hashGalaxpayPartner}`).toString('base64')
+        }
       })
   }
 
@@ -47,7 +40,6 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
       console.log('> Galaxpay Auth02')
       auth(hashLogin, isSandbox, hashPartner)
         .then((accessToken) => {
-          console.log(`> Galaxy token: ${hashLogin}`)
           authenticate(accessToken, isSandbox)
           if (documentRef) {
             documentRef.set({ accessToken }).catch(console.error)
