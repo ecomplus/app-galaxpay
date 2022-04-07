@@ -19,8 +19,6 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
       .doc(`${firestoreColl}/${hashLogin}`)
   }
 
-  console.log('> ID ', process.env.ID_GALAXPAY_PARTNER, ' hash ', process.env.HASH_GALAXPAY_PARTNER)
-
   if (ID_GALAXPAY_PARTNER && HASH_GALAXPAY_PARTNER) {
     hashPartner = Buffer.from(`${ID_GALAXPAY_PARTNER}:${HASH_GALAXPAY_PARTNER}`).toString('base64')
   } else {
@@ -32,9 +30,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
           if (documentSnapshot.exists && idGalaxpayPartner && hashGalaxpayPartner) {
             ID_GALAXPAY_PARTNER = process.env.ID_GALAXPAY_PARTNER = idGalaxpayPartner
             HASH_GALAXPAY_PARTNER = process.env.HASH_GALAXPAY_PARTNER = hashGalaxpayPartner
-
             hashPartner = Buffer.from(`${idGalaxpayPartner}:${hashGalaxpayPartner}`).toString('base64')
-            console.log('> Depois ID ', ID_GALAXPAY_PARTNER, ' hash ', HASH_GALAXPAY_PARTNER)
           }
         })
     }
