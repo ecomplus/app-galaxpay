@@ -44,7 +44,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firesto
     }
 
     const handleAuth = (isSandbox) => {
-      console.log('> Galaxpay Auth02')
+      console.log('> Galaxpay Auth02 >', hashPartner)
       auth(hashLogin, isSandbox, hashPartner)
         .then((accessToken) => {
           authenticate(accessToken, isSandbox)
