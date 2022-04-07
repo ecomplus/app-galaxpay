@@ -4,15 +4,14 @@ module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, re
   let accessToken
   const axios = require('./create-axios')(accessToken, isSandbox)
   const request = isRetry => {
-    const headers = {}
-    headers.Authorization = `Basic ${hashLogin}`
+    const headers = { Authorization: `Basic ${hashLogin}` }
 
     console.log('>hash Partner: ', hashPartner)
 
     axios.post('/token', {
       grant_type: 'authorization_code',
       scope: 'customers.read customers.write plans.read plans.write transactions.read transactions.write webhooks.write cards.read cards.write card-brands.read subscriptions.read subscriptions.write charges.read charges.write boletos.read'
-    }, headers)
+    }, { headers })
       .then(({ data }) => resolve(data.access_token))
       .catch(err => {
         if (!isRetry && err.response && err.response.status >= 429) {
