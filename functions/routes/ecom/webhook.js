@@ -37,7 +37,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       }
 
       /* DO YOUR CUSTOM STUFF HERE */
-      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox, storeId)
       const collectionSubscription = admin.firestore().collection('subscriptions')
 
       if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {

@@ -21,7 +21,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   // merge all app options configured by merchant
   const appData = Object.assign({}, application.data, application.hidden_data)
   // setup required `transaction` response object
-  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
+  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox, storeId)
 
   const orderId = params.order_id
   const orderNumber = params.order_number

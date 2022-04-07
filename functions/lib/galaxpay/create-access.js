@@ -2,7 +2,7 @@ const createAxios = require('./create-axios')
 const auth = require('./create-authorization')
 let { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
 
-module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 'galaxpay_tokens') {
+module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firestoreColl = 'galaxpay_tokens') {
   const self = this
 
   let documentRef
@@ -16,7 +16,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
   if (firestoreColl) {
     documentRef = require('firebase-admin')
       .firestore()
-      .doc(`${firestoreColl}/${hashLogin}`)
+      .doc(`${firestoreColl}/${storeId}-${hashLogin}`)
   }
 
   if (ID_GALAXPAY_PARTNER && HASH_GALAXPAY_PARTNER) {
