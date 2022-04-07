@@ -94,11 +94,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   let labelPaymentGateway = params.payment_method.name.replace('- GalaxPay', '')
   labelPaymentGateway = labelPaymentGateway.replace(methodConfigName, '')
 
-  console.log('> payment ', labelPaymentGateway)
-
   let plan = handlePlanTransction(labelPaymentGateway, appData)
-
-  console.log('> plan: ', plan)
 
   if (!plan && !appData.plan_recurrence && appData.plans) {
     plan = appData.plans[0]
