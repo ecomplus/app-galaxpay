@@ -1,3 +1,4 @@
+require('dotenv').config()
 const createAxios = require('./create-axios')
 const auth = require('./create-authorization')
 let { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
