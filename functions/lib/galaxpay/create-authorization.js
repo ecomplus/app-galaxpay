@@ -25,8 +25,7 @@ module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, re
         reject(err)
       })
   }
-  console.log('> hashLogin ', hashLogin, ' > isSandBox ', isSandbox)
-  if (hashLogin && isSandbox) {
+  if (hashLogin) {
     request()
   }
 })
