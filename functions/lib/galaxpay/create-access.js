@@ -1,6 +1,6 @@
 const createAxios = require('./create-axios')
 const auth = require('./create-authorization')
-const { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
+let { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
 
 module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 'galaxpay_tokens') {
   const self = this
@@ -30,8 +30,9 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
           const idGalaxpayPartner = documentSnapshot.data().galaxpayId
           const hashGalaxpayPartner = documentSnapshot.data().galaxpayHash
           if (documentSnapshot.exists && idGalaxpayPartner && hashGalaxpayPartner) {
-            process.env.ID_GALAXPAY_PARTNER = idGalaxpayPartner
-            process.env.HASH_GALAXPAY_PARTNER = hashGalaxpayPartner
+            ID_GALAXPAY_PARTNER = process.env.ID_GALAXPAY_PARTNER = idGalaxpayPartner
+            HASH_GALAXPAY_PARTNER = process.env.HASH_GALAXPAY_PARTNER = hashGalaxpayPartner
+
             hashPartner = Buffer.from(`${idGalaxpayPartner}:${hashGalaxpayPartner}`).toString('base64')
             console.log('> Depois ID ', ID_GALAXPAY_PARTNER, ' hash ', HASH_GALAXPAY_PARTNER)
           }
