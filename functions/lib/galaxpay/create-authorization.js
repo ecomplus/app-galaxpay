@@ -17,6 +17,7 @@ module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, re
     }, { headers })
       .then(({ data }) => resolve(data.access_token))
       .catch(err => {
+        console.log('> Err ', err)
         if (!isRetry && err.response && err.response.status >= 429) {
           setTimeout(() => request(true), 7000)
         }

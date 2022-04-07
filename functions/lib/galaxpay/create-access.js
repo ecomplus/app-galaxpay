@@ -1,6 +1,5 @@
 const createAxios = require('./create-axios')
 const auth = require('./create-authorization')
-const { consoleOrigin } = require('firebase-tools/lib/api')
 let { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
 
 module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firestoreColl = 'galaxpay_tokens') {
@@ -53,10 +52,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firesto
             documentRef.set({ accessToken }).catch(console.error)
           }
         })
-        .catch((err) => {
-          console.log('> ERR authorization ', err)
-          reject(err)
-        })
+        .catch(reject)
     }
 
     if (documentRef) {
