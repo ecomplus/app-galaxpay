@@ -7,9 +7,7 @@ module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, re
     const headers = {}
     headers.Authorization = `Basic ${hashLogin}`
 
-    if (hashPartner || hashPartner !== '') {
-      headers.AuthorizationPartner = hashPartner
-    }
+    console.log('>hash Partner: ', hashPartner)
 
     axios.post('/token', {
       grant_type: 'authorization_code',
