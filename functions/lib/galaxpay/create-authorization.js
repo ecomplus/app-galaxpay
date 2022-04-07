@@ -25,7 +25,5 @@ module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, re
         reject(err)
       })
   }
-  if (hashLogin) {
-    request()
-  }
+  request()
 })
