@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
 const { handleGateway, discountPlan } = require('../../../lib/payments/handle-plans')
-const { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
+// const { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
 
 exports.post = ({ appSdk }, req, res) => {
   /**
@@ -51,7 +51,7 @@ exports.post = ({ appSdk }, req, res) => {
   })
 
   */
- console.log('> ID_GALAXPAY_PARTNER: ', ID_GALAXPAY_PARTNER)
+ console.log('> ENV ', process.env)
   let amount = params.amount || {}
 
   if (!appData.galaxpay_id || !appData.galaxpay_hash) {
