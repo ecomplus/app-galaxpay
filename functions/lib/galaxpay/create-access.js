@@ -19,7 +19,7 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, firestoreColl = 
       .doc(`${firestoreColl}/${hashLogin}`)
   }
 
-  console.log('> ID ', ID_GALAXPAY_PARTNER, ' hash ', HASH_GALAXPAY_PARTNER)
+  console.log('> ID ', process.env.ID_GALAXPAY_PARTNER, ' hash ', process.env.HASH_GALAXPAY_PARTNER)
 
   if (ID_GALAXPAY_PARTNER && HASH_GALAXPAY_PARTNER) {
     hashPartner = Buffer.from(`${ID_GALAXPAY_PARTNER}:${HASH_GALAXPAY_PARTNER}`).toString('base64')
