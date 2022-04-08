@@ -29,7 +29,20 @@ const handlePlanTransction = (label, appData) => {
     }
     return plan
   } else if (appData.plans) {
-    return appData.plans.find((plan) => (plan.label ? plan.label : 'Plano' + ' ' + plan.periodicity) === label.trim())
+    let sendPlan
+
+    // appData.plans.find((plan) => (plan.label ? plan.label : 'Plano' + ' ' + plan.periodicity) === label.trim())
+    console.log('># ', label)
+    appData.plans.forEach((plan) => {
+      let planLabel = plan.label || 'Plano'
+      planLabel = planLabel + ' ' + plan.periodicity
+      label = label.trim()
+      console.log('-> ', planLabel)
+      if (label === planLabel) {
+        sendPlan = plan
+      }
+    })
+    return sendPlan
   }
 }
 
