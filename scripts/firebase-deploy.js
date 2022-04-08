@@ -18,8 +18,8 @@ const config = [
   `pkg.version=${version}`,
   `pkg.name=${name}`,
   `server.operator_token=${SERVER_OPERATOR_TOKEN}`,
-  `galaxypayConfig.id_partner=${ID_GALAXPAY_PARTNER}`,
-  `galaxypayConfig.hash_partner=${HASH_GALAXPAY_PARTNER}`
+  `galaxypayconfig.id_partner=${ID_GALAXPAY_PARTNER}`,
+  `galaxypayconfig.hash_partner=${HASH_GALAXPAY_PARTNER}`
 ]
 if (SERVER_BASE_URI) {
   config.push(`server.base_uri=${SERVER_BASE_URI}`)
