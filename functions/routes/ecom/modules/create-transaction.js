@@ -96,6 +96,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const fristPayment = new Date()
 
+  console.log('> quantity ', plan.quantity)
+  console.log('> typeof ', typeof plan.quantity)
   const galaxpaySubscriptions = {
     myId: `${orderId}`, // requered
     value: Math.floor(finalAmount * 100),
