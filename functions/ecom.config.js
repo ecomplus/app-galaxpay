@@ -264,6 +264,8 @@ const app = {
     pix: {
       schema: {
         type: 'object',
+        title: 'PIX - (Não Disponível)',
+        description: 'Configurações adicionais para PIX. OBS: Funcionalidade ainda não disponível para uso',
         additionalProperties: false,
         properties: {
           disable: {
@@ -280,7 +282,8 @@ const app = {
             default: 'PIX'
           },
         }
-      }
+      },
+      hide: false
     },
     plan_recurrence: {
       schema: {
