@@ -1,4 +1,4 @@
-const { hostingUri, galaxypayConfig } = require('../../../__env')
+const { hostingUri } = require('../../../__env')
 const fs = require('fs')
 const path = require('path')
 const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
@@ -75,14 +75,15 @@ exports.post = ({ appSdk }, req, res) => {
   // setup payment gateway objects
   const plans = handleGateway(appData)
   plans.forEach(plan => {
-    ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
+    ;['pix', 'credit_card', 'banking_billet'].forEach(paymentMethod => {
       paymentTypes.forEach(type => {
         const methodConfig = appData[paymentMethod] || {}
         if (!methodConfig.disable) {
           console.log('s: ', storeId, ' > Plan ', plan.periodicity)
 
           const isCreditCard = paymentMethod === 'credit_card'
-          let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
+          const isPix = paymentMethod === 'pix'
+          let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : (isPix ? 'PIX' : 'Boleto bancário'))
 
           const periodicity = parsePeriodicity(plan.periodicity)
           const planName = plan.label ? plan.label : 'Plano'
@@ -95,7 +96,7 @@ exports.post = ({ appSdk }, req, res) => {
             icon: methodConfig.icon,
             text: methodConfig.text,
             payment_method: {
-              code: paymentMethod,
+              code: isPix ? 'other' : paymentMethod, // pix is defined payment method outher
               name: `${label} - ${intermediator.name}`
             },
             type,
