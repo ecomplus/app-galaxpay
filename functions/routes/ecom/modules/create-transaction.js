@@ -156,6 +156,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions.PaymentMethodPix = PaymentMethodPix
   }
 
+  console.log('> GalaxPay Subscription ', galaxpaySubscriptions)
   galaxpayAxios.preparing
     .then(() => {
       if (type === 'recurrence') {

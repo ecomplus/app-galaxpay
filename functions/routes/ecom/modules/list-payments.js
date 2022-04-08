@@ -75,7 +75,7 @@ exports.post = ({ appSdk }, req, res) => {
   // setup payment gateway objects
   const plans = handleGateway(appData)
   plans.forEach(plan => {
-    ;['pix', 'credit_card', 'banking_billet'].forEach(paymentMethod => {
+    ;['credit_card', 'banking_billet', 'pix'].forEach(paymentMethod => {
       paymentTypes.forEach(type => {
         const methodConfig = appData[paymentMethod] || {}
         if (!methodConfig.disable) {
