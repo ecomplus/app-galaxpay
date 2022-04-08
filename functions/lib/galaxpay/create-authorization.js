@@ -5,6 +5,10 @@ module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, re
   const axios = require('./create-axios')(accessToken, isSandbox)
   const request = isRetry => {
     const headers = { Authorization: `Basic ${hashLogin}` }
+    if (!isSandbox && hashPartner) {
+      console.log('> Authorization Partner ', hashPartner)
+      headers.AuthorizationPartner = hashPartner
+    }
     axios.post('/token', {
       grant_type: 'authorization_code',
       scope: 'customers.read customers.write plans.read plans.write transactions.read transactions.write webhooks.write cards.read cards.write card-brands.read subscriptions.read subscriptions.write charges.read charges.write boletos.read'
