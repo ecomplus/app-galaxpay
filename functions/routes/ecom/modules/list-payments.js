@@ -1,4 +1,4 @@
-const { hostingUri } = require('../../../__env')
+const { hostingUri, galaxypayConfig } = require('../../../__env')
 const fs = require('fs')
 const path = require('path')
 const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
@@ -51,7 +51,7 @@ exports.post = ({ appSdk }, req, res) => {
   })
 
   */
- console.log('> ENV ', process.env)
+ console.log('> ENV ', galaxypayConfig)
   let amount = params.amount || {}
 
   if (!appData.galaxpay_id || !appData.galaxpay_hash) {
