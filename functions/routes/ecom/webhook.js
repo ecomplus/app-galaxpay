@@ -53,7 +53,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
             return appSdk.apiRequest(storeId, `/orders/${resourceId}.json`, 'GET', null, auth)
           })
           .then(({ response }) => {
-            console.log('> Cancell Subscription ')
+            console.log('s: ', storeId, '> Cancell Subscription ')
             const order = response.data
             const subscription = collectionSubscription.doc(order._id)
             subscription.get()
@@ -108,7 +108,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               })
           })
       } else if (trigger.resource === 'applications') {
-        console.log('> Edit Application')
+        console.log('s: ', storeId, '> Edit Application')
 
         const body = {
           url: `${baseUri}/galaxpay/webhooks`,

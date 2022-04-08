@@ -74,13 +74,12 @@ exports.post = ({ appSdk }, req, res) => {
 
   // setup payment gateway objects
   const plans = handleGateway(appData)
-  console.log('> store ', storeId)
   plans.forEach(plan => {
     ;['credit_card', 'banking_billet'].forEach(paymentMethod => {
       paymentTypes.forEach(type => {
         const methodConfig = appData[paymentMethod] || {}
         if (!methodConfig.disable) {
-          console.log('> test ', plan.periodicity)
+          console.log('s: ', storeId, ' > Plan ', plan.periodicity)
 
           const isCreditCard = paymentMethod === 'credit_card'
           let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : 'Boleto bancário')
@@ -126,7 +125,6 @@ exports.post = ({ appSdk }, req, res) => {
             gateway.discount.type = discount.discountOption.type
             response.discount_option = discount.discountOption
           }
-          console.log('> discount ', gateway.discount)
           response.payment_gateways.push(gateway)
         }
       })

@@ -248,6 +248,12 @@ const app = {
             format: 'uri',
             title: 'Ícone',
             description: 'Ícone customizado para a forma de pagamento, URL da imagem'
+          },
+          add_days: {
+            type: 'integer',
+            default: 0,
+            title: 'Prazo',
+            description: 'Prazo em DIAS para o primeiro pagamento'
           }
         },
         title: 'Boleto bancário',

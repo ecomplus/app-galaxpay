@@ -19,15 +19,14 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firesto
   this.preparing = new Promise((resolve, reject) => {
     const authenticate = (accessToken, isSandbox) => {
       self.axios = createAxios(accessToken, isSandbox)
-      console.log('> accessToken: ', { accessToken })
       resolve(self)
     }
 
     const handleAuth = (isSandbox) => {
-      console.log('> Galaxpay Auth02 ', hashPartner)
-      auth(hashLogin, isSandbox, hashPartner)
+      console.log('> Galaxpay Auth02 ', storeId)
+      auth(hashLogin, isSandbox, hashPartner, storeId)
         .then((accessToken) => {
-          console.log(`> Galaxy token: ${hashLogin}`)
+          console.log(`> Galaxy token: ${storeId}-${hashLogin}`)
           authenticate(accessToken, isSandbox)
           if (documentRef) {
             documentRef.set({ accessToken }).catch(console.error)

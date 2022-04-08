@@ -13,6 +13,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const galaxpayHook = req.body
   const type = galaxpayHook.event
   const GalaxPaySubscription = galaxpayHook.Subscription
+  const GalaxPaySubscriptionQuantity = GalaxPaySubscription.quantity
   const subscriptionId = GalaxPaySubscription.myId
   const GalaxPayTransaction = galaxpayHook.Transaction
 
@@ -178,7 +179,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         console.error(err)
         res.sendStatus(500)
       })
-  } else if (type === 'subscription.addTransaction') {
+  } else if (type === 'subscription.addTransaction' && GalaxPaySubscriptionQuantity === 0) {
     // find transaction in firebase
     const subscription = collectionSubscription.doc(subscriptionId)
     subscription.get()

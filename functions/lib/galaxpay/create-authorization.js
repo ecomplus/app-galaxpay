@@ -1,4 +1,4 @@
-module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, reject) => {
+module.exports = (hashLogin, isSandbox, hashPartner, storeId) => new Promise((resolve, reject) => {
   // https://docs.galaxpay.com.br/autenticacao
   // https://docs.galaxpay.com.br/auth/token
   let accessToken
@@ -6,7 +6,7 @@ module.exports = (hashLogin, isSandbox, hashPartner) => new Promise((resolve, re
   const request = isRetry => {
     const headers = { Authorization: `Basic ${hashLogin}` }
     if (!isSandbox && hashPartner) {
-      console.log('> Authorization Partner ', hashPartner)
+      console.log('#AuthorizationPartner ', storeId)
       headers.AuthorizationPartner = hashPartner
     }
     axios.post('/token', {

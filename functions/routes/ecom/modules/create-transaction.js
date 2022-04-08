@@ -26,7 +26,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const orderId = params.order_id
   const orderNumber = params.order_number
   const { amount, buyer, payer, to, items, type } = params
-  console.log('> Transaction #', storeId, orderId)
+  console.log('> Transaction #', orderId, ' store: ', storeId)
 
   const transaction = {
     type: type,
@@ -85,8 +85,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
     state: to.province || to.province_code
   })
 
-  let galaxpaySubscriptions
-
   const finalAmount = transaction.amount
 
   const methodConfigName = params.payment_method.code === 'credit_card' ? appData.credit_card.label : appData.banking_billet.label
@@ -95,6 +93,17 @@ exports.post = ({ appSdk, admin }, req, res) => {
   labelPaymentGateway = labelPaymentGateway.replace(methodConfigName, '')
 
   let plan = handlePlanTransction(labelPaymentGateway, appData)
+
+  const fristPayment = new Date()
+
+  const galaxpaySubscriptions = {
+    myId: `${orderId}`, // requered
+    value: Math.floor(finalAmount * 100),
+    quantity: plan.quantity || 0, //  recorrence quantity, non-zero case, recurrence limited by value
+    periodicity: parsePeriodicityGalaxPay(plan.periodicity),
+    // additionalInfo: '', // optional
+    ExtraFields: extraFields
+  }
 
   if (!plan && !appData.plan_recurrence && appData.plans) {
     plan = appData.plans[0]
@@ -110,18 +119,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
       preAuthorize: false
     }
 
-    galaxpaySubscriptions = {
-      myId: `${orderId}`, // requered
-      value: Math.floor(finalAmount * 100),
-      quantity: 0, //  recorrence quantity, non-zero case, recurrence limited by value
-      periodicity: parsePeriodicityGalaxPay(plan.periodicity),
-      firstPayDayDate: new Date().toISOString().split('T')[0], // requered
-      // additionalInfo: '', // optional
-      mainPaymentMethodId: 'creditcard',
-      Customer: galaxpayCustomer,
-      PaymentMethodCreditCard: PaymentMethodCreditCard,
-      ExtraFields: extraFields
-    }
+    galaxpaySubscriptions.mainPaymentMethodId = 'creditcard'
+    galaxpaySubscriptions.PaymentMethodCreditCard = PaymentMethodCreditCard
+    galaxpaySubscriptions.Customer = galaxpayCustomer
+    galaxpaySubscriptions.firstPayDayDate = fristPayment.split('T')[0] // requered
   } else if (params.payment_method.code === 'banking_billet') {
     if (to) {
       galaxpayCustomer.Address = parseAddress(to)
@@ -129,17 +130,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
       galaxpayCustomer.Address = parseAddress(params.billing_address)
     }
 
-    galaxpaySubscriptions = {
-      myId: `${orderId}`, // requered
-      value: Math.floor(finalAmount * 100),
-      quantity: 0, //  recorrence quantity, non-zero case, recurrence limited by value
-      periodicity: parsePeriodicityGalaxPay(plan.periodicity),
-      firstPayDayDate: new Date().toISOString().split('T')[0], // requered
-      // additionalInfo: '', // optional,  instructions banking billet?
-      mainPaymentMethodId: 'boleto',
-      Customer: galaxpayCustomer,
-      ExtraFields: extraFields
-    }
+    fristPayment.setDate(fristPayment.getDate() + (appData.banking_billet.add_days || 0))
+
+    galaxpaySubscriptions.mainPaymentMethodId = 'boleto'
+    galaxpaySubscriptions.Customer = galaxpayCustomer
+    galaxpaySubscriptions.firstPayDayDate = fristPayment.split('T')[0] // requered
   }
 
   galaxpayAxios.preparing
