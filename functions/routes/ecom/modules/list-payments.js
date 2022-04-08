@@ -96,7 +96,7 @@ exports.post = ({ appSdk }, req, res) => {
             icon: methodConfig.icon,
             text: methodConfig.text,
             payment_method: {
-              code: isPix ? 'other' : paymentMethod, // pix is defined payment method outher
+              code: isPix ? 'account_deposit' : paymentMethod, // pix is defined payment method outher
               name: `${label} - ${intermediator.name}`
             },
             type,

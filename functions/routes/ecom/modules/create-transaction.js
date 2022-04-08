@@ -136,7 +136,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions.mainPaymentMethodId = 'boleto'
     galaxpaySubscriptions.Customer = galaxpayCustomer
     galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0] // requered
-  } else if (params.payment_method.code === 'other') {
+  } else if (params.payment_method.code === 'account_deposit') {
     // other  is PIX
     if (to) {
       galaxpayCustomer.Address = parseAddress(to)
@@ -144,11 +144,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
       galaxpayCustomer.Address = parseAddress(params.billing_address)
     }
 
+    const PaymentMethodPix = {
+      instructions: appData.pix.instructions || ''
+    }
+
     // fristPayment.setDate(fristPayment.getDate() + (appData.banking_billet.add_days || 0))
 
     galaxpaySubscriptions.mainPaymentMethodId = 'pix'
     galaxpaySubscriptions.Customer = galaxpayCustomer
     galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0] // requered
+    galaxpaySubscriptions.PaymentMethodPix = PaymentMethodPix
   }
 
   galaxpayAxios.preparing
