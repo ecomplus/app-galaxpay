@@ -1,6 +1,6 @@
 // setup server and app options from Functions config (and mocks)
 const { GCLOUD_PROJECT, FIREBASE_CONFIG, FUNCTION_REGION } = process.env
-const { pkg, server, galaxypayConfig } = require('firebase-functions').config()
+const { pkg, server, galaxypayconfig } = require('firebase-functions').config()
 
 let projectId = GCLOUD_PROJECT
 if (!projectId && FIREBASE_CONFIG) {
@@ -19,6 +19,6 @@ module.exports = {
     ...pkg
   },
   galaxypayConfig: {
-    ...galaxypayConfig
+    ...galaxypayconfig
   }
 }
