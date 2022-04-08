@@ -122,7 +122,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions.mainPaymentMethodId = 'creditcard'
     galaxpaySubscriptions.PaymentMethodCreditCard = PaymentMethodCreditCard
     galaxpaySubscriptions.Customer = galaxpayCustomer
-    galaxpaySubscriptions.firstPayDayDate = fristPayment.split('T')[0] // requered
+    galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0]// requered
   } else if (params.payment_method.code === 'banking_billet') {
     if (to) {
       galaxpayCustomer.Address = parseAddress(to)
@@ -134,7 +134,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
     galaxpaySubscriptions.mainPaymentMethodId = 'boleto'
     galaxpaySubscriptions.Customer = galaxpayCustomer
-    galaxpaySubscriptions.firstPayDayDate = fristPayment.split('T')[0] // requered
+    galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0] // requered
   }
 
   galaxpayAxios.preparing
