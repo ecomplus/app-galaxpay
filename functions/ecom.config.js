@@ -318,6 +318,12 @@ const app = {
             description: 'Nome da forma de pagamento exibido para os clientes',
             default: 'PIX'
           },
+          instructions:{
+            type: 'string',
+            maxLength: 255,
+            title: 'Instruções do QR Code Pix',
+            description: 'Informação exibida nos detalhes do QR Code.',
+          }
         }
       },
       hide: false
