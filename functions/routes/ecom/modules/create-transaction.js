@@ -145,7 +145,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     }
 
     const PaymentMethodPix = {
-      instructions: '' //appData.pix.instructions || ''
+      instructions: appData.pix.instructions || 'Pix'
     }
 
     // fristPayment.setDate(fristPayment.getDate() + (appData.banking_billet.add_days || 0))
