@@ -1,6 +1,6 @@
 const createAxios = require('./create-axios')
 const auth = require('./create-authorization')
-const { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
+const { galaxypayConfig } = require('../../__env')
 
 module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firestoreColl = 'galaxpay_tokens') {
   const self = this
@@ -14,6 +14,8 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firesto
       .doc(`${firestoreColl}/${storeId}-${hashLogin}`)
   }
 
+  const hashPartner = Buffer.from(`${galaxypayConfig.id_partner}:${galaxypayConfig.hash_partner}`).toString('base64')
+
   this.preparing = new Promise((resolve, reject) => {
     const authenticate = (accessToken, isSandbox) => {
       self.axios = createAxios(accessToken, isSandbox)
@@ -22,8 +24,8 @@ module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firesto
     }
 
     const handleAuth = (isSandbox) => {
-      console.log('> Galaxpay Auth02')
-      auth(hashLogin, isSandbox)
+      console.log('> Galaxpay Auth02 ', hashPartner)
+      auth(hashLogin, isSandbox, hashPartner)
         .then((accessToken) => {
           console.log(`> Galaxy token: ${hashLogin}`)
           authenticate(accessToken, isSandbox)

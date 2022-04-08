@@ -51,7 +51,6 @@ exports.post = ({ appSdk }, req, res) => {
   })
 
   */
- console.log('> ENV ', galaxypayConfig)
   let amount = params.amount || {}
 
   if (!appData.galaxpay_id || !appData.galaxpay_hash) {
