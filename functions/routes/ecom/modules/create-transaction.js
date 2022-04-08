@@ -96,13 +96,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const fristPayment = new Date()
 
-  console.log('>> plan ', plan)
-  // console.log('> quantity ', plan.quantity)
-  // console.log('> typeof ', typeof plan.quantity)
+  const quantity = plan.quantity || 0
   const galaxpaySubscriptions = {
     myId: `${orderId}`, // requered
     value: Math.floor(finalAmount * 100),
-    quantity: plan.quantity || 0, //  recorrence quantity, non-zero case, recurrence limited by value
+    quantity: storeId === 1173 || storeId === 1011 ? quantity : 0, //  recorrence quantity, non-zero case, test in stores 1173 and 1011
     periodicity: parsePeriodicityGalaxPay(plan.periodicity),
     // additionalInfo: '', // optional
     ExtraFields: extraFields

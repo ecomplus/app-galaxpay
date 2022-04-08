@@ -101,7 +101,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         })
                     }
                   })
-              } else {
+              } else if (GalaxPaySubscriptionQuantity === 0) {
                 const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
                 findOrderByTransactionId(appSdk, storeId, auth, transaction_id)
                   .then(({ response }) => {
@@ -167,6 +167,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.error(err)
                     res.sendStatus(500)
                   })
+              } else {
+                // add order, because recorrence create all transaction in frist transaction when quantity non-zero, but we need create order when user to pay transaction
+
               }
             })
             .catch(err => {
