@@ -261,30 +261,6 @@ const app = {
       },
       hide: false
     },
-    pix: {
-      schema: {
-        type: 'object',
-        title: 'PIX - (Não Disponível)',
-        description: 'Configurações adicionais para PIX. OBS: Funcionalidade ainda não disponível para uso',
-        additionalProperties: false,
-        properties: {
-          disable: {
-            type: 'boolean',
-            default: true,
-            title: 'Desabilitar PIX',
-            description: 'Desabilitar pagamento com PIX via Galaxpay'
-          },
-          label: {
-            type: 'string',
-            maxLength: 50,
-            title: 'Rótulo',
-            description: 'Nome da forma de pagamento exibido para os clientes',
-            default: 'PIX'
-          },
-        }
-      },
-      hide: false
-    },
     plan_recurrence: {
       schema: {
         type: 'object',
@@ -319,6 +295,30 @@ const app = {
         },
         title: 'Plano de recorrência',
         description: 'Configurações para cobranças por recorrência'
+      },
+      hide: false
+    },
+    pix: {
+      schema: {
+        type: 'object',
+        title: 'PIX - (Não Disponível)',
+        description: 'Configurações adicionais para PIX. OBS: Funcionalidade ainda não disponível para uso',
+        additionalProperties: false,
+        properties: {
+          disable: {
+            type: 'boolean',
+            default: true,
+            title: 'Desabilitar PIX',
+            description: 'Desabilitar pagamento com PIX via Galaxpay'
+          },
+          label: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Rótulo',
+            description: 'Nome da forma de pagamento exibido para os clientes',
+            default: 'PIX'
+          },
+        }
       },
       hide: false
     },
