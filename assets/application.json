@@ -271,7 +271,7 @@
               "description": "Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual "
             },
             "quantity": {
-              "type": "number",
+              "type": "integer",
               "default": 0,
               "title": "Quantidade da recorrência",
               "description": "Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0"
