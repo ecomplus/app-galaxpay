@@ -96,7 +96,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   if (transactions[0].payment_method.code === 'banking_billet') {
                     transactions[0].payment_link = GalaxPaySubscription.paymentLink
                   }
-  
+
                   const financial_status = {
                     updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
                     current: parseStatus(GalaxPayTransaction.status)
@@ -283,7 +283,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
               } else {
                 // add order, because recorrence create all transaction in frist transaction when quantity non-zero, but we need create order when user to pay transaction
-
+                createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
               }
             })
             .catch(err => {
