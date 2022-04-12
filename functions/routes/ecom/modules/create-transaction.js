@@ -191,7 +191,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             admin.firestore().collection('subscriptions').doc(orderId)
               .set({
-                subscriptionLabel: plan.label,
+                subscriptionLabel: plan.label ? plan.label : 'Plano',
                 storeId,
                 status: 'open',
                 orderNumber: params.order_number,
