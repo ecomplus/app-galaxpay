@@ -297,7 +297,82 @@ const app = {
         description: 'Configurações para cobranças por recorrência'
       },
       hide: false
+    },
+    plans: {
+      schema: {
+        title: 'Planos de Recorrência - (Não Disponível)',
+        description: 'Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponível para uso',
+        type: 'array',
+        maxItems: 10,
+        items: {
+          title: 'Plano',
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            label: {
+              type: 'string',
+              maxLength: 100,
+              title: 'Plano',
+              description: 'Texto definir um nome para o plano'
+            },
+            periodicity: {
+              type: 'string',
+              enum: [
+                'Semanal',
+                'Quinzenal',
+                'Mensal',
+                'Bimestral',
+                'Trimestral',
+                'Semestral',
+                'Anual'
+              ],
+              default: 'Mensal',
+              title: 'Periodicidade da recorrência',
+              description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
+            },
+            quantity: {
+              type: 'number',
+              default: 0,
+              title: 'Quantidade da recorrência',
+              description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0'
+            },
+            discount: {
+              title: 'Desconto',
+              type: 'object',
+              required: [
+                'value'
+              ],
+              properties: {
+                percentage: {
+                  type: 'boolean',
+                  default: false,
+                  title: 'Desconto percentual'
+                },
+                value: {
+                  type: 'number',
+                  minimum: -99999999,
+                  maximum: 99999999,
+                  title: 'Valor do desconto',
+                  description: 'Valor percentual/fixo do desconto ou acréscimo (negativo)'
+                },
+                apply_at: {
+                  type: 'string',
+                  enum: [
+                    'total',
+                    'subtotal',
+                    'frete'
+                  ],
+                  default: 'subtotal',
+                  title: 'Aplicar desconto em',
+                  description: 'Em qual valor o desconto deverá ser aplicado no checkout'
+                }
+              }
+            }
+          }
+        }
+      }
     }
+
     /**
      * JSON schema based fields to be configured by merchant and saved to app `data` / `hidden_data`, such as:
 
