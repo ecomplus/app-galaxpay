@@ -148,7 +148,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       instructions: appData.pix.instructions || 'Pix'
     }
 
-    // fristPayment.setDate(fristPayment.getDate() + (appData.banking_billet.add_days || 0))
+    fristPayment.setDate(fristPayment.getDate() + (appData.pix.add_days || 0))
 
     galaxpaySubscriptions.mainPaymentMethodId = 'pix'
     galaxpaySubscriptions.Customer = galaxpayCustomer
@@ -156,7 +156,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions.PaymentMethodPix = PaymentMethodPix
   }
 
-  console.log('> GalaxPay Subscription ', galaxpaySubscriptions)
   galaxpayAxios.preparing
     .then(() => {
       if (type === 'recurrence') {
