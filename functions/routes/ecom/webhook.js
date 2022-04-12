@@ -53,7 +53,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
             return appSdk.apiRequest(storeId, `/orders/${resourceId}.json`, 'GET', null, auth)
           })
           .then(({ response }) => {
-            console.log('s: ', storeId, '> Cancell Subscription ')
+            console.log('s: ', storeId, '> Cancell Subscription ', resourceId)
             const order = response.data
             const subscription = collectionSubscription.doc(order._id)
             subscription.get()
