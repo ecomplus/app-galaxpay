@@ -298,6 +298,42 @@ const app = {
       },
       hide: false
     },
+    pix: {
+      schema: {
+        type: 'object',
+        title: 'PIX - (Não Disponível)',
+        description: 'Configurações adicionais para PIX. OBS: Funcionalidade ainda não disponível para uso',
+        additionalProperties: false,
+        properties: {
+          disable: {
+            type: 'boolean',
+            default: true,
+            title: 'Desabilitar PIX',
+            description: 'Desabilitar pagamento com PIX via Galaxpay'
+          },
+          label: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Rótulo',
+            description: 'Nome da forma de pagamento exibido para os clientes',
+            default: 'PIX'
+          },
+          instructions:{
+            type: 'string',
+            maxLength: 255,
+            title: 'Instruções do QR Code Pix',
+            description: 'Informação exibida nos detalhes do QR Code.',
+          },
+          add_days: {
+            type: 'integer',
+            default: 0,
+            title: 'Prazo',
+            description: 'Prazo em DIAS para o primeiro pagamento'
+          }
+        }
+      },
+      hide: false
+    },
     plans: {
       schema: {
         title: 'Planos de Recorrência - (Não Disponível)',
