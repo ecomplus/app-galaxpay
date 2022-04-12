@@ -191,7 +191,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             admin.firestore().collection('subscriptions').doc(orderId)
               .set({
-                subscriptionLabel: appData.galaxpay_subscription_label,
+                subscriptionLabel: plan.label,
                 storeId,
                 status: 'open',
                 orderNumber: params.order_number,

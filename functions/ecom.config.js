@@ -406,7 +406,8 @@ const app = {
             }
           }
         }
-      }
+      },
+      hide: false
     }
 
     /**
