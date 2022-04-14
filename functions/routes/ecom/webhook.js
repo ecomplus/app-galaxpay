@@ -49,6 +49,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
           })
           .then(auth => {
             // Get Original Order
+            console.log('s: ', storeId, '> ', resourceId)
             authorization = auth
             return appSdk.apiRequest(storeId, `/orders/${resourceId}.json`, 'GET', null, auth)
           })
@@ -76,7 +77,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       res.send(ECHO_SUCCESS)
                       admin.firestore().collection('subscriptions').doc(order._id)
                         .set({
-                          status: 'cancelled'
+                          status: 'cancelled',
+                          updated_at: new Date().toISOString
                         }, { merge: true })
                         .catch(console.error)
                     })
