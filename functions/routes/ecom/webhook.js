@@ -84,9 +84,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     })
                     .catch((err) => {
                       console.error(err)
-                      console.log(' > Response ', err.response)
+                      const statusCode = err.response.status
                       // case error cancell GalaxPay, not cancelled in API
-                      if (!order.subscription_order) {
+                      if (!order.subscription_order && statusCode !== 404) {
                         const body = {
                           status: 'open'
                         }
@@ -103,6 +103,21 @@ exports.post = ({ appSdk, admin }, req, res) => {
                               message
                             })
                           })
+                      } else if (statusCode === 404) {
+                        admin.firestore().collection('subscriptions').doc(order._id)
+                          .set({
+                            status: 'cancelled',
+                            updated_at: new Date().toISOString,
+                            description: 'Subscription canceled or finished in galaxPay'
+                          }, { merge: true })
+                          .catch(console.error)
+                      } else {
+                        admin.firestore().collection('subscriptions').doc(order._id)
+                          .set({
+                            updated_at: new Date().toISOString,
+                            description: `GALAXPAY_TRANSACTION_ERR ${statusCode}`
+                          }, { merge: true })
+                          .catch(console.error)
                       }
                     })
                 } else {
