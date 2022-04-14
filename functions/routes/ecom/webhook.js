@@ -83,7 +83,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         .catch(console.error)
                     })
                     .catch((err) => {
-                      console.error(err, ' > ', err.response)
+                      console.error(err)
+                      console.log(' > Response ', err.response)
                       // case error cancell GalaxPay, not cancelled in API
                       if (!order.subscription_order) {
                         const body = {
