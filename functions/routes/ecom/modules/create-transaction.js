@@ -166,9 +166,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
           .then((data) => {
             console.log('> New Subscription')
 
-            if (data.mainPaymentMethodId === 'boleto' || data.mainPaymentMethodId === 'pix') {
-              transaction.payment_link = data.paymentLink
-            }
+            transaction.payment_link = data.paymentLink
 
             const transactionGalaxPay = data.Transactions[0]
 
