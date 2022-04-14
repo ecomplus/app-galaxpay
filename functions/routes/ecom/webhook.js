@@ -70,6 +70,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 })
               })
               .then(({ status, order }) => {
+                const updatedAt = new Date().toISOString()
                 if (status !== 'cancelled') {
                   galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
                     .then((data) => {
@@ -77,7 +78,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       res.send(ECHO_SUCCESS)
                       admin.firestore().collection('subscriptions').doc(order._id)
                         .set({
-                          status: 'cancelled'
+                          status: 'cancelled',
+                          updatedAt
                         }, { merge: true })
                         .catch(console.error)
                     })
@@ -103,18 +105,19 @@ exports.post = ({ appSdk, admin }, req, res) => {
                             })
                           })
                       } else if (statusCode === 404) {
-                        const updatedAt = new Date().toISOString
                         console.log('> ', updatedAt, 'Type ', typeof updatedAt)
                         admin.firestore().collection('subscriptions').doc(order._id)
                           .set({
                             status: 'cancelled',
-                            description: 'Subscription canceled or finished in galaxPay'
+                            description: 'Subscription canceled or finished in galaxPay',
+                            updatedAt
                           }, { merge: true })
                           .catch(console.error)
                       } else {
                         admin.firestore().collection('subscriptions').doc(order._id)
                           .set({
-                            description: `GALAXPAY_TRANSACTION_ERR ${statusCode}`
+                            description: `GALAXPAY_TRANSACTION_ERR ${statusCode}`,
+                            updatedAt
                           }, { merge: true })
                           .catch(console.error)
                       }
