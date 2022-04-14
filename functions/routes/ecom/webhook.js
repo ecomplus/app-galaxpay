@@ -78,7 +78,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       admin.firestore().collection('subscriptions').doc(order._id)
                         .set({
                           status: 'cancelled',
-                          updated_at: new Date().toISOString
+                          updated_at: new Date().toISOString.split('T')[0]
                         }, { merge: true })
                         .catch(console.error)
                     })
@@ -107,14 +107,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         admin.firestore().collection('subscriptions').doc(order._id)
                           .set({
                             status: 'cancelled',
-                            updated_at: new Date().toISOString,
+                            updated_at: new Date().toISOString.split('T')[0],
                             description: 'Subscription canceled or finished in galaxPay'
                           }, { merge: true })
                           .catch(console.error)
                       } else {
                         admin.firestore().collection('subscriptions').doc(order._id)
                           .set({
-                            updated_at: new Date().toISOString,
+                            updated_at: new Date().toISOString.split('T')[0],
                             description: `GALAXPAY_TRANSACTION_ERR ${statusCode}`
                           }, { merge: true })
                           .catch(console.error)

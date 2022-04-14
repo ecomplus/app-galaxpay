@@ -196,7 +196,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 status: 'open',
                 orderNumber: params.order_number,
                 transactionId: transactionGalaxPay.galaxPayId,
-                create_at: new Date().toISOString()
+                create_at: new Date().toISOString().split('T')[0]
               })
               .catch(console.error)
           })
