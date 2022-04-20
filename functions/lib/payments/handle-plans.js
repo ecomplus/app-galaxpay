@@ -1,16 +1,21 @@
 
+// for list-payments
 const handleGateway = (appData) => {
   let gateways = []
+  // Check that the app has the plan_recurrence property and that the property is not disabled.
   if (appData.plan_recurrence && !appData.plan_recurrence.disable) {
     const label = appData.galaxpay_subscription_label ? appData.galaxpay_subscription_label : ''
+    // create plan, to list-payments
     const plan = {
       label,
       periodicity: appData.plan_recurrence.periodicity,
       quantity: appData.plan_recurrence.quantity,
       discount: { percentage: false }
     }
+    // add plan on  payments gateways list
     gateways.push(plan)
   } else if (appData.plans) {
+    // Newer versions of the app will have a list of plans
     appData.plans.forEach(plan => {
       gateways.push(plan)
     })
@@ -19,7 +24,9 @@ const handleGateway = (appData) => {
   return gateways
 }
 
+// for create-transaction
 const handlePlanTransction = (label, appData) => {
+  // Check that the app has the plan_recurrence property and that the property is not disabled.
   if (appData.plan_recurrence && !appData.plan_recurrence.disable) {
     const plan = {
       label,
@@ -29,9 +36,13 @@ const handlePlanTransction = (label, appData) => {
     }
     return plan
   } else if (appData.plans) {
+    /* More recent versions of the application will have a list of plans, where it will be necessary to find the plan by name, 
+    and return it since it will be necessary to use the periodicity and quantity property */
     let sendPlan
 
+    // find plan by name (label)
     appData.plans.forEach((plan) => {
+      // if the name of the plan is blank, on the list-payments side it is set to 'Plano'
       let planLabel = plan.label || 'Plano'
       planLabel = planLabel + ' ' + plan.periodicity
       label = label.trim()
@@ -52,7 +63,6 @@ const discountPlan = (planName, discount, amount) => {
       value,
       type: discount.percentage ? 'percentage' : 'fixed'
     }
-    // response.discount_option
 
     if (amount.total) {
       // check amount value to apply discount

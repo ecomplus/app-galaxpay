@@ -173,16 +173,6 @@ const app = {
       },
       hide: false
     },
-    galaxpay_subscription_label: {
-      schema: {
-        type: 'string',
-        maxLength: 50,
-        title: 'Rótulo para assinatura',
-        description: 'Exibido para os clientes junto ao nome da forma de pagamento',
-        default: 'Assinatura'
-      },
-      hide: false
-    },
     credit_card: {
       schema: {
         type: 'object',
@@ -261,48 +251,11 @@ const app = {
       },
       hide: false
     },
-    plan_recurrence: {
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          disable: {
-            type: 'boolean',
-            title: 'Desabilitar plano de recorrência',
-            description: 'Desabilitar recorrência via Galaxpay'
-          },
-          periodicity: {
-            type: 'string',
-            enum: [
-              'Semanal',
-              'Quinzenal',
-              'Mensal',
-              'Bimestral',
-              'Trimestral',
-              'Semestral',
-              'Anual'
-            ],
-            default: 'Mensal',
-            title: 'Periodicidade da recorrência',
-            description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
-          },
-          quantity: {
-            type: 'number',
-            default: 0,
-            title: 'Quantidade da recorrência',
-            description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0. OBS.: Valores diferente de 0 (zero) não disponivél no momento'
-          },
-        },
-        title: 'Plano de recorrência',
-        description: 'Configurações para cobranças por recorrência'
-      },
-      hide: false
-    },
     pix: {
       schema: {
         type: 'object',
-        title: 'PIX - (Não Disponível)',
-        description: 'Configurações adicionais para PIX. OBS: Funcionalidade ainda não disponível para uso',
+        title: 'PIX',
+        description: 'Configurações adicionais para PIX.',
         additionalProperties: false,
         properties: {
           disable: {
@@ -336,8 +289,8 @@ const app = {
     },
     plans: {
       schema: {
-        title: 'Planos de Recorrência - (Não Disponível)',
-        description: 'Criar tipos de planos para recorrência. OBS: Funcionalidade ainda não disponível para uso',
+        title: 'Planos de Recorrência',
+        description: 'Criar tipos de planos para recorrência.',
         type: 'array',
         maxItems: 10,
         items: {

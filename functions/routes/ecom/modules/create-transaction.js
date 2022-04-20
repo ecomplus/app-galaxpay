@@ -90,10 +90,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const isPix = params.payment_method.code === 'account_deposit'
   const methodConfigName = params.payment_method.code === 'credit_card' ? appData.credit_card.label : (isPix ? appData.pix.label : appData.banking_billet.label)
 
+  // handle plan label to find plan by name (label)
   let labelPaymentGateway = params.payment_method.name.replace('- GalaxPay', '')
   labelPaymentGateway = labelPaymentGateway.replace(methodConfigName, '')
 
-  let plan = handlePlanTransction(labelPaymentGateway, appData)
+  let plan = handlePlanTransction(labelPaymentGateway, appData) // find plan selected
 
   const fristPayment = new Date()
 
@@ -101,7 +102,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const galaxpaySubscriptions = {
     myId: `${orderId}`, // requered
     value: Math.floor(finalAmount * 100),
-    quantity: storeId === 1173 || storeId === 1011 ? quantity : 0, //  recorrence quantity, non-zero case, test in stores 1173 and 1011
+    quantity: quantity, //  recorrence quantity
     periodicity: parsePeriodicityGalaxPay(plan.periodicity),
     // additionalInfo: '', // optional
     ExtraFields: extraFields

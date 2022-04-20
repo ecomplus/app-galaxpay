@@ -280,7 +280,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     res.sendStatus(500)
                   })
               } else {
-                // add order, because recorrence create all transaction in frist transaction when quantity non-zero, but we need create order when user to pay transaction
+                /* add order, because recorrence create all transaction in frist transaction when quantity non-zero,
+                 but we need create order when user to pay transaction */
                 createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
               }
             })
