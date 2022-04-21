@@ -1,7 +1,7 @@
 
 // for list-payments
 const handleGateway = (appData) => {
-  let gateways = []
+  const gateways = []
   // Check that the app has the plan_recurrence property and that the property is not disabled.
   if (appData.plan_recurrence && !appData.plan_recurrence.disable) {
     const label = appData.galaxpay_subscription_label ? appData.galaxpay_subscription_label : ''
