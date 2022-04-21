@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/ecomplus/application-starter/compare/v1.0.0...v1.1.0) (2022-04-21)
+
+
+### Features
+
+* **PIX:** add pix payment method ([1400463](https://github.com/ecomplus/application-starter/commit/14004639d185dff0f2f3c6e7c8b89a38bdfdec94))
+* **PIX:** create payment Pix in config ([5ba21d5](https://github.com/ecomplus/application-starter/commit/5ba21d508054aad9670cf508d5412a9feb81f000))
+* **Plans:** create plans in config ([fadc18d](https://github.com/ecomplus/application-starter/commit/fadc18d58d55e6ad1a32ae6d09c337b3852ed240))
+
+
+### Bug Fixes
+
+* **config:** add frist payment deadline ([2bed697](https://github.com/ecomplus/application-starter/commit/2bed697549e383bff76ab5f15f24b4fdd26f1144))
+* **config:** string corretion frist payment ([34c3e24](https://github.com/ecomplus/application-starter/commit/34c3e246a29a43be8cd8558e5ef4831fddbcd50b))
+* **ecom config:** back subscription_label ([ec3a3ab](https://github.com/ecomplus/application-starter/commit/ec3a3abf45c820161e7c1ec109fa3052f3faa926))
+* **ecom config:** remove plan_recorrence and subscription_label ([e1b58b3](https://github.com/ecomplus/application-starter/commit/e1b58b359d91cb55c21563f79e35bc68f05d7287))
+* **list-payments:** fix credit card icon uri ([17b38ee](https://github.com/ecomplus/application-starter/commit/17b38ee0aa9b150fd2bc2a7bd09f9978cc45dd3c))
+* **periodicity name:** alter name periodicity and create parse ([7e0fc7e](https://github.com/ecomplus/application-starter/commit/7e0fc7e5c3279863df4a40167a194f4e784b9800))
+
 ## 1.0.0 (2022-03-29)
 
 
