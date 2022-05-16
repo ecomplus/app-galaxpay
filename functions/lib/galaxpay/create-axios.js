@@ -12,7 +12,7 @@ module.exports = (accessToken, isSandbox) => {
   }
 
   return axios.create({
-    baseURL: `https://api.${isSandbox ? 'sandbox.cloud.' : ''}galaxpay.com.br/v2`,
+    baseURL: `https://api.galaxpay.com.br/v2`,
     headers
   })
 }
