@@ -65,6 +65,7 @@ exports.post = ({ appSdk }, req, res) => {
   const intermediator = {
     name: 'GalaxPay',
     link: `https://api.galaxpay.com.br/v2`,
+    // link: `https://api.${isSandbox ? 'sandbox.cloud.' : ''}galaxpay.com.br/v2`,
     code: 'galaxpay_app'
   }
   const paymentTypes = []

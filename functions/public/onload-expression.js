@@ -3,7 +3,7 @@
     return new Promise(function (resolve, reject) {
       // https://docs.galaxpay.com.br/tokenizacao-cartao-js
       const token = window._galaxPayPublicToken
-      const environment = true
+      const environment = true //!window._galaxPaySandbox // false = sandbox, true = production
       var galaxPay = new GalaxPay(token, environment)
       const galaxpayCard = galaxPay.newCard({
         number: card.number,

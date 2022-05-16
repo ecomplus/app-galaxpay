@@ -168,6 +168,7 @@ const app = {
       schema: {
         type: 'string',
         maxLength: 255,
+        default: false,
         title: 'Galax Public Token',
         description: 'Seu Public Token para Tokenização de Cartão, disponivél no Dashbord do GalaxPay, sessão de modulos, configuração de WebServices'
       },
