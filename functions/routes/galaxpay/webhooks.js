@@ -213,7 +213,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         })
                     }
                   })
-              } else if (GalaxPaySubscriptionQuantity === 0) {
+              } else {
+                /* add order, because recurrence creates all transactions in the first transaction when quantity is non-zero,
+                Search for the order by ID, if not found, create the transaction, and if found, check if it will be necessary 
+                to update the transaction status */
                 const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
                 findOrderByTransactionId(appSdk, storeId, auth, transaction_id)
                   .then(({ response }) => {
@@ -221,7 +224,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const { result } = response.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
-                        reject(new Error())
+                        if (GalaxPaySubscriptionQuantity !== 0 && GalaxPayTransaction.status !== 'notSend'){
+                          // Determined periodicity and status other than 'notSend', necessary to create order
+                          createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
+                        }else {
+                          reject(new Error())
+                        }
                       } else {
                         resolve({ result })
                       }
@@ -279,10 +287,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.error(err)
                     res.sendStatus(500)
                   })
-              } else {
-                /* add order, because recorrence create all transaction in frist transaction when quantity non-zero,
-                 but we need create order when user to pay transaction */
-                createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
               }
             })
             .catch(err => {
