@@ -233,8 +233,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const { result } = response.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
-                        if (GalaxPaySubscriptionQuantity !== 0 && checkPayDay(GalaxPayTransaction.payday)) {
-                          // Determined periodicity and status other than 'notSend', necessary to create order
+                        if (checkPayDay(GalaxPayTransaction.payday)) {
+                          // necessary to create order
                           createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
                         } else {
                           reject(new Error())
