@@ -196,6 +196,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 status: 'open',
                 orderNumber: params.order_number,
                 transactionId: transactionGalaxPay.galaxPayId,
+                quantity,
                 create_at: new Date().toISOString()
               })
               .catch(console.error)

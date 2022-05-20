@@ -17,8 +17,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const subscriptionId = GalaxPaySubscription.myId
   const GalaxPayTransaction = galaxpayHook.Transaction
 
-  console.log('> Galaxy WebHook ', type)
+  console.log('> Galaxy WebHook ', type, ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status)
   const collectionSubscription = admin.firestore().collection('subscriptions')
+
+  const checkPayDay = (str) => {
+    // check if today is 3 days before payday.
+    const payDay = new Date(str);
+    const nowTime = new Date().getTime() + 259200000; // add 3day to today
+    const now = new Date(nowTime);
+    return (now >= payDay);
+  }
 
   const findOrderByTransactionId = (appSdk, storeId, auth, transactionId) => {
     return new Promise((resolve, reject) => {
@@ -52,6 +60,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const orderNumber = documentSnapshot.data().orderNumber // number original order
         const transactionId = documentSnapshot.data().transactionId // Id frist transaction subscription
         const subscriptionLabel = documentSnapshot.data().subscriptionLabel
+        console.log('> Create new Order s:',storeId, ' transactionId: ', transactionId);
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -224,10 +233,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const { result } = response.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
-                        if (GalaxPaySubscriptionQuantity !== 0 && GalaxPayTransaction.status !== 'notSend'){
+                        if (GalaxPaySubscriptionQuantity !== 0 && checkPayDay(GalaxPayTransaction.payday)) {
                           // Determined periodicity and status other than 'notSend', necessary to create order
                           createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
-                        }else {
+                        } else {
                           reject(new Error())
                         }
                       } else {
@@ -302,6 +311,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
   } else if (type === 'subscription.addTransaction' && GalaxPaySubscriptionQuantity === 0) {
     // find transaction in firebase
     const subscription = collectionSubscription.doc(subscriptionId)
-    createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
+    if (checkPayDay(GalaxPayTransaction.payday)) {
+      createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
+    }
   }
 }

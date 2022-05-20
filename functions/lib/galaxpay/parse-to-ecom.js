@@ -25,6 +25,7 @@ const parsePeriodicity = (periodicity) => {
 
 const parseStatus = (status) => {
   switch (status) {
+    case 'notSend': // Ainda não enviada para operadora de Cartão
     case 'pendingBoleto': // Boleto em aberto
     case 'pendingPix': // Pix em aberto
       return 'pending'
@@ -50,9 +51,6 @@ const parseStatus = (status) => {
     case 'notCompensated' : // Boleto baixado por decurso de prazo
     case 'unavailablePix' : // Pix indisponível para pagamento
       return 'voided'
-
-    case 'notSend': // Ainda não enviada para operadora de Cartão
-      return 'under_analysis'
   }
   return 'unknown'
 }
