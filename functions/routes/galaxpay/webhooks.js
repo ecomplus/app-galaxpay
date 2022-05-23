@@ -20,6 +20,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type, ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status)
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
+  const checkStatus = (financialStatus, GalaxPayTransaction) => {
+    if (financialStatus.current === parseStatus(GalaxPayTransaction.status)) {
+      return true;
+    } else if ((financialStatus.current === 'paid' || financialStatus.current === 'authorized')
+      && parseStatus(GalaxPayTransaction.status) !== 'refunded') {
+      return true;
+    }
+    return false;
+  }
+
   const checkPayDay = (str) => {
     // check if today is 3 days before payday.
     const payDay = new Date(str);
@@ -60,7 +70,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const orderNumber = documentSnapshot.data().orderNumber // number original order
         const transactionId = documentSnapshot.data().transactionId // Id frist transaction subscription
         const subscriptionLabel = documentSnapshot.data().subscriptionLabel
-        console.log('> Create new Order s:',storeId, ' transactionId: ', transactionId);
+        console.log('> Create new Order s:', storeId, ' transactionId: ', transactionId);
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -188,7 +198,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   .then(({ response }) => {
                     order = response.data
                     // console.log('> order ', order)
-                    if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
+                    if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
                       // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
@@ -246,7 +256,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
                   .then(({ result }) => {
                     order = result[0]
-                    if (order.financial_status && order.financial_status.current === parseStatus(GalaxPayTransaction.status)) {
+                    if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
                       // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
@@ -274,7 +284,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
 
                   .then(apiResponse => {
-                    if (parseStatus(GalaxPayTransaction.status) === 'voided') {
+                    if (parseStatus(GalaxPayTransaction.status) === 'voided' || parseStatus(GalaxPayTransaction.status) === 'refunded') {
                       const body = {
                         status: 'cancelled'
                       }
