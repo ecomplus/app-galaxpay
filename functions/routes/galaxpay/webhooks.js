@@ -17,7 +17,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const subscriptionId = GalaxPaySubscription.myId
   const GalaxPayTransaction = galaxpayHook.Transaction
 
-  console.log('> Galaxy WebHook ', type, ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status)
+  console.log('> Galaxy WebHook ', type, ' Subscription ', GalaxPaySubscription ,' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status)
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
   const checkStatus = (financialStatus, GalaxPayTransaction) => {
@@ -70,7 +70,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const orderNumber = documentSnapshot.data().orderNumber // number original order
         const transactionId = documentSnapshot.data().transactionId // Id frist transaction subscription
         const subscriptionLabel = documentSnapshot.data().subscriptionLabel
-        console.log('> Create new Order s:', storeId, ' transactionId: ', transactionId);
+        console.log('> Create new Order s:', storeId, ' transactionId: ', transactionId, ' original Order: ', subscriptionId);
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -92,12 +92,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const originalTransaction = oldOrder.transactions[0]
                   const quantity = installment
                   const periodicity = parsePeriodicity(GalaxPaySubscription.periodicity)
+                  const dateUpdate = GalaxPayTransaction.datetimeLastSentToOperator ? new Date(GalaxPayTransaction.datetimeLastSentToOperator).toISOString() : new Date().toISOString()
 
                   const transactions = [
                     {
                       amount: originalTransaction.amount,
                       status: {
-                        updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
+                        updated_at: dateUpdate,
                         current: parseStatus(GalaxPayTransaction.status)
                       },
                       intermediator: {
@@ -115,7 +116,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   transactions[0].payment_link = GalaxPaySubscription.paymentLink
 
                   const financial_status = {
-                    updated_at: GalaxPayTransaction.datetimeLastSentToOperator || new Date().toISOString(),
+                    updated_at: dateUpdate,
                     current: parseStatus(GalaxPayTransaction.status)
                   }
                   body = {
