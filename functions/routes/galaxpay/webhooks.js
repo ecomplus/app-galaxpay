@@ -17,7 +17,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const subscriptionId = GalaxPaySubscription.myId
   const GalaxPayTransaction = galaxpayHook.Transaction
 
-  console.log('> Galaxy WebHook ', type, ' Subscription ', GalaxPaySubscription ,' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status)
+  console.log('> Galaxy WebHook ', type, ' Subscription ', JSON.stringify(GalaxPaySubscription), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
   const checkStatus = (financialStatus, GalaxPayTransaction) => {
@@ -70,6 +70,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const orderNumber = documentSnapshot.data().orderNumber // number original order
         const transactionId = documentSnapshot.data().transactionId // Id frist transaction subscription
         const subscriptionLabel = documentSnapshot.data().subscriptionLabel
+        const plan = documentSnapshot.data().plan
         console.log('> Create new Order s:', storeId, ' transactionId: ', transactionId, ' original Order: ', subscriptionId);
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
@@ -93,6 +94,33 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const quantity = installment
                   const periodicity = parsePeriodicity(GalaxPaySubscription.periodicity)
                   const dateUpdate = GalaxPayTransaction.datetimeLastSentToOperator ? new Date(GalaxPayTransaction.datetimeLastSentToOperator).toISOString() : new Date().toISOString()
+
+                  if (plan) {
+
+                    for (let i = 0; i < items.length; i++) {
+                      let item = items[i]
+                      if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
+                        amount.subtotal -= item.final_price
+                        amount.discount -= item.final_price
+                        items.splice(i, 1)
+                      }
+                    }
+          
+                    amount.total = amount.subtotal + (amount.tax || 0) + (amount.freight || 0) + (amount.extra || 0)
+
+                    // ex.:  plan = {"discount":{"percentage":false,"apply_at":"subtotal","value":5},"periodicity":"Mensal","quantity":0,"label":"plano test1"} 
+                    let planDiscount = amount[plan.discount.apply_at]
+                    if (plan.discount.percentage) {
+                      planDiscount = planDiscount * ((planDiscount.discount.value) / 100)
+                    }
+
+                    amount.discount = ((!plan.discount.percentage? plan.discount.value : planDiscount) || 0)
+                    amount.total -= amount.discount
+                    
+                    const TransactionValue = GalaxPayTransaction.value / 100
+                    console.log('>> Transaction Value ', TransactionValue, ' Amout: ', JSON.stringify(amount),' <<')
+                    
+                  }
 
                   const transactions = [
                     {

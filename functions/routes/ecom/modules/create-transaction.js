@@ -28,10 +28,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const { amount, buyer, payer, to, items, type } = params
   console.log('> Transaction #', orderId, ' store: ', storeId)
 
-  const transaction = {
-    type: type,
-    amount: amount.total
-  }
 
   // indicates whether the buyer should be redirected to payment link right after checkout
   let redirectToPayment = false
@@ -85,8 +81,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
     state: to.province || to.province_code
   })
 
-  const finalAmount = transaction.amount
-
   const isPix = params.payment_method.code === 'account_deposit'
   const methodConfigName = params.payment_method.code === 'credit_card' ? appData.credit_card.label : (isPix ? appData.pix.label : appData.banking_billet.label)
 
@@ -96,138 +90,187 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   let plan = handlePlanTransction(labelPaymentGateway, appData) // find plan selected
 
-  const fristPayment = new Date()
+  appSdk.getAuth(storeId)
+    .then(auth => {
+      appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
+        .then(({ response }) => {
+          let amoutOrder = response.data.amount
+          const itemsOrder = response.data.items
 
-  const quantity = plan.quantity || 0
-  const galaxpaySubscriptions = {
-    myId: `${orderId}`, // requered
-    value: Math.floor(finalAmount * 100),
-    quantity: quantity, //  recorrence quantity
-    periodicity: parsePeriodicityGalaxPay(plan.periodicity),
-    // additionalInfo: '', // optional
-    ExtraFields: extraFields
-  }
+          for (let i = 0; i < itemsOrder.length; i++) {
+            let item = itemsOrder[i]
+            if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
+              amoutOrder.subtotal -= item.final_price
+              amoutOrder.discount -= item.final_price
+              itemsOrder.splice(i, 1)
+            }
+          }
 
-  if (!plan && !appData.plan_recurrence && appData.plans) {
-    plan = appData.plans[0]
-  }
+          amoutOrder.total = amoutOrder.subtotal + (amoutOrder.tax || 0) + (amoutOrder.freight || 0) + (amoutOrder.extra || 0)
+          
+          // ex.:  plan  {"discount":{"percentage":false,"apply_at":"subtotal","value":5},"periodicity":"Mensal","quantity":0,"label":"plano test1"} 
+          let planDiscount = amoutOrder[plan.discount.apply_at]
+          if (plan.discount.percentage) {
+            planDiscount = planDiscount * ((planDiscount.discount.value) / 100)
+          }
 
-  if (params.payment_method.code === 'credit_card') {
-    const card = {
-      hash: params.credit_card.hash
-    }
+          const transaction = {
+            type: type,
+            amount: amount.total
+          }
+          let discount = ((!plan.discount.percentage ? plan.discount.value : planDiscount) || 0)
 
-    const PaymentMethodCreditCard = {
-      Card: card,
-      preAuthorize: false
-    }
+          const finalAmount = amoutOrder.total - discount
+          const fristPayment = new Date()
 
-    galaxpaySubscriptions.mainPaymentMethodId = 'creditcard'
-    galaxpaySubscriptions.PaymentMethodCreditCard = PaymentMethodCreditCard
-    galaxpaySubscriptions.Customer = galaxpayCustomer
-    galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0]// requered
-  } else if (params.payment_method.code === 'banking_billet') {
-    if (to) {
-      galaxpayCustomer.Address = parseAddress(to)
-    } else if (params.billing_address) {
-      galaxpayCustomer.Address = parseAddress(params.billing_address)
-    }
+          const quantity = plan.quantity || 0
+          const galaxpaySubscriptions = {
+            myId: `${orderId}`, // requered
+            value: Math.floor(finalAmount * 100),
+            quantity: quantity, //  recorrence quantity
+            periodicity: parsePeriodicityGalaxPay(plan.periodicity),
+            // additionalInfo: '', // optional
+            ExtraFields: extraFields
+          }
 
-    fristPayment.setDate(fristPayment.getDate() + (appData.banking_billet.add_days || 0))
+          if (!plan && !appData.plan_recurrence && appData.plans) {
+            plan = appData.plans[0]
+          }
 
-    galaxpaySubscriptions.mainPaymentMethodId = 'boleto'
-    galaxpaySubscriptions.Customer = galaxpayCustomer
-    galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0] // requered
-  } else if (params.payment_method.code === 'account_deposit') {
-    // other  is PIX
-    if (to) {
-      galaxpayCustomer.Address = parseAddress(to)
-    } else if (params.billing_address) {
-      galaxpayCustomer.Address = parseAddress(params.billing_address)
-    }
-
-    const PaymentMethodPix = {
-      instructions: appData.pix.instructions || 'Pix'
-    }
-
-    fristPayment.setDate(fristPayment.getDate() + (appData.pix.add_days || 0))
-
-    galaxpaySubscriptions.mainPaymentMethodId = 'pix'
-    galaxpaySubscriptions.Customer = galaxpayCustomer
-    galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0] // requered
-    galaxpaySubscriptions.PaymentMethodPix = PaymentMethodPix
-  }
-
-  galaxpayAxios.preparing
-    .then(() => {
-      if (type === 'recurrence') {
-        galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
-          .then((data) => {
-            return data.data.Subscription
-          })
-          .then((data) => {
-            console.log('> New Subscription')
-
-            transaction.payment_link = data.paymentLink
-
-            const transactionGalaxPay = data.Transactions[0]
-
-            const installment = transactionGalaxPay.installment
-
-            transaction.status = {
-              updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
-              current: parseStatus(transactionGalaxPay.status)
+          if (params.payment_method.code === 'credit_card') {
+            const card = {
+              hash: params.credit_card.hash
             }
 
-            transaction.intermediator = {
-              transaction_id: transactionGalaxPay.tid,
-              transaction_code: transactionGalaxPay.authorizationCode
+            const PaymentMethodCreditCard = {
+              Card: card,
+              preAuthorize: false
             }
 
-            res.send({
-              redirect_to_payment: redirectToPayment,
-              transaction
-            })
+            galaxpaySubscriptions.mainPaymentMethodId = 'creditcard'
+            galaxpaySubscriptions.PaymentMethodCreditCard = PaymentMethodCreditCard
+            galaxpaySubscriptions.Customer = galaxpayCustomer
+            galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0]// requered
+          } else if (params.payment_method.code === 'banking_billet') {
+            if (to) {
+              galaxpayCustomer.Address = parseAddress(to)
+            } else if (params.billing_address) {
+              galaxpayCustomer.Address = parseAddress(params.billing_address)
+            }
 
-            admin.firestore().collection('subscriptions').doc(orderId)
-              .set({
-                subscriptionLabel: plan.label ? plan.label : 'Plano',
-                storeId,
-                status: 'open',
-                orderNumber: params.order_number,
-                transactionId: transactionGalaxPay.galaxPayId,
-                quantity,
-                create_at: new Date().toISOString()
-              })
-              .catch(console.error)
-          })
-          .catch(error => {
-            console.log(error.response)
-            // try to debug request error
-            const errCode = 'GALAXPAY_TRANSACTION_ERR'
-            let { message } = error
-            const err = new Error(`${errCode} #${storeId} - ${orderId} => ${message}`)
-            if (error.response) {
-              const { status, data } = error.response
-              if (status !== 401 && status !== 403) {
-                err.payment = JSON.stringify(transaction)
-                err.status = status
-                if (typeof data === 'object' && data) {
-                  err.response = JSON.stringify(data)
-                } else {
-                  err.response = data
-                }
-              } else if (data && Array.isArray(data.errors) && data.errors[0] && data.errors[0].message) {
-                message = data.errors[0].message
+            fristPayment.setDate(fristPayment.getDate() + (appData.banking_billet.add_days || 0))
+
+            galaxpaySubscriptions.mainPaymentMethodId = 'boleto'
+            galaxpaySubscriptions.Customer = galaxpayCustomer
+            galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0] // requered
+          } else if (params.payment_method.code === 'account_deposit') {
+            // other  is PIX
+            if (to) {
+              galaxpayCustomer.Address = parseAddress(to)
+            } else if (params.billing_address) {
+              galaxpayCustomer.Address = parseAddress(params.billing_address)
+            }
+
+            const PaymentMethodPix = {
+              instructions: appData.pix.instructions || 'Pix'
+            }
+
+            fristPayment.setDate(fristPayment.getDate() + (appData.pix.add_days || 0))
+
+            galaxpaySubscriptions.mainPaymentMethodId = 'pix'
+            galaxpaySubscriptions.Customer = galaxpayCustomer
+            galaxpaySubscriptions.firstPayDayDate = fristPayment.toISOString().split('T')[0] // requered
+            galaxpaySubscriptions.PaymentMethodPix = PaymentMethodPix
+          }
+
+          if (amount.discount || amount.balance) {
+            // custom transaction on GalaxPay
+            const fristTransaction = {
+              myId: parseId(`${new Date().getTime()}`),
+              value: Math.floor(amount.total * 100),
+              installment: 1,
+            }
+            galaxpaySubscriptions.Transactions = [fristTransaction]
+
+          }
+          console.log('>> subscriptions ', JSON.stringify(galaxpaySubscriptions), ' <<')
+
+          galaxpayAxios.preparing
+            .then(() => {
+              if (type === 'recurrence') {
+                galaxpayAxios.axios.post('/subscriptions', galaxpaySubscriptions)
+                  .then((data) => {
+                    return data.data.Subscription
+                  })
+                  .then((data) => {
+                    console.log('> New Subscription')
+
+                    transaction.payment_link = data.paymentLink
+
+                    const transactionGalaxPay = data.Transactions[0]
+
+                    const installment = transactionGalaxPay.installment
+
+                    transaction.status = {
+                      updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
+                      current: parseStatus(transactionGalaxPay.status)
+                    }
+
+                    transaction.intermediator = {
+                      transaction_id: transactionGalaxPay.tid,
+                      transaction_code: transactionGalaxPay.authorizationCode
+                    }
+
+                    res.send({
+                      redirect_to_payment: redirectToPayment,
+                      transaction
+                    })
+
+                    admin.firestore().collection('subscriptions').doc(orderId)
+                      .set({
+                        subscriptionLabel: plan.label ? plan.label : 'Plano',
+                        storeId,
+                        status: 'open',
+                        orderNumber: params.order_number,
+                        transactionId: transactionGalaxPay.galaxPayId,
+                        quantity,
+                        create_at: new Date().toISOString(),
+                        plan,
+                      })
+                      .catch(console.error)
+                  })
+                  .catch(error => {
+                    console.log(error.response)
+                    // try to debug request error
+                    const errCode = 'GALAXPAY_TRANSACTION_ERR'
+                    let { message } = error
+                    const err = new Error(`${errCode} #${storeId} - ${orderId} => ${message}`)
+                    if (error.response) {
+                      const { status, data } = error.response
+                      if (status !== 401 && status !== 403) {
+                        err.payment = JSON.stringify(transaction)
+                        err.status = status
+                        if (typeof data === 'object' && data) {
+                          err.response = JSON.stringify(data)
+                        } else {
+                          err.response = data
+                        }
+                      } else if (data && Array.isArray(data.errors) && data.errors[0] && data.errors[0].message) {
+                        message = data.errors[0].message
+                      }
+                    }
+                    console.error(err)
+                    res.status(409)
+                    res.send({
+                      error: errCode,
+                      message
+                    })
+                  })
               }
-            }
-            console.error(err)
-            res.status(409)
-            res.send({
-              error: errCode,
-              message
             })
-          })
-      }
+        })
+    })
+    .catch(e => {
+      console.error(e)
     })
 }
