@@ -1,6 +1,6 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
 // const errorHandling = require('../../../lib/store-api/error-handling')
-const { parseId, parseStatus, parsePeriodicityGalaxPay } = require('../../../lib/galaxpay/parse-to-ecom')
+const { parseStatus, parsePeriodicityGalaxPay } = require('../../../lib/galaxpay/parse-to-ecom')
 const { handlePlanTransction } = require('../../../lib/payments/handle-plans')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
@@ -89,30 +89,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   let plan = handlePlanTransction(labelPaymentGateway, appData) // find plan selected
 
-  let total = amount.total
-
-  if (amount.discount) {
-    total += amount.discount
-  }
-  if (amount.balance) {
-    total += amount.balance
-  }
-
-  // ex.:  plan  {"discount":{"percentage":false,"apply_at":"subtotal","value":5},"periodicity":"Mensal","quantity":0,"label":"plano test1"}
-  console.log('> amout ', amount)
-  console.log('> plan ', plan)
-  let planDiscount = amount[plan.discount.apply_at]
-  if (plan.discount.percentage) {
-    planDiscount = planDiscount * ((plan.discount.value) / 100)
-  }
-
   const transaction = {
     type: type,
     amount: amount.total
   }
-  const discount = ((!plan.discount.percentage ? plan.discount.value : planDiscount) || 0)
 
-  const finalAmount = total - discount
+  const finalAmount = amount.total
   const fristPayment = new Date()
 
   const quantity = plan.quantity || 0
@@ -175,15 +157,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions.PaymentMethodPix = PaymentMethodPix
   }
 
-  if (amount.discount || amount.balance) {
-    // custom transaction on GalaxPay
-    const fristTransaction = {
-      myId: parseId(`${new Date().getTime()}`),
-      value: Math.floor(amount.total * 100),
-      installment: 1
-    }
-    galaxpaySubscriptions.Transactions = [fristTransaction]
-  }
   console.log('>> subscriptions ', JSON.stringify(galaxpaySubscriptions), ' <<')
 
   galaxpayAxios.preparing

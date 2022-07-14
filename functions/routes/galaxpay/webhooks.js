@@ -1,5 +1,7 @@
 const { parseId, parseStatus, parsePeriodicity } = require('../../lib/galaxpay/parse-to-ecom')
+const { updateValueSubscription } = require('../../lib/galaxpay/update-subscription')
 exports.post = ({ appSdk, admin }, req, res) => {
+  // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
 
   // endpoint https://us-central1-ecom-galaxpay.cloudfunctions.net/app/galaxpay/webhooks
@@ -13,6 +15,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const GalaxPaySubscriptionQuantity = GalaxPaySubscription.quantity
   const subscriptionId = GalaxPaySubscription.myId
   const GalaxPayTransaction = galaxpayHook.Transaction
+  const GalaxPayTransactionValue = GalaxPayTransaction.value / 100
 
   console.log('> Galaxy WebHook ', type, ' Subscription ', JSON.stringify(GalaxPaySubscription), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
@@ -91,27 +94,24 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const periodicity = parsePeriodicity(GalaxPaySubscription.periodicity)
                   const dateUpdate = GalaxPayTransaction.datetimeLastSentToOperator ? new Date(GalaxPayTransaction.datetimeLastSentToOperator).toISOString() : new Date().toISOString()
 
-                  if (amount.discount) {
-                    amount.total += amount.discount
-                  }
-
-                  if (amount.balance) {
-                    amount.total += amount.balance
-                    delete amount.balance
-                  }
-
                   // remove items free in new orders subscription
+                  let subtotal = 0
                   for (let i = 0; i < items.length; i++) {
                     const item = items[i]
                     if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
-                      amount.total -= item.final_price
-                      amount.subtotal -= item.final_price
-                      amount.discount -= item.final_price
                       items.splice(i, 1)
+                    } else {
+                      subtotal += item.quantity * item.price
                     }
                   }
+                  amount.subtotal = subtotal
+                  amount.total = amount.subtotal + (amount.tax || 0) + (amount.freight || 0) + (amount.extra || 0)
 
-                  if (plan) {
+                  if (amount.balance) {
+                    delete amount.balance
+                  }
+
+                  if (plan && plan.discount) {
                     let planDiscount = amount[plan.discount.apply_at]
                     if (plan.discount.percentage) {
                       planDiscount = planDiscount * ((plan.discount.value) / 100)
@@ -121,8 +121,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   } else {
                     amount.discount = 0
                   }
-
-                  const TransactionValue = GalaxPayTransaction.value / 100
 
                   const transactions = [
                     {
@@ -166,7 +164,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       number: parseInt(orderNumber)
                     },
                     notes: `Pedido #${quantity} referente à ${subscriptionLabel} ${periodicity}`,
-                    staff_notes: `Valor cobrado no GalaxPay R$${TransactionValue}`
+                    staff_notes: `Valor cobrado no GalaxPay R$${GalaxPayTransactionValue}`
                   }
                   const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
                   return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
@@ -220,6 +218,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const storeId = documentSnapshot.data().storeId
         // const orderNumber = documentSnapshot.data().orderNumber
         const transactionId = documentSnapshot.data().transactionId
+        const plan = documentSnapshot.data().plan
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -227,11 +226,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
               if (transactionId === GalaxPayTransaction.galaxPayId) {
                 // update frist payment
                 findOrderById(appSdk, storeId, auth, subscriptionId)
-                  .then(({ response }) => {
+                  .then(async ({ response }) => {
                     order = response.data
+
+                    // Update value Subscription in GalaxPay
+                    await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, GalaxPaySubscription)
+
                     // console.log('> order ', order)
                     if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
-                      // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
                       // update payment
