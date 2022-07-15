@@ -1,6 +1,6 @@
 const GalaxpayAxios = require('../../../lib/galaxpay/create-access')
-const errorHandling = require('../../../lib/store-api/error-handling')
-const { parseId, parseStatus, parsePeriodicityGalaxPay } = require('../../../lib/galaxpay/parse-to-ecom')
+// const errorHandling = require('../../../lib/store-api/error-handling')
+const { parseStatus, parsePeriodicityGalaxPay } = require('../../../lib/galaxpay/parse-to-ecom')
 const { handlePlanTransction } = require('../../../lib/payments/handle-plans')
 exports.post = ({ appSdk, admin }, req, res) => {
   /**
@@ -25,13 +25,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const orderId = params.order_id
   const orderNumber = params.order_number
-  const { amount, buyer, payer, to, items, type } = params
+  const { amount, buyer, to, type } = params
   console.log('> Transaction #', orderId, ' store: ', storeId)
-
-  const transaction = {
-    type: type,
-    amount: amount.total
-  }
 
   // indicates whether the buyer should be redirected to payment link right after checkout
   let redirectToPayment = false
@@ -85,8 +80,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
     state: to.province || to.province_code
   })
 
-  const finalAmount = transaction.amount
-
   const isPix = params.payment_method.code === 'account_deposit'
   const methodConfigName = params.payment_method.code === 'credit_card' ? appData.credit_card.label : (isPix ? appData.pix.label : appData.banking_billet.label)
 
@@ -96,6 +89,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   let plan = handlePlanTransction(labelPaymentGateway, appData) // find plan selected
 
+  const transaction = {
+    type: type,
+    amount: amount.total
+  }
+
+  const finalAmount = amount.total
   const fristPayment = new Date()
 
   const quantity = plan.quantity || 0
@@ -158,6 +157,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
     galaxpaySubscriptions.PaymentMethodPix = PaymentMethodPix
   }
 
+  console.log('>> subscriptions ', JSON.stringify(galaxpaySubscriptions), ' <<')
+
   galaxpayAxios.preparing
     .then(() => {
       if (type === 'recurrence') {
@@ -172,7 +173,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
             const transactionGalaxPay = data.Transactions[0]
 
-            const installment = transactionGalaxPay.installment
+            // const installment = transactionGalaxPay.installment
 
             transaction.status = {
               updated_at: data.datetimeLastSentToOperator || new Date().toISOString(),
@@ -197,7 +198,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 orderNumber: params.order_number,
                 transactionId: transactionGalaxPay.galaxPayId,
                 quantity,
-                create_at: new Date().toISOString()
+                create_at: new Date().toISOString(),
+                plan
               })
               .catch(console.error)
           })

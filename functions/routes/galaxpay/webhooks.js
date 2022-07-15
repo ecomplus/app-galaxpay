@@ -1,6 +1,5 @@
-const getAppData = require('../../lib/store-api/get-app-data')
-const GalaxpayAxios = require('../../lib/galaxpay/create-access')
 const { parseId, parseStatus, parsePeriodicity } = require('../../lib/galaxpay/parse-to-ecom')
+const { updateValueSubscription, checkAmountItemsOrder } = require('../../lib/galaxpay/update-subscription')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -16,26 +15,26 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const GalaxPaySubscriptionQuantity = GalaxPaySubscription.quantity
   const subscriptionId = GalaxPaySubscription.myId
   const GalaxPayTransaction = galaxpayHook.Transaction
+  const GalaxPayTransactionValue = GalaxPayTransaction.value / 100
 
-  console.log('> Galaxy WebHook ', type, ' Subscription ', GalaxPaySubscription ,' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status)
+  console.log('> Galaxy WebHook ', type, ' Subscription ', JSON.stringify(GalaxPaySubscription), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
   const checkStatus = (financialStatus, GalaxPayTransaction) => {
     if (financialStatus.current === parseStatus(GalaxPayTransaction.status)) {
-      return true;
-    } else if ((financialStatus.current === 'paid' || financialStatus.current === 'authorized')
-      && parseStatus(GalaxPayTransaction.status) !== 'refunded') {
-      return true;
+      return true
+    } else if ((financialStatus.current === 'paid' || financialStatus.current === 'authorized') && parseStatus(GalaxPayTransaction.status) !== 'refunded') {
+      return true
     }
-    return false;
+    return false
   }
 
   const checkPayDay = (str) => {
     // check if today is 3 days before payday.
-    const payDay = new Date(str);
-    const nowTime = new Date().getTime() + 259200000; // add 3day to today
-    const now = new Date(nowTime);
-    return (now >= payDay);
+    const payDay = new Date(str)
+    const nowTime = new Date().getTime() + 259200000 // add 3day to today
+    const now = new Date(nowTime)
+    return (now >= payDay)
   }
 
   const findOrderByTransactionId = (appSdk, storeId, auth, transactionId) => {
@@ -70,7 +69,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
         const orderNumber = documentSnapshot.data().orderNumber // number original order
         const transactionId = documentSnapshot.data().transactionId // Id frist transaction subscription
         const subscriptionLabel = documentSnapshot.data().subscriptionLabel
-        console.log('> Create new Order s:', storeId, ' transactionId: ', transactionId, ' original Order: ', subscriptionId);
+        const plan = documentSnapshot.data().plan
+        console.log('> Try create new Order s:', storeId, ' transactionId: ', transactionId, ' original Order: ', subscriptionId)
         if (documentSnapshot.exists && storeId && transactionId !== GalaxPayTransaction.galaxPayId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -83,16 +83,22 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const oldOrder = response.data
                   const buyers = oldOrder.buyers
                   const items = oldOrder.items
-                  const channel_type = oldOrder.channel_type
+                  const channelType = oldOrder.channel_type
                   const domain = oldOrder.domain
                   const amount = oldOrder.amount
-                  const shipping_lines = oldOrder.shipping_lines
-                  const shipping_method_label = oldOrder.shipping_method_label
-                  const payment_method_label = oldOrder.payment_method_label
+                  const shippingLines = oldOrder.shipping_lines
+                  const shippingMethodLabel = oldOrder.shipping_method_label
+                  const paymentMethodLabel = oldOrder.payment_method_label
                   const originalTransaction = oldOrder.transactions[0]
                   const quantity = installment
                   const periodicity = parsePeriodicity(GalaxPaySubscription.periodicity)
                   const dateUpdate = GalaxPayTransaction.datetimeLastSentToOperator ? new Date(GalaxPayTransaction.datetimeLastSentToOperator).toISOString() : new Date().toISOString()
+
+                  // remove items free in new orders subscription
+                  checkAmountItemsOrder(amount, items, plan)
+                  if (amount.balance) {
+                    delete amount.balance
+                  }
 
                   const transactions = [
                     {
@@ -115,30 +121,31 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
                   transactions[0].payment_link = GalaxPaySubscription.paymentLink
 
-                  const financial_status = {
+                  const financialStatus = {
                     updated_at: dateUpdate,
                     current: parseStatus(GalaxPayTransaction.status)
                   }
                   body = {
                     opened_at: new Date().toISOString(),
                     items,
-                    shipping_lines,
+                    shipping_lines: shippingLines,
                     buyers,
-                    channel_type,
+                    channel_type: channelType,
                     domain,
                     amount,
-                    shipping_method_label,
-                    payment_method_label,
+                    shipping_method_label: shippingMethodLabel,
+                    payment_method_label: paymentMethodLabel,
                     transactions,
-                    financial_status,
+                    financial_status: financialStatus,
                     subscription_order: {
                       _id: subscriptionId,
                       number: parseInt(orderNumber)
                     },
-                    notes: `Pedido #${quantity} referente à ${subscriptionLabel} ${periodicity}`
+                    notes: `Pedido #${quantity} referente à ${subscriptionLabel} ${periodicity}`,
+                    staff_notes: `Valor cobrado no GalaxPay R$${GalaxPayTransactionValue}`
                   }
-                  const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
-                  return findOrderByTransactionId(appSdk, storeId, auth, transaction_id)
+                  const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
+                  return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                 })
                 .then(({ response }) => {
                   const { result } = response.data
@@ -187,8 +194,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
         // console.log('> Update Status')
         // find StoreId in subscription
         const storeId = documentSnapshot.data().storeId
-        const orderNumber = documentSnapshot.data().orderNumber
+        // const orderNumber = documentSnapshot.data().orderNumber
         const transactionId = documentSnapshot.data().transactionId
+        const plan = documentSnapshot.data().plan
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -196,19 +204,24 @@ exports.post = ({ appSdk, admin }, req, res) => {
               if (transactionId === GalaxPayTransaction.galaxPayId) {
                 // update frist payment
                 findOrderById(appSdk, storeId, auth, subscriptionId)
-                  .then(({ response }) => {
+                  .then(async ({ response }) => {
                     order = response.data
+
+                    // Update value Subscription in GalaxPay
+                    console.log('plan-> ', JSON.stringify(plan))
+                    await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, GalaxPaySubscription)
+                    console.log('ORDER ', JSON.stringify(order.amount), '**')
+
                     // console.log('> order ', order)
                     if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
-                      // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
                       // update payment
-                      const transaction_id = order.transactions[0]._id
+                      const transactionId = order.transactions[0]._id
                       const body = {
                         date_time: new Date().toISOString(),
                         status: parseStatus(GalaxPayTransaction.status),
-                        transaction_id: transaction_id,
+                        transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId,
                         flags: ['GalaxPay']
                       }
@@ -221,7 +234,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                               transaction_code: GalaxPayTransaction.authorizationCode || ''
                             }
                           }
-                          return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transaction_id}.json`, 'PATCH', body, auth)
+                          return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
                         })
                         .then(apiResponse => {
                           // console.log('> UPDATE Transaction OK')
@@ -235,10 +248,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
               } else {
                 /* add order, because recurrence creates all transactions in the first transaction when quantity is non-zero,
-                Search for the order by ID, if not found, create the transaction, and if found, check if it will be necessary 
+                Search for the order by ID, if not found, create the transaction, and if found, check if it will be necessary
                 to update the transaction status */
-                const transaction_id = String(parseId(GalaxPayTransaction.galaxPayId))
-                findOrderByTransactionId(appSdk, storeId, auth, transaction_id)
+                const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
+                findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   .then(({ response }) => {
                     return new Promise((resolve, reject) => {
                       const { result } = response.data
@@ -266,7 +279,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const body = {
                         date_time: new Date().toISOString(),
                         status: parseStatus(GalaxPayTransaction.status),
-                        transaction_id: transaction_id,
+                        transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId,
                         flags: ['GalaxPay']
                       }
@@ -281,7 +294,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                         transaction_code: GalaxPayTransaction.authorizationCode || ''
                       }
                     }
-                    return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transaction_id}.json`, 'PATCH', body, auth)
+                    return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
                   })
 
                   .then(apiResponse => {

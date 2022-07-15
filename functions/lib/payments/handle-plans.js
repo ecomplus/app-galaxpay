@@ -36,7 +36,7 @@ const handlePlanTransction = (label, appData) => {
     }
     return plan
   } else if (appData.plans) {
-    /* More recent versions of the application will have a list of plans, where it will be necessary to find the plan by name, 
+    /* More recent versions of the application will have a list of plans, where it will be necessary to find the plan by name,
     and return it since it will be necessary to use the periodicity and quantity property */
     let sendPlan
 

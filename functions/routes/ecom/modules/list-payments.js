@@ -59,12 +59,12 @@ exports.post = ({ appSdk }, req, res) => {
       message: 'GalaxPay ID e/ou GalaxPay Hash da API indefinido(s) (lojista deve configurar o aplicativo)'
     })
   }
-  const isSandbox = appData.galaxpay_sandbox
+  // const isSandbox = appData.galaxpay_sandbox
 
   // common payment methods data
   const intermediator = {
     name: 'GalaxPay',
-    link: `https://api.galaxpay.com.br/v2`,
+    link: 'https://api.galaxpay.com.br/v2',
     // link: `https://api.${isSandbox ? 'sandbox.cloud.' : ''}galaxpay.com.br/v2`,
     code: 'galaxpay_app'
   }
