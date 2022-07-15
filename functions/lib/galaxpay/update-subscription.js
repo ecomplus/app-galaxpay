@@ -2,7 +2,7 @@ const getAppData = require('../store-api/get-app-data')
 const GalaxpayAxios = require('./create-access')
 
 const updateValueSubscription = (appSdk, storeId, auth, subscriptionId, amount, items, plan, GalaxPaySubscription) => {
-  const value = recalcValue(amount, items, plan)
+  const value = checkAmountItemsOrder({ ...amount }, [...items], { ...plan })
 
   return new Promise((resolve, reject) => {
     getAppData({ appSdk, storeId, auth })
@@ -24,10 +24,11 @@ const updateValueSubscription = (appSdk, storeId, auth, subscriptionId, amount, 
   })
 }
 
-const recalcValue = (amount, items, plan) => {
+const checkAmountItemsOrder = (amount, items, plan) => {
   let subtotal = 0
+  let item
   for (let i = 0; i < items.length; i++) {
-    const item = items[i]
+    item = items[i]
     if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
       items.splice(i, 1)
     } else {
@@ -43,11 +44,12 @@ const recalcValue = (amount, items, plan) => {
       planDiscount = planDiscount * ((plan.discount.value) / 100)
     }
   }
-  const discount = ((!plan.discount.percentage ? plan.discount.value : planDiscount) || 0)
-  return Math.floor((amount.total - discount).toFixed(2) * 100)
+  amount.discount = ((!plan.discount.percentage ? plan.discount.value : planDiscount) || 0)
+  amount.total -= amount.discount
+  return Math.floor((amount.total - amount.discount).toFixed(2) * 100)
 }
 
 module.exports = {
   updateValueSubscription,
-  recalcValue
+  checkAmountItemsOrder
 }

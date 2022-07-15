@@ -1,5 +1,5 @@
 const { parseId, parseStatus, parsePeriodicity } = require('../../lib/galaxpay/parse-to-ecom')
-const { updateValueSubscription } = require('../../lib/galaxpay/update-subscription')
+const { updateValueSubscription, checkAmountItemsOrder } = require('../../lib/galaxpay/update-subscription')
 exports.post = ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
   // https://docs.galaxpay.com.br/webhooks
@@ -95,31 +95,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   const dateUpdate = GalaxPayTransaction.datetimeLastSentToOperator ? new Date(GalaxPayTransaction.datetimeLastSentToOperator).toISOString() : new Date().toISOString()
 
                   // remove items free in new orders subscription
-                  let subtotal = 0
-                  for (let i = 0; i < items.length; i++) {
-                    const item = items[i]
-                    if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
-                      items.splice(i, 1)
-                    } else {
-                      subtotal += item.quantity * item.price
-                    }
-                  }
-                  amount.subtotal = subtotal
-                  amount.total = amount.subtotal + (amount.tax || 0) + (amount.freight || 0) + (amount.extra || 0)
-
+                  checkAmountItemsOrder(amount, items, plan)
                   if (amount.balance) {
                     delete amount.balance
-                  }
-
-                  if (plan && plan.discount) {
-                    let planDiscount = amount[plan.discount.apply_at]
-                    if (plan.discount.percentage) {
-                      planDiscount = planDiscount * ((plan.discount.value) / 100)
-                    }
-                    amount.discount = ((!plan.discount.percentage ? plan.discount.value : planDiscount) || 0)
-                    amount.total -= amount.discount
-                  } else {
-                    amount.discount = 0
                   }
 
                   const transactions = [
@@ -230,7 +208,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     order = response.data
 
                     // Update value Subscription in GalaxPay
+                    console.log('plan-> ', JSON.stringify(plan))
                     await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, GalaxPaySubscription)
+                    console.log('ORDER ', JSON.stringify(order.amount), '**')
 
                     // console.log('> order ', order)
                     if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
