@@ -44,7 +44,7 @@ const checkAmountItemsOrder = (amount, items, plan) => {
       planDiscount = planDiscount * ((plan.discount.value) / 100)
     }
   }
-  amount.discount = ((!plan.discount.percentage ? plan.discount.value : planDiscount) || 0)
+  amount.discount = ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0)
   amount.total -= amount.discount
   return Math.floor((amount.total - amount.discount).toFixed(2) * 100)
 }
