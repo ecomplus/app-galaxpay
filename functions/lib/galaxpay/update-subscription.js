@@ -32,7 +32,7 @@ const checkAmountItemsOrder = (amount, items, plan) => {
     if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
       items.splice(i, 1)
     } else {
-      subtotal += item.quantity * item.price
+      subtotal += item.quantity * (item.final_price || item.price)
     }
   }
   amount.subtotal = subtotal
