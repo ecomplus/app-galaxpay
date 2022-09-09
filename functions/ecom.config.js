@@ -191,6 +191,14 @@ const app = {
             description: 'Nome da forma de pagamento exibido para os clientes',
             default: 'Cartão de crédito'
           },
+          min_amount: {
+            type: 'number',
+            minimum: 0,
+            maximum: 999999999,
+            title: 'Pedido mínimo',
+            default: 0,
+            description: 'Montante mínimo para listar meio de pagamento via cartão de crédito'
+          },
           text: {
             type: 'string',
             maxLength: 1000,
@@ -226,6 +234,14 @@ const app = {
             title: 'Rótulo',
             description: 'Nome da forma de pagamento exibido para os clientes',
             default: 'Boleto bancário'
+          },
+          min_amount: {
+            type: 'number',
+            minimum: 0,
+            maximum: 999999999,
+            title: 'Pedido mínimo',
+            default: 0,
+            description: 'Montante mínimo para listar meio de pagamento via boleto bancário'
           },
           text: {
             type: 'string',
@@ -271,6 +287,14 @@ const app = {
             title: 'Rótulo',
             description: 'Nome da forma de pagamento exibido para os clientes',
             default: 'PIX'
+          },
+          min_amount: {
+            type: 'number',
+            minimum: 0,
+            maximum: 999999999,
+            title: 'Pedido mínimo',
+            default: 0,
+            description: 'Montante mínimo para listar meio de pagamento via Pix'
           },
           instructions:{
             type: 'string',

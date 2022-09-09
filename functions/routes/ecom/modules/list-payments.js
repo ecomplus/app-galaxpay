@@ -79,7 +79,8 @@ exports.post = ({ appSdk }, req, res) => {
     ;['credit_card', 'banking_billet', 'pix'].forEach(paymentMethod => {
       paymentTypes.forEach(type => {
         const methodConfig = appData[paymentMethod] || {}
-        if (!methodConfig.disable) {
+        const methodMinAmount = methodConfig.min_amount || 0
+        if (!methodConfig.disable && ( methodMinAmount <= amount.total)) {
           console.log('s: ', storeId, ' > Plan ', plan.periodicity)
 
           const isCreditCard = paymentMethod === 'credit_card'
