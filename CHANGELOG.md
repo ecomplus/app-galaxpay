@@ -7,26 +7,8 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
-* **Add Transaction:** add function check payday ([74f6e9f](https://github.com/ecomplus/application-starter/commit/74f6e9f25135a436abb6c608b6bf3f3911625648))
-* **Create Axios:** remove URL sandBox ([4cc99b8](https://github.com/ecomplus/application-starter/commit/4cc99b80a57423669e92f3662873753b997ac400))
-* **Create new Order:** sintax date for request api ([6db4995](https://github.com/ecomplus/application-starter/commit/6db49959873ad573c017a81e3d89951ae4daaed0))
-* **deps:** update all non-major ([5d3c04f](https://github.com/ecomplus/application-starter/commit/5d3c04fc45445586217b0760230d48d9c1efadab))
-* **deps:** update all non-major ([949857d](https://github.com/ecomplus/application-starter/commit/949857dbf05ef08d2df5ca22f3b518cd2095d614))
-* **deps:** update all non-major ([d6de2fb](https://github.com/ecomplus/application-starter/commit/d6de2fb144b22ca4a1749e09ddbf134ab0d3e9f3))
-* **deps:** update dependency firebase-admin to v11 ([#30](https://github.com/ecomplus/application-starter/issues/30)) [skip ci] ([0eb9379](https://github.com/ecomplus/application-starter/commit/0eb9379ef311b4ceec18fa0406a0b365b11bae77))
-* **deps:** update dependency firebase-tools to ^11.4.1 ([1585ced](https://github.com/ecomplus/application-starter/commit/1585ceddacbaba6f1a74e8305c8f98b38fae9edf))
-* **deps:** update dependency firebase-tools to v11 ([#27](https://github.com/ecomplus/application-starter/issues/27)) [skip ci] ([0f5654c](https://github.com/ecomplus/application-starter/commit/0f5654c4f41f0aa1b0b7d1196eea0aa57535e8b3))
-* **Deps:** Update deps ecomplus/application-sdk ([87ccd9d](https://github.com/ecomplus/application-starter/commit/87ccd9df28d5453723b4836f2c1af261f7f3240b))
-* **Discount:** remove discount in Subscription GalaxPay ([aa9fc4b](https://github.com/ecomplus/application-starter/commit/aa9fc4be6bcf96aa36f60987508481e80f07ab68))
-* **discount:** remove discount in Subscription GalaxPay ([#31](https://github.com/ecomplus/application-starter/issues/31)) [skip ci] ([ad4adb3](https://github.com/ecomplus/application-starter/commit/ad4adb3a4375096374dde5429c2aa2bc7e5756d1))
-* **List Payments:** remove URL sandBox ([545e739](https://github.com/ecomplus/application-starter/commit/545e739375a3b74b3f114795f7116a36a8208d3f))
-* **Onload Expression:** remove var sandBox ([573e7e8](https://github.com/ecomplus/application-starter/commit/573e7e8939e3bbfdc6b7f134087bc57c803e23cf))
-* **Update discount:** add coditional to check plan on discount ([66866ee](https://github.com/ecomplus/application-starter/commit/66866eea201dd967b6de07e068e83ad3d3d5c337))
-* **Update Subscription:** Fix plan discount ([398217a](https://github.com/ecomplus/application-starter/commit/398217a0338acb31212369f14ed0eb29b5eefd94))
-* **Update value:** use final price in value ([2f3da9c](https://github.com/ecomplus/application-starter/commit/2f3da9cfb7f58d6d9053be312da9f3a399693661))
-* **webhook galaxPay:** check status, update order ([fddd7f1](https://github.com/ecomplus/application-starter/commit/fddd7f1d1342bff6c3de5de7760079c515c1d10b))
-* **webhook GalaxPay:** Modify rule, create order in API if status different from notSend ([53dd0e3](https://github.com/ecomplus/application-starter/commit/53dd0e3cf36f9b25f99fa2438cbca095c2ba50ee))
-* **Webhook galaxy:** update check payday ([e5f5080](https://github.com/ecomplus/application-starter/commit/e5f508044e45d50e83fd8ad7c7b947cab737a385))
+* **List Payments:** add minimum amount setting in payment methods to list payments ([028c174](https://github.com/ecomplus/app-galaxpay/commit/028c174b37294b9780319cc049e02e4730003257))
+
 
 ### [1.1.1](https://github.com/ecomplus/application-starter/compare/v1.1.0...v1.1.1) (2022-07-15)
 
