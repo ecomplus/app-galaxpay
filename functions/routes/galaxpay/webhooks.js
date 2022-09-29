@@ -209,7 +209,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
                     // Update value Subscription in GalaxPay
                     console.log('plan-> ', JSON.stringify(plan))
-                    await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, GalaxPaySubscription)
+                    // not update subscripton canceled
+                    if (GalaxPayTransaction.status !== 'cancelByContract') {
+                      await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, GalaxPaySubscription)
+                    }
                     console.log('ORDER ', JSON.stringify(order.amount), '**')
 
                     // console.log('> order ', order)
@@ -257,11 +260,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const { result } = response.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
-                        if (checkPayDay(GalaxPayTransaction.payday)) {
+                        if (GalaxPayTransaction.status !== 'cancelByContract' && checkPayDay(GalaxPayTransaction.payday)) {
                           // necessary to create order
                           createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
                         } else {
-                          reject(new Error())
+                          reject(new Error('Status or checkPayDay invalid'))
                         }
                       } else {
                         resolve({ result })
