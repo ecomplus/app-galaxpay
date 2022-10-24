@@ -29,6 +29,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return false
   }
 
+  const checkStatusNotValid = (status) => {
+    const parsedStatus = parseStatus(status)
+    console.log('>> Status (', status, ')=> ', parsedStatus)
+    if (parsedStatus === 'unauthorized' || parsedStatus === 'refunded' || parsedStatus === 'voided') {
+      return true
+    }
+    return false
+  }
+
   const checkPayDay = (str) => {
     // check if today is 3 days before payday.
     const payDay = new Date(str)
@@ -210,10 +219,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     // Update value Subscription in GalaxPay
                     console.log('plan-> ', JSON.stringify(plan))
                     // not update subscripton canceled
-                    if (GalaxPayTransaction.status !== 'cancelByContract') {
+                    if (!checkStatusNotValid(GalaxPayTransaction.status)) {
                       await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, GalaxPaySubscription)
                     }
-                    console.log('ORDER ', JSON.stringify(order.amount), '**')
+                    console.log('ORDER: ', JSON.stringify(order.amount), ' **')
 
                     // console.log('> order ', order)
                     if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
@@ -260,7 +269,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const { result } = response.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
-                        if (GalaxPayTransaction.status !== 'cancelByContract' && checkPayDay(GalaxPayTransaction.payday)) {
+                        if (!checkStatusNotValid(GalaxPayTransaction.status) && checkPayDay(GalaxPayTransaction.payday)) {
                           // necessary to create order
                           createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
                         } else {
@@ -335,11 +344,17 @@ exports.post = ({ appSdk, admin }, req, res) => {
         console.error(err)
         res.sendStatus(500)
       })
-  } else if (type === 'subscription.addTransaction' && GalaxPaySubscriptionQuantity === 0) {
-    // find transaction in firebase
-    const subscription = collectionSubscription.doc(subscriptionId)
-    if (checkPayDay(GalaxPayTransaction.payday)) {
-      createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
+  } else if (type === 'subscription.addTransaction') {
+    if (GalaxPaySubscriptionQuantity === 0) {
+      // find transaction in firebase
+      const subscription = collectionSubscription.doc(subscriptionId)
+      if (checkPayDay(GalaxPayTransaction.payday)) {
+        createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
+      }
+    } else {
+      // Avoid retries of this GalaxPay webhook
+      res.status(200)
+        .send('Subscription webhook with non-zero quantity. The Order will be analyzed with the updateStatus webhook.')
     }
   }
 }
