@@ -1,13 +1,13 @@
 const getAppData = require('../store-api/get-app-data')
 const GalaxpayAxios = require('./create-access')
 
-const updateValueSubscription = (appSdk, storeId, auth, subscriptionId, amount, items, plan, GalaxPaySubscription) => {
+const updateValueSubscription = (appSdk, storeId, auth, subscriptionId, amount, items, plan, isSandbox) => {
   const value = checkAmountItemsOrder({ ...amount }, [...items], { ...plan })
 
   return new Promise((resolve, reject) => {
     getAppData({ appSdk, storeId, auth })
       .then((appData) => {
-        const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox, storeId)
+        const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, isSandbox, storeId)
         return galaxpayAxios.preparing
           .then(() => {
             return galaxpayAxios.axios.put(`subscriptions/${subscriptionId}/myId`, { value })
@@ -45,9 +45,11 @@ const checkAmountItemsOrder = (amount, items, plan) => {
     }
   }
   // if the plan doesn't exist, because it's subscription before the update
-  amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) : amount.discount
+  amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) :
+    (amount.discount || 0)
+
   amount.total -= amount.discount
-  return Math.floor((amount.total - amount.discount).toFixed(2) * 100)
+  return Math.floor((amount.total).toFixed(2) * 100)
 }
 
 module.exports = {
