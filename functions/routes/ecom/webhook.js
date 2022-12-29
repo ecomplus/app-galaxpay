@@ -5,11 +5,51 @@ const getAppData = require('./../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
 const { baseUri } = require('../../__env')
+const { checkAmountItemsOrder } = require('../../lib/galaxpay/update-subscription')
 
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
 const ECHO_SKIP = 'SKIP'
 const ECHO_API_ERROR = 'STORE_API_ERR'
+
+const getAuth = (appSdk, storeId) => new Promise((resolve, reject) => {
+  appSdk.getAuth(storeId)
+    .then(auth => resolve(auth))
+    .catch(err => reject(err))
+})
+
+const getDocSubscription = (
+  orderId,
+  collectionSubscription
+) => new Promise((resolve, reject) => {
+  const subscription = collectionSubscription.doc(orderId)
+
+  subscription.get()
+    .then(documentSnapshot => {
+      if (documentSnapshot.exists) {
+        const data = documentSnapshot.data()
+        if (data.storeId) {
+          resolve(data)
+        } else {
+          reject(new Error('StoreId property not found in document'))
+        }
+      } else {
+        reject(new Error('Document does not exist Firestore'))
+      }
+    }).catch(err => {
+      reject(err)
+    })
+})
+
+const findOrderById = (appSdk, storeId, orderId, auth) => new Promise((resolve, reject) => {
+  appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
+    .then(({ response }) => {
+      resolve(response.data)
+    })
+    .catch(err => {
+      reject(err)
+    })
+})
 
 exports.post = ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
@@ -25,7 +65,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   // get app configured options
   getAppData({ appSdk, storeId })
 
-    .then(appData => {
+    .then(async appData => {
       if (
         Array.isArray(appData.ignore_triggers) &&
         appData.ignore_triggers.indexOf(trigger.resource) > -1
@@ -36,44 +76,26 @@ exports.post = ({ appSdk, admin }, req, res) => {
         throw err
       }
 
+      const isSandbox = true // TODO: false
       /* DO YOUR CUSTOM STUFF HERE */
-      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox, storeId)
+      const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, isSandbox, storeId)
       const collectionSubscription = admin.firestore().collection('subscriptions')
 
-      if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
-        let authorization
+      const auth = await getAuth(appSdk, storeId)
 
+      if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
         galaxpayAxios.preparing
-          .then(() => {
-            return appSdk.getAuth(storeId)
-          })
-          .then(auth => {
+          .then(async () => {
             // Get Original Order
             console.log('s: ', storeId, '> ', resourceId)
-            authorization = auth
-            return appSdk.apiRequest(storeId, `/orders/${resourceId}.json`, 'GET', null, auth)
-          })
-          .then(({ response }) => {
-            const order = response.data
+            const order = await findOrderById(appSdk, storeId, resourceId, auth)
             console.log('s: ', storeId, '> Cancell Subscription ', order._id)
-            const subscription = collectionSubscription.doc(order._id)
-            subscription.get()
-              .then((documentSnapshot) => {
-                return new Promise((resolve, reject) => {
-                  const storeId = documentSnapshot.data().storeId
-                  const status = documentSnapshot.data().status
-                  if (documentSnapshot.exists && storeId) {
-                    resolve({ status, order })
-                  } else {
-                    reject(new Error())
-                  }
-                })
-              })
-              .then(({ status, order }) => {
+            getDocSubscription(order._id, collectionSubscription)
+              .then(({ status }) => {
                 const updatedAt = new Date().toISOString()
                 if (status !== 'cancelled') {
                   galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
-                    .then((data) => {
+                    .then(() => {
                       console.log(`> ${order._id} Cancelled`)
                       res.send(ECHO_SUCCESS)
                       admin.firestore().collection('subscriptions').doc(order._id)
@@ -92,8 +114,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                           status: 'open'
                         }
                         console.log(`> Back  status  ${order._id}`)
-                        appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, authorization)
-                          .then(({ response }) => {
+                        appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, auth)
+                          .then(() => {
                             res.send(ECHO_SUCCESS)
                           })
                           .catch((err) => {
@@ -127,6 +149,49 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 }
               })
           })
+      } else if (trigger.resource === 'orders' &&
+        trigger.body.status !== 'cancelled' && trigger.action !== 'create') {
+        //
+        try {
+          const docSubscription = await getDocSubscription(resourceId, collectionSubscription)
+          const order = await findOrderById(appSdk, storeId, resourceId, auth)
+          const { amount, items } = order
+          let { plan, updates } = docSubscription
+          // await updateValueSubscription(appSdk, storeId, auth, resourceId, order.amount, order.items, plan)
+          const value = checkAmountItemsOrder({ ...amount }, [...items], { ...plan })
+
+          await galaxpayAxios.preparing
+          const { data } = await galaxpayAxios.axios.put(`subscriptions/${resourceId}/myId`, { value })
+          if (data.type) {
+            console.log('> Successful signature edit on Galax Pay')
+            res.send(ECHO_SUCCESS)
+
+            const updatedAt = new Date().toISOString()
+            if (updates) {
+              updates.push({ value, updatedAt })
+            } else {
+              updates = []
+              updates.push({ value, updatedAt })
+            }
+
+            admin.firestore().collection('subscriptions').doc(resourceId)
+              .set({
+                updates,
+                updatedAt
+              }, { merge: true })
+              .catch(console.error)
+          }
+        } catch (err) {
+          console.error('> Error editing subscription => ', err)
+          const statusCode = err.response.status
+          res.status(statusCode || 500)
+          const { message } = err
+
+          res.send({
+            error: ECHO_API_ERROR,
+            message
+          })
+        }
       } else if (trigger.resource === 'applications') {
         console.log('s: ', storeId, '> Edit Application')
 
