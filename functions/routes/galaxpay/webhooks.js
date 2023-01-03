@@ -206,6 +206,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
         // const orderNumber = documentSnapshot.data().orderNumber
         const transactionId = documentSnapshot.data().transactionId
         const plan = documentSnapshot.data().plan
+        const oldValue = documentSnapshot.data().value
+        let updates = documentSnapshot.data().updates
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
             .then(auth => {
@@ -220,7 +222,25 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.log('plan-> ', JSON.stringify(plan))
                     // not update subscripton canceled
                     if (!checkStatusNotValid(GalaxPayTransaction.status)) {
-                      await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, GalaxPaySubscription)
+                      const newValue = await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
+
+                      if (newValue && newValue !== oldValue) {
+                        const updatedAt = new Date().toISOString()
+                        if (updates) {
+                          updates.push({ value: newValue, updatedAt })
+                        } else {
+                          updates = []
+                          updates.push({ value: newValue, updatedAt })
+                        }
+
+                        admin.firestore().collection('subscriptions').doc(subscriptionId)
+                          .set({
+                            updates,
+                            updatedAt,
+                            value: newValue
+                          }, { merge: true })
+                          .catch(console.error)
+                      }
                     }
                     console.log('ORDER: ', JSON.stringify(order.amount), ' **')
 
