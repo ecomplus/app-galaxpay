@@ -2,7 +2,7 @@ const createAxios = require('./create-axios')
 const auth = require('./create-authorization')
 const { galaxypayConfig } = require('../../__env')
 
-module.exports = function (galaxpayId, galaxpayHash, isSandbox, storeId, firestoreColl = 'galaxpay_tokens') {
+module.exports = function (galaxpayId, galaxpayHash, storeId, isSandbox = false, firestoreColl = 'galaxpay_tokens') {
   const self = this
 
   let documentRef

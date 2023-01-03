@@ -21,7 +21,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   // merge all app options configured by merchant
   const appData = Object.assign({}, application.data, application.hidden_data)
   // setup required `transaction` response object
-  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox, storeId)
+  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
 
   const orderId = params.order_id
   const orderNumber = params.order_number
@@ -199,7 +199,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 transactionId: transactionGalaxPay.galaxPayId,
                 quantity,
                 create_at: new Date().toISOString(),
-                plan
+                plan,
+                value: Math.floor(finalAmount * 100)
               })
               .catch(console.error)
           })
