@@ -1,27 +1,25 @@
 const getAppData = require('../store-api/get-app-data')
 const GalaxpayAxios = require('./create-access')
 
-const updateValueSubscription = (appSdk, storeId, auth, subscriptionId, amount, items, plan, isSandbox) => {
+const updateValueSubscription = async (appSdk, storeId, auth, subscriptionId, amount, items, plan, oldValue) => {
   const value = checkAmountItemsOrder({ ...amount }, [...items], { ...plan })
 
-  return new Promise((resolve, reject) => {
-    getAppData({ appSdk, storeId, auth })
-      .then((appData) => {
-        const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, isSandbox, storeId)
-        return galaxpayAxios.preparing
-          .then(() => {
-            return galaxpayAxios.axios.put(`subscriptions/${subscriptionId}/myId`, { value })
-              .then(({ data }) => {
-                if (data.type) {
-                  resolve(true)
-                }
-              })
-          })
-      })
-      .catch((err) => {
-        reject(err)
-      })
-  })
+  const appData = await getAppData({ appSdk, storeId, auth })
+  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
+  await galaxpayAxios.preparing
+
+  if (!oldValue) {
+    const { data } = await galaxpayAxios.axios.get(`subscriptions?myIds=${subscriptionId}&startAt=0&limit=1`)
+    oldValue = data.Subscriptions[0] && data.Subscriptions[0].value
+  }
+
+  if (oldValue !== value) {
+    const { data } = await galaxpayAxios.axios.put(`subscriptions/${subscriptionId}/myId`, { value })
+    if (data.type) {
+      return value
+    }
+  }
+  return null
 }
 
 const checkAmountItemsOrder = (amount, items, plan) => {
@@ -45,8 +43,7 @@ const checkAmountItemsOrder = (amount, items, plan) => {
     }
   }
   // if the plan doesn't exist, because it's subscription before the update
-  amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) :
-    (amount.discount || 0)
+  amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) : (amount.discount || 0)
 
   amount.total -= amount.discount
   return Math.floor((amount.total).toFixed(2) * 100)

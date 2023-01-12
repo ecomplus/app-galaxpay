@@ -34,13 +34,13 @@ const app = {
      * Triggered when listing payments, must return available payment methods.
      * Start editing `routes/ecom/modules/list-payments.js`
      */
-    list_payments:        { enabled: true },
+    list_payments: { enabled: true },
 
     /**
      * Triggered when order is being closed, must create payment transaction and return info.
      * Start editing `routes/ecom/modules/create-transaction.js`
      */
-    create_transaction:   { enabled: true },
+    create_transaction: { enabled: true },
   },
 
   /**
@@ -296,7 +296,7 @@ const app = {
             default: 0,
             description: 'Montante mínimo para listar meio de pagamento via Pix'
           },
-          instructions:{
+          instructions: {
             type: 'string',
             maxLength: 255,
             title: 'Instruções do QR Code Pix',
@@ -442,6 +442,10 @@ procedures.push({
     {
       resource: 'orders',
       field: 'status',
+    },
+    {
+      resource: 'orders',
+      field: 'items',
     },
   ],
 
