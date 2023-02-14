@@ -20,11 +20,18 @@ exports.post = ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
+  const delay = async (timeout = 500) => new Promise((resolve) => {
+    setTimeout(resolve(true), timeout)
+  })
+
   const isStatusUpdatedOrPaid = (financialStatus, GalaxPayTransaction) => {
-    if (financialStatus.current === parseStatus(GalaxPayTransaction.status)) {
+    const parsedStatus = parseStatus(GalaxPayTransaction.status)
+    console.log('>> FinancialStatus: ', financialStatus.current, ' GalaxStatus: ', parsedStatus)
+
+    if (financialStatus.current === parsedStatus) {
       return true
     } else if ((financialStatus.current === 'paid' || financialStatus.current === 'authorized') &&
-      (parseStatus(GalaxPayTransaction.status) !== 'refunded' || parseStatus(GalaxPayTransaction.status) !== 'voided')) {
+      (parsedStatus !== 'refunded')) {
       return true
     }
     return false
@@ -47,7 +54,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return (now >= payDay)
   }
 
-  const findOrderByTransactionId = (appSdk, storeId, auth, transactionId) => {
+  const findOrderByTransactionId = async (appSdk, storeId, auth, transactionId) => {
+    await delay()
+
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders.json?transactions._id=${transactionId}`, 'GET', null, auth)
         .then(({ response }) => {
@@ -59,7 +68,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
     })
   }
 
-  const findOrderById = (appSdk, storeId, auth, orderId) => {
+  const findOrderById = async (appSdk, storeId, auth, orderId) => {
+    await delay()
+
     return new Promise((resolve, reject) => {
       appSdk.apiRequest(storeId, `/orders/${orderId}.json?fields=transactions,financial_status`, 'GET', null, auth)
         .then(({ response }) => {
