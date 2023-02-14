@@ -20,16 +20,17 @@ exports.post = ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
-  const checkStatus = (financialStatus, GalaxPayTransaction) => {
+  const isStatusUpdatedOrPaid = (financialStatus, GalaxPayTransaction) => {
     if (financialStatus.current === parseStatus(GalaxPayTransaction.status)) {
       return true
-    } else if ((financialStatus.current === 'paid' || financialStatus.current === 'authorized') && parseStatus(GalaxPayTransaction.status) !== 'refunded') {
+    } else if ((financialStatus.current === 'paid' || financialStatus.current === 'authorized') &&
+      (parseStatus(GalaxPayTransaction.status) !== 'refunded' || parseStatus(GalaxPayTransaction.status) !== 'voided')) {
       return true
     }
     return false
   }
 
-  const checkStatusNotValid = (status) => {
+  const isStatusInvalid = (status) => {
     const parsedStatus = parseStatus(status)
     console.log('>> Status (', status, ')=> ', parsedStatus)
     if (parsedStatus === 'unauthorized' || parsedStatus === 'refunded' || parsedStatus === 'voided') {
@@ -221,7 +222,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     // Update value Subscription in GalaxPay
                     console.log('plan-> ', JSON.stringify(plan))
                     // not update subscripton canceled
-                    if (!checkStatusNotValid(GalaxPayTransaction.status)) {
+                    if (!isStatusInvalid(GalaxPayTransaction.status)) {
                       const newValue = await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
 
                       if (newValue && newValue !== oldValue) {
@@ -245,7 +246,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                     console.log('ORDER: ', JSON.stringify(order.amount), ' **')
 
                     // console.log('> order ', order)
-                    if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
+                    if (order.financial_status && isStatusUpdatedOrPaid(order.financial_status, GalaxPayTransaction)) {
                       res.sendStatus(200)
                     } else {
                       // update payment
@@ -289,7 +290,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       const { result } = response.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
-                        if (!checkStatusNotValid(GalaxPayTransaction.status) && checkPayDay(GalaxPayTransaction.payday)) {
+                        if (!isStatusInvalid(GalaxPayTransaction.status) && checkPayDay(GalaxPayTransaction.payday)) {
                           // necessary to create order
                           createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
                         } else {
@@ -302,7 +303,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   })
                   .then(({ result }) => {
                     order = result[0]
-                    if (order.financial_status && checkStatus(order.financial_status, GalaxPayTransaction)) {
+                    if (order.financial_status && isStatusUpdatedOrPaid(order.financial_status, GalaxPayTransaction)) {
                       // console.log('> Equals Status')
                       res.sendStatus(200)
                     } else {
