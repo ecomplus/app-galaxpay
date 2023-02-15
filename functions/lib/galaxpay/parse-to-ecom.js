@@ -1,4 +1,4 @@
-const parseId = (id) => {
+const setId = (id) => {
   const length = 24 - id.toString().length + 1
   return Array(length).join('0') + id
 }
@@ -76,7 +76,7 @@ const parsePeriodicityGalaxPay = (periodicity) => {
 }
 
 module.exports = {
-  parseId,
+  setId,
   parsePeriodicity,
   parsePeriodicityGalaxPay,
   parseStatus

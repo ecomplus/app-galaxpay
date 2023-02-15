@@ -193,7 +193,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               })
             }
           } else if (trigger.resource === 'applications') {
-            console.log('s: ', storeId, '> Edit Application')
+            console.log('s: ', storeId, '> Edit Application ', trigger)
 
             const body = {
               url: `${baseUri}/galaxpay/webhooks`,
@@ -201,11 +201,22 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             }
 
             galaxpayAxios.preparing
-              .then(() => {
-                return galaxpayAxios.axios.put('/webhooks', body)
+              .then(async () => {
+                const { confirmHash } = (await galaxpayAxios.axios.put('/webhooks', body)).data
+
+                // console.log('>> ', storeId, ' confirmHash: ', confirmHash)
+                admin.firestore().doc(`hashToWebhook/${storeId}`)
+                  .set({
+                    storeId,
+                    updatedAt: new Date().toISOString(),
+                    confirmHash
+                  })
+                  .catch(console.error)
+
+                return confirmHash
               })
-              .then(({ response }) => {
-                console.log('> Success edit webhook')
+              .then(() => {
+                console.log('> Success edit webhook ')
                 res.send(ECHO_SUCCESS)
               })
               .catch((err) => {
