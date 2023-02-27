@@ -1,9 +1,9 @@
 const { parseStatus, parsePeriodicity, setId } = require('../galaxpay/parse-to-ecom')
 const { checkAmountItemsOrder } = require('../galaxpay/update-subscription')
 
-const isStatusPaidAuthorized = (status) => {
+const isStatusPaid = (status) => {
   const parsedStatus = parseStatus(status)
-  if (parsedStatus === 'paid' || parsedStatus === 'authorized') {
+  if (parsedStatus === 'paid') {
     return true
   }
   return false
@@ -11,7 +11,7 @@ const isStatusPaidAuthorized = (status) => {
 
 const findOrderById = async (appSdk, storeId, auth, orderId) => {
   return new Promise((resolve, reject) => {
-    appSdk.apiRequest(storeId, `/orders/${orderId}.json?fields=transactions,financial_status`, 'GET', null, auth)
+    appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
       .then(({ response }) => {
         const { data } = response
         resolve(data)
@@ -116,6 +116,6 @@ const createNewOrder = async (appSdk, storeId, auth, originalOrder, galaxPayTran
 module.exports = {
   findOrderByTid,
   findOrderById,
-  isStatusPaidAuthorized,
+  isStatusPaid,
   createNewOrder
 }
