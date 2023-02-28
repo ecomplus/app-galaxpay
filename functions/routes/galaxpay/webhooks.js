@@ -36,10 +36,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   if (!type) {
     return res.sendStatus(400)
   }
-  // const { Transaction, Subscription } = body
   const webhookTransaction = body.Transaction
   const webhookSubscription = body.Subscription
   const galaxpaySubscriptionId = webhookSubscription.myId
+  if (!galaxpaySubscriptionId) {
+    return res.sendStatus(400)
+  }
   const metadataStoreId = webhookSubscription.ExtraFields.find(metadata => metadata.tagName === 'store_id')
   let storeId = metadataStoreId && parseInt(metadataStoreId.tagValue, 10)
   let subscriptionDoc
@@ -70,7 +72,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     }
 
     /* checks if the webhook is authorized or searches for status in galaxpay */
-    if (body?.confirmHash !== confirmHash) {
+    if (body.confirmHash !== confirmHash) {
       try {
         const appData = await getAppData({ appSdk, storeId, auth })
         const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
