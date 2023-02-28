@@ -66,7 +66,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     try {
       confirmHash = (await getDocumentFirestore(storeId, 'hashToWebhook')).confirmHash
     } catch (err) {
-      console.error('> Get ConfirmHash ', err)
+      console.error(err)
     }
 
     /* checks if the webhook is authorized or searches for status in galaxpay */
@@ -81,7 +81,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
         statusTransaction = data.Transactions[0]?.status
       } catch (err) {
-        return sendError(err, res, '> Error getting transaction status in Galaxpay')
+        return sendError(err, res, 'Error getting transaction status in Galaxpay')
       }
     }
 
