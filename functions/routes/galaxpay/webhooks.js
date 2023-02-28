@@ -1,11 +1,15 @@
 const {
   findOrderByTid,
   findOrderById,
-  isStatusPaid,
+  checkStatusPaid,
   createNewOrder
 } = require('../../lib/store-api/utils')
 const { parseStatus } = require('../../lib/galaxpay/parse-to-ecom')
 const { updateValueSubscription, checkAmountItemsOrder } = require('../../lib/galaxpay/update-subscription')
+const getAppData = require('./../../lib/store-api/get-app-data')
+
+// Auth GalaxPay
+const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
 const sendError = (err, res, message) => {
   console.error(err)
@@ -27,10 +31,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   // POST transaction.updateStatus update Transation status
   // POST subscription.addTransaction add transation in subscription
 
-  const collectionSubscription = admin.firestore().collection('subscriptions')
-
   const { body } = req
-  const type = body.event
+  const type = body?.event
+  if (!type) {
+    return res.sendStatus(400)
+  }
   // const { Transaction, Subscription } = body
   const webhookTransaction = body.Transaction
   const webhookSubscription = body.Subscription
@@ -39,9 +44,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   let storeId = metadataStoreId && parseInt(metadataStoreId.tagValue, 10)
   let subscriptionDoc
 
-  const getSubscriptionDocument = async (docId) => {
+  const getDocumentFirestore = async (docId, collection = 'subscriptions') => {
     let document
-    const documentSnapshot = await collectionSubscription.doc(docId).get()
+    const documentSnapshot = await admin.firestore().collection(collection).doc(docId).get()
     if (documentSnapshot && documentSnapshot.exists) {
       document = { ...documentSnapshot.data() }
     }
@@ -49,14 +54,37 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   }
 
   if (!storeId) {
-    subscriptionDoc = await getSubscriptionDocument(galaxpaySubscriptionId)
+    subscriptionDoc = await getDocumentFirestore(galaxpaySubscriptionId)
     storeId = subscriptionDoc && subscriptionDoc.storeId
   }
 
   if (storeId && storeId > 100 && webhookTransaction.tid) {
     const auth = await appSdk.getAuth(storeId)
-    // const appData = await getAppData({ appSdk, storeId, auth }, true)
-    // console.log('>> appData ', appData)
+
+    let statusTransaction = webhookTransaction.status
+    let confirmHash
+    try {
+      confirmHash = (await getDocumentFirestore(storeId, 'hashToWebhook')).confirmHash
+    } catch (err) {
+      console.error('> Get ConfirmHash ', err)
+    }
+
+    /* checks if the webhook is authorized or searches for status in galaxpay */
+    if (body?.confirmHash !== confirmHash) {
+      try {
+        const appData = await getAppData({ appSdk, storeId, auth })
+        const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
+        await galaxpayAxios.preparing
+
+        const { data } = await galaxpayAxios.axios
+          .get(`transactions?galaxPayIds=${webhookTransaction.galaxPayId}&startAt=0&limit=1`)
+
+        statusTransaction = data.Transactions[0]?.status
+      } catch (err) {
+        return sendError(err, res, '> Error getting transaction status in Galaxpay')
+      }
+    }
+
     let originalOrder
     let planSubscription
 
@@ -64,7 +92,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       originalOrder = await findOrderById(appSdk, storeId, auth, webhookSubscription.myId)
       // console.log('>>Original ', originalOrder)
       if (!subscriptionDoc) {
-        subscriptionDoc = await getSubscriptionDocument(originalOrder._id)
+        subscriptionDoc = await getDocumentFirestore(originalOrder._id)
       }
       planSubscription = subscriptionDoc && subscriptionDoc.plan
     } catch (err) {
@@ -81,7 +109,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             After the first payment is made, update the subscription value in GalaxPay
             to remove gifts and payments with points
           */
-          if (isStatusPaid(webhookTransaction.status)) {
+          if (checkStatusPaid(statusTransaction)) {
             const oldSubscriptionValue = subscriptionDoc.value ||
               ({ ...originalOrder.amount }.total * 100)
             const newValue = checkAmountItemsOrder(
@@ -108,7 +136,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 updates = []
                 updates.push({ value, updatedAt })
               }
-              collectionSubscription.doc(originalOrder._id)
+              admin.firestore().collection('subscriptions').doc(originalOrder._id)
                 .set({
                   updates,
                   updatedAt,
@@ -126,7 +154,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         const method = 'POST'
         const bodyPaymentHistory = {
           date_time: new Date().toISOString(),
-          status: parseStatus(webhookTransaction.status),
+          status: parseStatus(statusTransaction),
           notification_code: type + ';' + body.webhookId,
           flags: ['GalaxPay']
         }
@@ -134,7 +162,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           bodyPaymentHistory.transaction_id = transaction._id
         }
         try {
-        // console.log('bodyPH ', JSON.stringify(bodyPaymentHistory))
+          // console.log('bodyPH ', JSON.stringify(bodyPaymentHistory))
           await appSdk.apiRequest(storeId, resource, method, bodyPaymentHistory)
           return res.status(200).send({ message: 'OK' })
         } catch (err) {
@@ -142,7 +170,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         }
       } else {
         // Order Not Found
-        if (isStatusPaid(webhookTransaction.status)) {
+        if (checkStatusPaid(statusTransaction)) {
           try {
             await createNewOrder(appSdk, storeId, auth, originalOrder, webhookTransaction, webhookSubscription, subscriptionDoc)
             return res.status(200).send({ message: 'New order successfully created.' })

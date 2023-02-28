@@ -1,7 +1,8 @@
-const { parseStatus, parsePeriodicity, setId } = require('../galaxpay/parse-to-ecom')
+const { parseStatus, parsePeriodicity } = require('../galaxpay/parse-to-ecom')
 const { checkAmountItemsOrder } = require('../galaxpay/update-subscription')
+const ecomUtils = require('@ecomplus/utils')
 
-const isStatusPaid = (status) => {
+const checkStatusPaid = (status) => {
   const parsedStatus = parseStatus(status)
   if (parsedStatus === 'paid') {
     return true
@@ -9,7 +10,7 @@ const isStatusPaid = (status) => {
   return false
 }
 
-const findOrderById = async (appSdk, storeId, auth, orderId) => {
+const findOrderById = (appSdk, storeId, auth, orderId) => {
   return new Promise((resolve, reject) => {
     appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
       .then(({ response }) => {
@@ -22,7 +23,7 @@ const findOrderById = async (appSdk, storeId, auth, orderId) => {
   })
 }
 
-const findOrderByTid = async (appSdk, storeId, auth, tid) => {
+const findOrderByTid = (appSdk, storeId, auth, tid) => {
   return new Promise((resolve, reject) => {
     appSdk.apiRequest(storeId, `/orders.json?transactions.intermediator.transaction_id=${tid}&fields=transactions`, 'GET', null, auth)
       .then(({ response }) => {
@@ -36,7 +37,7 @@ const findOrderByTid = async (appSdk, storeId, auth, tid) => {
   })
 }
 
-const createNewOrder = async (appSdk, storeId, auth, originalOrder, galaxPayTransaction, galaxPaySubscription, subscriptionDoc) => {
+const createNewOrder = (appSdk, storeId, auth, originalOrder, galaxPayTransaction, galaxPaySubscription, subscriptionDoc) => {
   console.log('> Create new Order ')
   return new Promise((resolve, reject) => {
     const { plan, subscriptionLabel } = subscriptionDoc
@@ -65,7 +66,7 @@ const createNewOrder = async (appSdk, storeId, auth, originalOrder, galaxPayTran
 
     const transactions = [
       {
-        _id: setId(Date.now()),
+        _id: ecomUtils.randomObjectId(),
         amount: originalTransaction.amount,
         status: {
           updated_at: dateUpdate,
@@ -116,6 +117,6 @@ const createNewOrder = async (appSdk, storeId, auth, originalOrder, galaxPayTran
 module.exports = {
   findOrderByTid,
   findOrderById,
-  isStatusPaid,
+  checkStatusPaid,
   createNewOrder
 }
