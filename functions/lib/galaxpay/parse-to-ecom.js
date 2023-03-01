@@ -1,3 +1,8 @@
+const parseId = (id) => {
+  const length = 24 - id.toString().length + 1
+  return Array(length).join('0') + id
+}
+
 const parsePeriodicity = (periodicity) => {
   switch (periodicity) {
     case 'weekly':
@@ -29,10 +34,10 @@ const parseStatus = (status) => {
       return 'authorized'
 
     case 'captured': // Capturada na Operadora de Cartão
-    case 'payExternal': // Paga fora do sistema
-    case 'payedBoleto': // Boleto compensado
-    case 'payedPix': // Pix pago
-    case 'free': // Isento
+    case 'payExternal' : // Paga fora do sistema
+    case 'payedBoleto' : // Boleto compensado
+    case 'payedPix' : // Pix pago
+    case 'free' : // Isento
       return 'paid'
 
     case 'denied': // Negada na Operadora de Cartão
@@ -43,8 +48,8 @@ const parseStatus = (status) => {
 
     case 'cancel': // Cancelada manualmente
     case 'cancelByContract': // Cancelada ao cancelar a cobrança
-    case 'notCompensated': // Boleto baixado por decurso de prazo
-    case 'unavailablePix': // Pix indisponível para pagamento
+    case 'notCompensated' : // Boleto baixado por decurso de prazo
+    case 'unavailablePix' : // Pix indisponível para pagamento
       return 'voided'
   }
   return 'unknown'
@@ -71,6 +76,7 @@ const parsePeriodicityGalaxPay = (periodicity) => {
 }
 
 module.exports = {
+  parseId,
   parsePeriodicity,
   parsePeriodicityGalaxPay,
   parseStatus
