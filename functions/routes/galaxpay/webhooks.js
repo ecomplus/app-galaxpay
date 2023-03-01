@@ -38,11 +38,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   }
   const webhookTransaction = body.Transaction
   const webhookSubscription = body.Subscription
-  const galaxpaySubscriptionId = webhookSubscription.myId
+  const galaxpaySubscriptionId = webhookSubscription?.myId
   if (!galaxpaySubscriptionId) {
     return res.sendStatus(400)
   }
-  const metadataStoreId = webhookSubscription.ExtraFields.find(metadata => metadata.tagName === 'store_id')
+  const metadataStoreId = webhookSubscription.ExtraFields?.find(metadata => metadata.tagName === 'store_id')
   let storeId = metadataStoreId && parseInt(metadataStoreId.tagValue, 10)
   let subscriptionDoc
 
