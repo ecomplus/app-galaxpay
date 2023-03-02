@@ -13,12 +13,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   // POST subscription.addTransaction add transation in subscription
 
   const galaxpayHook = req.body
-  const type = galaxpayHook.event
+  const type = galaxpayHook?.event
   const GalaxPaySubscription = galaxpayHook?.Subscription
   const GalaxPaySubscriptionQuantity = GalaxPaySubscription?.quantity
   const subscriptionId = GalaxPaySubscription?.myId
-  const GalaxPayTransaction = galaxpayHook.Transaction
-  const GalaxPayTransactionValue = GalaxPayTransaction.value / 100
+  const GalaxPayTransaction = galaxpayHook?.Transaction
+  const GalaxPayTransactionValue = GalaxPayTransaction?.value && (GalaxPayTransaction.value / 100)
 
   // console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
@@ -214,6 +214,13 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     })
   }
 
+  if (!type) {
+    console.log('galaxpay webhook: eventType not found')
+  }
+  if (!subscriptionId) {
+    console.log('galaxpay webhook: subscriptionId not found')
+  }
+
   const refactorMetadataStoreId = GalaxPaySubscription.ExtraFields?.find(metadata => metadata.tagName === 'store_id')
   let refactorStoreId = refactorMetadataStoreId && parseInt(refactorMetadataStoreId.tagValue, 10)
   let subscriptionDoc
@@ -286,6 +293,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       console.log('galaxpay webhook ignored webhook')
     }
   }
+  // End refactoring
 
   if (type === 'transaction.updateStatus') {
     const subscription = collectionSubscription.doc(subscriptionId)
