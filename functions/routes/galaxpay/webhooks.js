@@ -20,7 +20,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const GalaxPayTransaction = galaxpayHook?.Transaction
   const GalaxPayTransactionValue = GalaxPayTransaction?.value && (GalaxPayTransaction.value / 100)
 
-  // console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
+  console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
   const checkStatus = (financialStatus, GalaxPayTransaction) => {
