@@ -247,7 +247,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   }
 
   if (!refactorStoreId || refactorStoreId < 100 || !GalaxPayTransaction.tid) {
-    console.warn(`galaxpay webhook: storeId or tid not found => type: ${type} storeId: ${refactorStoreId}, webhook body${galaxpayHook}`)
+    console.warn(`galaxpay webhook: storeId or tid not found => type: ${type} storeId: ${refactorStoreId}, webhook body${JSON.stringify(galaxpayHook)}`)
   } else {
     const refactorAuth = await appSdk.getAuth(refactorStoreId)
 
