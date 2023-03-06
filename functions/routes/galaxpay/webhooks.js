@@ -266,7 +266,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         await galaxpayAxios.preparing
 
         const { data } = await galaxpayAxios.axios
-          .get(`transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
+          .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
 
         refactorStatusTransaction = data.Transactions[0]?.status
       } catch (err) {
@@ -274,18 +274,25 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       }
     }
     let originalOrder
+    let orderFoundTid
+    let orderFoundTransactionId
     console.log(`galaxpay webhook status Transaction: ${refactorStatusTransaction}, parse: ${parseStatus(refactorStatusTransaction)} `)
 
     try {
       originalOrder = await findOrderById(appSdk, refactorStoreId, refactorAuth, subscriptionId)
+      console.log(`galaxpay webhook, find original order (${subscriptionId}) => ${JSON.stringify(originalOrder)}`)
     } catch (err) {
       console.warn(`galaxpay webhook Error: original order (${subscriptionId}) not found => ${err.message}`)
     }
     if (type === 'transaction.updateStatus') {
       //
-      const orderFoundTid = await findOrderByTid(appSdk, refactorStoreId, refactorAuth, GalaxPayTransaction.tid)
-      const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-      const orderFoundTransactionId = await findOrderByTransactionId(appSdk, refactorStoreId, refactorAuth, transactionId)
+      try {
+        orderFoundTid = await findOrderByTid(appSdk, refactorStoreId, refactorAuth, GalaxPayTransaction.tid)
+        const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
+        orderFoundTransactionId = await findOrderByTransactionId(appSdk, refactorStoreId, refactorAuth, transactionId)
+      } catch (err) {
+        console.warn(`galaxpay webhook Error: ${err.message}`)
+      }
       console.log(`galaxpay webhook OriginalOrder: ${JSON.stringify(originalOrder)}`)
       console.log(`galaxpay webhook orderFoundTid: ${JSON.stringify(orderFoundTid)}`)
       console.log(`galaxpay webhook orderFoundTransactionId: ${JSON.stringify(orderFoundTransactionId)}`)
