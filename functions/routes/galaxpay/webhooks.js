@@ -295,7 +295,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       }
       console.log(`galaxpay webhook OriginalOrder: ${JSON.stringify(originalOrder)}`)
       console.log(`galaxpay webhook orderFoundTid: ${JSON.stringify(orderFoundTid)}`)
-      console.log(`galaxpay webhook orderFoundTransactionId: ${JSON.stringify(orderFoundTransactionId)}`)
+      console.log(`galaxpay webhook orderFoundTransactionId: ${orderFoundTransactionId}`)
     } else {
       console.log('galaxpay webhook ignored webhook')
     }
