@@ -247,7 +247,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   }
 
   if (!refactorStoreId || refactorStoreId < 100 || !GalaxPayTransaction.tid) {
-    console.warn(`galaxpay webhook: storeId or tid not found => type: ${type} storeId: ${refactorStoreId}, webhook body${JSON.stringify(galaxpayHook)}`)
+    console.warn(`galaxpay webhook: storeId or tid not found => type: ${type} storeId: ${refactorStoreId}, webhook body`)
   } else {
     const refactorAuth = await appSdk.getAuth(refactorStoreId)
 
@@ -270,7 +270,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
         refactorStatusTransaction = data.Transactions[0]?.status
       } catch (err) {
-        console.warn(`galaxpay webhook Error: get Transaction in Galaxpay => ${err.message}, body webhook ${JSON.stringify(galaxpayHook)}`)
+        console.warn(`galaxpay webhook Error: get Transaction in Galaxpay => ${err.message}, body webhook`)
       }
     }
     let originalOrder
@@ -293,9 +293,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       } catch (err) {
         console.warn(`galaxpay webhook Error: ${err.message}`)
       }
-      console.log(`galaxpay webhook OriginalOrder: ${JSON.stringify(originalOrder)}`)
-      console.log(`galaxpay webhook orderFoundTid: ${JSON.stringify(orderFoundTid)}`)
-      console.log(`galaxpay webhook orderFoundTransactionId: ${orderFoundTransactionId}`)
+      console.log('galaxpay webhook OriginalOrder: ', originalOrder, ' <')
+      console.log('galaxpay webhook orderFoundTid: ', orderFoundTid, ' <')
+      console.log('galaxpay webhook orderFoundTransactionId: ', orderFoundTransactionId, ' <')
     } else {
       console.log('galaxpay webhook ignored webhook')
     }
