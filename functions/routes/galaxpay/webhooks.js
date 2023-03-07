@@ -279,7 +279,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     console.log(`galaxpay webhook status Transaction: ${refactorStatusTransaction}, parse: ${parseStatus(refactorStatusTransaction)} `)
 
     try {
-      originalOrder = await findOrderById(appSdk, refactorStoreId, refactorAuth, subscriptionId)
+      originalOrder = (await findOrderById(appSdk, refactorStoreId, refactorAuth, subscriptionId)).data
       console.log(`galaxpay webhook, find original order (${subscriptionId})`)
     } catch (err) {
       console.warn(`galaxpay webhook Error: original order (${subscriptionId}) not found => ${err.message}`)
@@ -287,9 +287,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     if (type === 'transaction.updateStatus') {
       //
       try {
-        orderFoundTid = await findOrderByTid(appSdk, refactorStoreId, refactorAuth, GalaxPayTransaction.tid)
+        orderFoundTid = (await findOrderByTid(appSdk, refactorStoreId, refactorAuth, GalaxPayTransaction.tid)).data
         const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-        orderFoundTransactionId = await findOrderByTransactionId(appSdk, refactorStoreId, refactorAuth, transactionId)
+        orderFoundTransactionId = (await findOrderByTransactionId(appSdk, refactorStoreId, refactorAuth, transactionId)).data
       } catch (err) {
         console.warn(`galaxpay webhook Error: ${err.message}`)
       }
