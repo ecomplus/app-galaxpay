@@ -280,7 +280,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
     try {
       originalOrder = await findOrderById(appSdk, refactorStoreId, refactorAuth, subscriptionId)
-      console.log(`galaxpay webhook, find original order (${subscriptionId}) => ${JSON.stringify(originalOrder)}`)
+      console.log(`galaxpay webhook, find original order (${subscriptionId})`)
     } catch (err) {
       console.warn(`galaxpay webhook Error: original order (${subscriptionId}) not found => ${err.message}`)
     }
