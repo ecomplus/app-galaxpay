@@ -1,7 +1,6 @@
 const { hostingUri } = require('../../../__env')
 const fs = require('fs')
 const path = require('path')
-const { parsePeriodicity } = require('./../../../lib/galaxpay/parse-to-ecom')
 const { handleGateway, discountPlan } = require('../../../lib/payments/handle-plans')
 // const { ID_GALAXPAY_PARTNER, HASH_GALAXPAY_PARTNER } = process.env
 
@@ -87,11 +86,10 @@ exports.post = ({ appSdk }, req, res) => {
           const isPix = paymentMethod === 'pix'
           let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : (isPix ? 'PIX' : 'Boleto bancário'))
 
-          const periodicity = parsePeriodicity(plan.periodicity)
           const planName = plan.label ? plan.label : 'Plano'
 
           if (type === 'recurrence' && planName) {
-            label = planName + ' ' + periodicity + ' ' + label
+            label = planName
           }
           const gateway = {
             label,
