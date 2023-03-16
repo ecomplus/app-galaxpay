@@ -32,6 +32,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
   const checkStatusPaid = (status) => {
     const parsedStatus = parseStatus(status)
+    console.log(`>> Status is ${status} => ${parsedStatus}`)
     if (parsedStatus === 'paid') {
       return true
     }
