@@ -23,8 +23,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
-  const checkStatusIsEqual = (financialStatus, GalaxPayTransaction) => {
-    if (financialStatus.current === parseStatus(GalaxPayTransaction.status)) {
+  const checkStatusIsEqual = (financialStatus, galaxPayTransactionStatus) => {
+    if (financialStatus.current === parseStatus(galaxPayTransactionStatus)) {
       return true
     }
     return false
@@ -250,33 +250,18 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     console.log(`galaxpay webhook tid: ${GalaxPayTransaction.tid}`)
     const refactorAuth = await appSdk.getAuth(refactorStoreId)
 
-    let refactorStatusTransaction = GalaxPayTransaction?.status
-    let refactorConfirmHash
-    try {
-      refactorConfirmHash = (await getDocumentFirestore(refactorStoreId, 'hashToWebhook')).confirmHash
-    } catch (err) {
-      console.warn(`galaxpay webhook Error: getDocumentFirestore confirmHash => ${err.message}`)
-    }
+    // let refactorStatusTransaction = GalaxPayTransaction?.status
+    // let refactorConfirmHash
+    // try {
+    //   refactorConfirmHash = (await getDocumentFirestore(refactorStoreId, 'hashToWebhook')).confirmHash
+    // } catch (err) {
+    //   console.warn(`galaxpay webhook Error: getDocumentFirestore confirmHash => ${err.message}`)
+    // }
 
-    if (galaxpayHook.confirmHash !== refactorConfirmHash) {
-      try {
-        const appData = await getAppData({ appSdk, storeId: refactorStoreId, auth: refactorAuth })
-
-        const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, refactorStoreId)
-        await galaxpayAxios.preparing
-
-        const { data } = await galaxpayAxios.axios
-          .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
-
-        refactorStatusTransaction = data.Transactions[0]?.status
-      } catch (err) {
-        console.warn(`galaxpay webhook Error: get Transaction in Galaxpay => ${err.message}, body webhook`)
-      }
-    }
     let originalOrder
     let orderFoundTid
     let orderFoundTransactionId
-    console.log(`galaxpay webhook status Transaction: ${refactorStatusTransaction}, parse: ${parseStatus(refactorStatusTransaction)} `)
+    // console.log(`galaxpay webhook status Transaction: ${refactorStatusTransaction}, parse: ${parseStatus(refactorStatusTransaction)} `)
 
     try {
       originalOrder = (await findOrderById(appSdk, refactorStoreId, refactorAuth, subscriptionId)).response.data
@@ -318,7 +303,29 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         let updates = documentSnapshot.data().updates
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
-            .then(auth => {
+            .then(async (auth) => {
+              let galaxPayTransactionStatus
+              let galaxpaySubscriptionStatus
+
+              try {
+                const appData = await getAppData({ appSdk, storeId, auth })
+
+                const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
+                await galaxpayAxios.preparing
+
+                let { data } = await galaxpayAxios.axios
+                  .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
+
+                galaxPayTransactionStatus = data.Transactions[0]?.status
+
+                data = (await galaxpayAxios.axios
+                  .get(`/subscriptions?myIds=${subscriptionId}&startAt=0&limit=1`)).data
+
+                galaxpaySubscriptionStatus = data.Subscriptions[0]?.status
+              } catch (err) {
+                console.warn(`galaxpay webhook Error: get Transaction/Subscription in Galaxpay => ${err.message}`)
+              }
+
               let order
               if (transactionId === GalaxPayTransaction.galaxPayId) {
                 // update frist payment
@@ -352,7 +359,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     }
                     console.log('ORDER: ', JSON.stringify(order.amount), ' **')
 
-                    if (order.financial_status && checkStatusIsEqual(order.financial_status, GalaxPayTransaction)) {
+                    if (order.financial_status && checkStatusIsEqual(order.financial_status, galaxPayTransactionStatus)) {
                       console.log('>> Order status already updated')
                       res.sendStatus(200)
                     } else {
@@ -360,7 +367,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       const transactionId = order.transactions[0]._id
                       const body = {
                         date_time: new Date().toISOString(),
-                        status: parseStatus(GalaxPayTransaction.status),
+                        status: parseStatus(galaxPayTransactionStatus || GalaxPayTransaction.status),
                         transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId,
                         flags: ['GalaxPay']
@@ -393,15 +400,36 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
                 findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   .then(({ response }) => {
-                    return new Promise((resolve, reject) => {
+                    return new Promise(async (resolve, reject) => {
                       const { result } = response.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
-                        if (checkStatusPaid(GalaxPayTransaction.status) && checkPayDay(GalaxPayTransaction.payday)) {
+                        if (checkStatusPaid(galaxPayTransactionStatus) && checkPayDay(GalaxPayTransaction.payday)) {
                           // necessary to create order
                           createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
                         } else {
-                          reject(new Error('Status or checkPayDay invalid'))
+                          // reject(new Error('Status or checkPayDay invalid'))
+                          // fetches the original order again to avoid delay from other webhooks
+                          const originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId)).response.data
+
+                          if (galaxpaySubscriptionStatus === 'canceled' && originalOrder?.status !== 'cancelled') {
+                            appSdk.apiRequest(storeId, `orders/${subscriptionId}.json`, 'PATCH', { status: 'cancelled' }, auth)
+                              .then(() => {
+                                admin.firestore().collection('subscriptions').doc(subscriptionId)
+                                  .set({
+                                    status: 'cancelled',
+                                    updatedAt: new Date().toISOString()
+                                  }, { merge: true })
+                                  .catch(console.error)
+
+                                res.sendStatus(200)
+                              }).catch(err => {
+                                console.error(err)
+                                res.sendStatus(400)
+                              })
+                          } else {
+                            res.status(400).send({ message: 'Status or checkPayDay invalid' })
+                          }
                         }
                       } else {
                         resolve({ result })
@@ -410,7 +438,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   })
                   .then(({ result }) => {
                     order = result[0]
-                    if (order.financial_status && checkStatusIsEqual(order.financial_status, GalaxPayTransaction)) {
+                    if (order.financial_status && checkStatusIsEqual(order.financial_status, galaxPayTransactionStatus)) {
                       console.log('>> Order status already updated')
                       res.sendStatus(200)
                     } else {
@@ -418,7 +446,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       // update payment
                       const body = {
                         date_time: new Date().toISOString(),
-                        status: parseStatus(GalaxPayTransaction.status),
+                        status: parseStatus(galaxPayTransactionStatus),
                         transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId,
                         flags: ['GalaxPay']
@@ -438,7 +466,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   })
 
                   .then(apiResponse => {
-                    if (parseStatus(GalaxPayTransaction.status) === 'voided' || parseStatus(GalaxPayTransaction.status) === 'refunded') {
+                    if (parseStatus(galaxPayTransactionStatus) === 'voided' || parseStatus(galaxPayTransactionStatus) === 'refunded') {
                       const body = {
                         status: 'cancelled'
                       }
