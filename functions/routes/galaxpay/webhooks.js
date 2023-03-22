@@ -308,6 +308,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               let galaxpaySubscriptionStatus
 
               try {
+                // check subscription and transaction status before in galaxpay
                 const appData = await getAppData({ appSdk, storeId, auth })
 
                 const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
@@ -367,7 +368,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       const transactionId = order.transactions[0]._id
                       const body = {
                         date_time: new Date().toISOString(),
-                        status: parseStatus(galaxPayTransactionStatus || GalaxPayTransaction.status),
+                        status: parseStatus(galaxPayTransactionStatus),
                         transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId,
                         flags: ['GalaxPay']
@@ -409,6 +410,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
                         } else {
                           // reject(new Error('Status or checkPayDay invalid'))
+
                           // fetches the original order again to avoid delay from other webhooks
                           const originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId)).response.data
 
