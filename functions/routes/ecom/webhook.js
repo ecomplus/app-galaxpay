@@ -155,12 +155,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               await galaxpayAxios.preparing
 
               if (!value) {
-                const { data } = await galaxpayAxios.axios.get(`subscriptions?myIds=${resourceId}&startAt=0&limit=1`)
+                const { data } = await galaxpayAxios.axios.get(`/subscriptions?myIds=${resourceId}&startAt=0&limit=1`)
                 value = data.Subscriptions[0] && data.Subscriptions[0].value
               }
 
               if (newValue !== value) {
-                const { data } = await galaxpayAxios.axios.put(`subscriptions/${resourceId}/myId`, { value: newValue })
+                const { data } = await galaxpayAxios.axios.put(`/subscriptions/${resourceId}/myId`, { value: newValue })
                 if (data.type) {
                   console.log('> Successful signature edit on Galax Pay')
                   res.send(ECHO_SUCCESS)
