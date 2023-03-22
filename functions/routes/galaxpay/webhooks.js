@@ -264,7 +264,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     // console.log(`galaxpay webhook status Transaction: ${refactorStatusTransaction}, parse: ${parseStatus(refactorStatusTransaction)} `)
 
     try {
-      originalOrder = (await findOrderById(appSdk, refactorStoreId, refactorAuth, subscriptionId)).response.data
+      originalOrder = (await findOrderById(appSdk, refactorStoreId, refactorAuth, subscriptionId))?.response?.data
       console.log(`galaxpay webhook, find original order (${subscriptionId})`)
     } catch (err) {
       console.warn(`galaxpay webhook Error: original order (${subscriptionId}) not found => ${err.message}`)
@@ -273,10 +273,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       //
       try {
         if (GalaxPayTransaction.tid) {
-          orderFoundTid = (await findOrderByTid(appSdk, refactorStoreId, refactorAuth, GalaxPayTransaction.tid)).response.data
+          orderFoundTid = (await findOrderByTid(appSdk, refactorStoreId, refactorAuth, GalaxPayTransaction.tid))?.response?.data
         }
         const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-        orderFoundTransactionId = (await findOrderByTransactionId(appSdk, refactorStoreId, refactorAuth, transactionId)).response.data
+        orderFoundTransactionId = (await findOrderByTransactionId(appSdk, refactorStoreId, refactorAuth, transactionId))?.response?.data
       } catch (err) {
         console.warn(`galaxpay webhook Error: ${err.message}`)
       }
@@ -413,9 +413,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           // reject(new Error('Status or checkPayDay invalid'))
 
                           // fetches the original order again to avoid delay from other webhooks
-                          const originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId)).response.data
+                          const originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
 
                           if (galaxpaySubscriptionStatus === 'canceled' && originalOrder?.status !== 'cancelled') {
+                            console.log('>> galaxpay webhook: Subscription canceled at galapay')
                             appSdk.apiRequest(storeId, `orders/${subscriptionId}.json`, 'PATCH', { status: 'cancelled' }, auth)
                               .then(() => {
                                 admin.firestore().collection('subscriptions').doc(subscriptionId)
@@ -431,6 +432,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                                 res.sendStatus(400)
                               })
                           } else {
+                            console.log(`>> galaxpay webhook: Status or checkPayDay invalid => Payday: ${GalaxPayTransaction.payday} now: ${new Date().toISOString()}`)
                             res.status(400).send({ message: 'Status or checkPayDay invalid' })
                           }
                         }
