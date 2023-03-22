@@ -366,14 +366,15 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     } else {
                       // update payment
                       const transactionId = order.transactions[0]._id
+                      const notificationCode = `;${GalaxPayTransaction.tid || ''};${GalaxPayTransaction.authorizationCode || ''}`
                       const body = {
                         date_time: new Date().toISOString(),
                         status: parseStatus(galaxPayTransactionStatus),
                         transaction_id: transactionId,
-                        notification_code: type + ';' + galaxpayHook.webhookId,
+                        notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,
                         flags: ['GalaxPay']
                       }
-                      return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
+                      return appSdk.apiRequest(storeId, `orders / ${order._id} /payments_history.json`, 'POST', body, auth)
                         .then(apiResponse => {
                           // console.log('>  create Payment History')
                           const body = {
@@ -446,11 +447,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     } else {
                       // console.log('> Order id ')
                       // update payment
+                      const notificationCode = `;${GalaxPayTransaction.tid || ''};${GalaxPayTransaction.authorizationCode || ''}`
                       const body = {
                         date_time: new Date().toISOString(),
                         status: parseStatus(galaxPayTransactionStatus),
                         transaction_id: transactionId,
-                        notification_code: type + ';' + galaxpayHook.webhookId,
+                        notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,
                         flags: ['GalaxPay']
                       }
                       return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
