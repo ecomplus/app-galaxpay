@@ -98,14 +98,14 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             .catch(console.error)
                         })
                         .catch((err) => {
-                          console.error(err)
                           const statusCode = err.response.status
                           // case error cancell GalaxPay, not cancelled in API
                           if (!order.subscription_order && statusCode !== 404) {
                             const body = {
                               status: 'open'
                             }
-                            console.log(`> Back  status  ${order._id}`)
+                            console.error(err)
+                            console.log(`> Set order status to open:  ${order._id}`)
                             appSdk.apiRequest(storeId, `orders/${order._id}.json`, 'PATCH', body, auth)
                               .then(() => {
                                 res.send(ECHO_SUCCESS)
@@ -119,7 +119,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                                 })
                               })
                           } else if (statusCode === 404) {
-                            console.log('> ', updatedAt, 'Type ', typeof updatedAt)
+                            console.log('>E-com webhook: Subscription canceled or finished in galaxPay')
                             admin.firestore().collection('subscriptions').doc(order._id)
                               .set({
                                 status: 'cancelled',
@@ -128,6 +128,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               }, { merge: true })
                               .catch(console.error)
                           } else {
+                            console.error(err)
                             admin.firestore().collection('subscriptions').doc(order._id)
                               .set({
                                 description: `GALAXPAY_TRANSACTION_ERR ${statusCode}`,
