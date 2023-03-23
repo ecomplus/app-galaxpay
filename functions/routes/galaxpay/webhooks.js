@@ -405,7 +405,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   .then(({ response }) => {
                     return new Promise(async (resolve, reject) => {
-                      const { result } = response.data
+                      const { result } = response?.data
                       if (!result || !result.length) {
                         // console.log('> Not found Transaction in API')
                         if (checkStatusPaid(galaxPayTransactionStatus) && checkPayDay(GalaxPayTransaction.payday)) {
@@ -417,7 +417,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           // fetches the original order again to avoid delay from other webhooks
                           const originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
 
-                          if (galaxpaySubscriptionStatus === 'canceled' && originalOrder?.status !== 'cancelled') {
+                          if (originalOrder && galaxpaySubscriptionStatus === 'canceled' && originalOrder?.status !== 'cancelled') {
                             console.log('>> galaxpay webhook: Subscription canceled at galapay')
                             appSdk.apiRequest(storeId, `orders/${subscriptionId}.json`, 'PATCH', { status: 'cancelled' }, auth)
                               .then(() => {
