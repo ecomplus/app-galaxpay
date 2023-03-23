@@ -416,6 +416,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
                           // fetches the original order again to avoid delay from other webhooks
                           const originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
+                          console.log(`>>galaxpay webhook: Original Order cancelled? ${JSON.stringify(originalOrder)}`)
 
                           if (originalOrder && galaxpaySubscriptionStatus === 'canceled' && originalOrder?.status !== 'cancelled') {
                             console.log('>> galaxpay webhook: Subscription canceled at galapay')
