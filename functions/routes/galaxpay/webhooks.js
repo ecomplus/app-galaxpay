@@ -318,7 +318,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
 
                 galaxPayTransactionStatus = data.Transactions[0]?.status
-                console.log('>> galaxpay webhook: Transaction status ', galaxpaySubscriptionStatus)
+                console.log('>> galaxpay webhook: Transaction status ', galaxPayTransactionStatus)
 
                 data = (await galaxpayAxios.axios
                   .get(`/subscriptions?myIds=${subscriptionId}&startAt=0&limit=1`)).data
