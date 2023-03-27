@@ -376,7 +376,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,
                         flags: ['GalaxPay']
                       }
-                      return appSdk.apiRequest(storeId, `orders / ${order._id} /payments_history.json`, 'POST', body, auth)
+                      return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                         .then(apiResponse => {
                           // console.log('>  create Payment History')
                           const body = {
