@@ -141,6 +141,19 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       res.send(ECHO_SUCCESS)
                     }
                   })
+                  .catch((err) => {
+                    let status = 500
+                    const { message } = err
+                    if (message === 'Document does not exist Firestore') {
+                      console.warn(`>> StoreApi webhook: Document does not exist Firestore, order #${resourceId}, not found`)
+                      status = 404
+                    }
+
+                    res.status(status).send({
+                      error: ECHO_API_ERROR,
+                      message
+                    })
+                  })
               })
           } else if (trigger.resource === 'orders' &&
             trigger.body.status !== 'cancelled' && trigger.action !== 'create') {
