@@ -415,7 +415,13 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           // reject(new Error('Status or checkPayDay invalid'))
 
                           // fetches the original order again to avoid delay from other webhooks
-                          const originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
+                          let originalOrder
+                          try {
+                            originalOrder = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
+                          } catch (err) {
+                            console.warn(`>> galaxpay webhook: Original Order not found (${subscriptionId}) `)
+                            res.status(404).send({ message: 'Original Order not found' })
+                          }
                           console.log(`>> galaxpay webhook: status Original Order: ${originalOrder?.status} `)
 
                           if (originalOrder && galaxpaySubscriptionStatus === 'canceled' && originalOrder?.status !== 'cancelled') {
