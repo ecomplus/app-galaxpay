@@ -91,7 +91,7 @@ exports.post = ({ appSdk }, req, res) => {
           const planName = plan.label ? plan.label : 'Plano'
 
           if (type === 'recurrence' && planName) {
-            label = planName + ' ' + periodicity + ' ' + label
+            label = planName
           }
           const gateway = {
             label,
@@ -99,7 +99,7 @@ exports.post = ({ appSdk }, req, res) => {
             text: methodConfig.text,
             payment_method: {
               code: isPix ? 'account_deposit' : paymentMethod, // pix is defined payment method outher
-              name: `${label} - ${intermediator.name}`
+              name: `${label} ${periodicity} - ${intermediator.name}`
             },
             type,
             intermediator
