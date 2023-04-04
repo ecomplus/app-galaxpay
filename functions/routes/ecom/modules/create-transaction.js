@@ -184,6 +184,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction_id: transactionGalaxPay.tid,
               transaction_code: transactionGalaxPay.authorizationCode
             }
+            console.log('>> Create Transaction ', transaction.intermediator)
 
             res.send({
               redirect_to_payment: redirectToPayment,
