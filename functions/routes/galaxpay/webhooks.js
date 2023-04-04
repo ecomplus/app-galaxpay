@@ -307,10 +307,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               let galaxPayTransactionStatus
               let galaxpaySubscriptionStatus
               let transactionCreatedAt
-              // if (GalaxPayTransaction.createdAt) {
-              //   dateTime = new Date(`${GalaxPayTransaction.createdAt} UTC-3`)
-              //   console.log('>> ', dateTime.toISOString())
-              // }
 
               try {
                 // check subscription and transaction status before in galaxpay
