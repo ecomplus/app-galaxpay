@@ -203,7 +203,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       appSdk.apiRequest(storeId, `/orders.json?transactions.intermediator.transaction_id=${tid}&fields=transactions`, 'GET', null, auth)
         .then(({ response }) => {
           const { result } = response.data
-          // console.log('>> ', result)
+          console.log('>>FindTid ', result)
           resolve(result[0])
         })
         .catch((err) => {
@@ -306,6 +306,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             .then(async (auth) => {
               let galaxPayTransactionStatus
               let galaxpaySubscriptionStatus
+              let transactionCreatedAt
+              // if (GalaxPayTransaction.createdAt) {
+              //   dateTime = new Date(`${GalaxPayTransaction.createdAt} UTC-3`)
+              //   console.log('>> ', dateTime.toISOString())
+              // }
 
               try {
                 // check subscription and transaction status before in galaxpay
@@ -318,7 +323,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
 
                 galaxPayTransactionStatus = data.Transactions[0]?.status
-                console.log('>> galaxpay webhook: Transaction status ', galaxPayTransactionStatus)
+                const dateTimeTransaction = data.Transactions[0]?.createdAt
+                transactionCreatedAt = dateTimeTransaction && new Date(`${dateTimeTransaction} UTC-3`)
+                console.log('>> galaxpay webhook: Transaction status ', galaxPayTransactionStatus, ' ', transactionCreatedAt)
 
                 data = (await galaxpayAxios.axios
                   .get(`/subscriptions?myIds=${subscriptionId}&startAt=0&limit=1`)).data
@@ -370,7 +377,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       const transactionId = order.transactions[0]._id
                       const notificationCode = `;${GalaxPayTransaction.tid || ''};${GalaxPayTransaction.authorizationCode || ''}`
                       const body = {
-                        date_time: new Date().toISOString(),
+                        date_time: transactionCreatedAt || new Date().toISOString(),
                         status: parseStatus(galaxPayTransactionStatus),
                         transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,
@@ -460,7 +467,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       // update payment
                       const notificationCode = `;${GalaxPayTransaction.tid || ''};${GalaxPayTransaction.authorizationCode || ''}`
                       const body = {
-                        date_time: new Date().toISOString(),
+                        date_time: transactionCreatedAt || new Date().toISOString(),
                         status: parseStatus(galaxPayTransactionStatus),
                         transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,
