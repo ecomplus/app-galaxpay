@@ -340,7 +340,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     order = response.data
 
                     // Update value Subscription in GalaxPay
-                    console.log('plan-> ', JSON.stringify(plan))
+                    // console.log('plan-> ', JSON.stringify(plan))
                     // not update subscripton canceled
                     if (checkStatusPaid(GalaxPayTransaction.status)) {
                       const newValue = await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
@@ -363,22 +363,29 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           .catch(console.error)
                       }
                     }
-                    console.log('ORDER: ', JSON.stringify(order.amount), ' **')
+                    // console.log('ORDER: ', JSON.stringify(order.amount), ' **')
 
                     if (order.financial_status && checkStatusIsEqual(order.financial_status, galaxPayTransactionStatus)) {
                       console.log('>> Order status already updated')
                       res.sendStatus(200)
                     } else {
                       // update payment
-                      const transactionId = order.transactions[0]._id
+                      let transactionId
+                      if (order.transactions && order.transactions[0]) {
+                        transactionId = order.transactions[0]._id
+                      }
                       const notificationCode = `;${GalaxPayTransaction.tid || ''};${GalaxPayTransaction.authorizationCode || ''}`
                       const body = {
                         date_time: transactionCreatedAt || new Date().toISOString(),
                         status: parseStatus(galaxPayTransactionStatus),
-                        transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,
                         flags: ['GalaxPay']
                       }
+
+                      if (transactionId) {
+                        body.transaction_id = transactionId
+                      }
+
                       return appSdk.apiRequest(storeId, `orders/${order._id}/payments_history.json`, 'POST', body, auth)
                         .then(apiResponse => {
                           // console.log('>  create Payment History')
@@ -388,7 +395,14 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               transaction_code: GalaxPayTransaction.authorizationCode || ''
                             }
                           }
-                          return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
+                          if (transactionId) {
+                            return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
+                          } else {
+                            body.amount = order.amount.total
+                            let code = GalaxPaySubscription.mainPaymentMethodId === "creditcard" ? "credit_card" : "banking_billet"
+                            body.payment_method = { code }
+                            return appSdk.apiRequest(storeId, `orders/${order._id}/transactions.json`, 'POST', body, auth)
+                          }
                         })
                         .then(apiResponse => {
                           // console.log('> UPDATE Transaction OK')
