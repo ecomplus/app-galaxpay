@@ -20,7 +20,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const GalaxPayTransaction = galaxpayHook?.Transaction
   const GalaxPayTransactionValue = GalaxPayTransaction?.value && (GalaxPayTransaction.value / 100)
 
-  console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' quantity: ', GalaxPaySubscriptionQuantity, ' status:', GalaxPayTransaction.status, ' <')
+  console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' status:', GalaxPayTransaction.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
   const checkStatusIsEqual = (financialStatus, galaxPayTransactionStatus) => {
@@ -247,7 +247,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   if (!refactorStoreId || refactorStoreId < 100) {
     console.warn(`galaxpay webhook: storeId found => type: ${type} storeId: ${refactorStoreId}, webhook body`)
   } else {
-    console.log(`galaxpay webhook tid: ${GalaxPayTransaction.tid}`)
+    // console.log(`galaxpay webhook tid: ${GalaxPayTransaction.tid}`)
     const refactorAuth = await appSdk.getAuth(refactorStoreId)
 
     // let refactorStatusTransaction = GalaxPayTransaction?.status
