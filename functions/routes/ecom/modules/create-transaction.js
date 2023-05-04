@@ -167,7 +167,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
             return data.data.Subscription
           })
           .then((data) => {
-            console.log(`> New Subscription ${data} <`)
+            console.log(`> New Subscription ${JSON.stringify(data)} <`)
 
             transaction.payment_link = data.paymentLink
 
@@ -184,7 +184,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
               transaction_id: transactionGalaxPay.tid,
               transaction_code: transactionGalaxPay.authorizationCode
             }
-            console.log(`>> Create Transaction:  ${transaction} <<`)
+            console.log(`>> Create Transaction:  ${JSON.stringify(transaction)} <<`)
 
             res.send({
               redirect_to_payment: redirectToPayment,
