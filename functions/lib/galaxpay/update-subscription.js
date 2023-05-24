@@ -1,13 +1,7 @@
 const getAppData = require('../store-api/get-app-data')
 const GalaxpayAxios = require('./create-access')
 
-const updateValueSubscription = async (appSdk, storeId, auth, subscriptionId, amount, items, plan, oldValue) => {
-  const value = checkAmountItemsOrder({ ...amount }, [...items], { ...plan })
-
-  const appData = await getAppData({ appSdk, storeId, auth })
-  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
-  await galaxpayAxios.preparing
-
+const updateValueSubscriptionGalaxpay = async (galaxpayAxios, subscriptionId, value, oldValue) => {
   if (!oldValue) {
     const { data } = await galaxpayAxios.axios.get(`subscriptions?myIds=${subscriptionId}&startAt=0&limit=1`)
     oldValue = data.Subscriptions[0] && data.Subscriptions[0].value
@@ -22,34 +16,103 @@ const updateValueSubscription = async (appSdk, storeId, auth, subscriptionId, am
   return null
 }
 
-const checkAmountItemsOrder = (amount, items, plan) => {
+const checkAndUpdateSubscriptionGalaxpay = async (appSdk, storeId, auth, subscriptionId, amount, items, plan, oldValue) => {
+  const value = checkItemsAndRecalculeteOrder({ ...amount }, [...items], { ...plan })
+
+  const appData = await getAppData({ appSdk, storeId, auth })
+  const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
+  await galaxpayAxios.preparing
+  return updateValueSubscriptionGalaxpay(galaxpayAxios, subscriptionId, value, oldValue)
+}
+
+const checkItemsAndRecalculeteOrder = (amount, items, plan, newItem, isRemoveItem) => {
   let subtotal = 0
   let item
-  for (let i = 0; i < items.length; i++) {
+  let i = 0
+  while (i < items.length) {
     item = items[i]
-    if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
-      items.splice(i, 1)
+    if (newItem && item.sku === newItem.sku) {
+      if (isRemoveItem) {
+        items.splice(i, 1)
+      } else {
+        if (item.final_price) {
+          item.final_price = newItem.price
+        }
+        item.price = newItem.price
+        subtotal += item.quantity * (item.final_price || item.price)
+        i++
+      }
     } else {
-      subtotal += item.quantity * (item.final_price || item.price)
+      if (item.flags && (item.flags.includes('freebie') || item.flags.includes('discount-set-free'))) {
+        items.splice(i, 1)
+      } else {
+        subtotal += item.quantity * (item.final_price || item.price)
+        i++
+      }
     }
   }
-  amount.subtotal = subtotal
-  amount.total = amount.subtotal + (amount.tax || 0) + (amount.freight || 0) + (amount.extra || 0)
-  let planDiscount
-  if (plan && plan.discount) {
-    if (plan.discount.percentage) {
-      planDiscount = amount[plan.discount.apply_at]
-      planDiscount = planDiscount * ((plan.discount.value) / 100)
-    }
-  }
-  // if the plan doesn't exist, because it's subscription before the update
-  amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) : (amount.discount || 0)
 
-  amount.total -= amount.discount
-  return Math.floor((amount.total).toFixed(2) * 100)
+  if (subtotal > 0) {
+    amount.subtotal = subtotal
+    amount.total = amount.subtotal + (amount.tax || 0) + (amount.freight || 0) + (amount.extra || 0)
+    let planDiscount
+    if (plan && plan.discount) {
+      if (plan.discount.percentage) {
+        planDiscount = amount[plan.discount.apply_at]
+        planDiscount = planDiscount * ((plan.discount.value) / 100)
+      }
+    }
+    // if the plan doesn't exist, because it's subscription before the update
+    amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) : (amount.discount || 0)
+
+    amount.total -= amount.discount
+    return amount.total > 0 ? Math.floor((amount.total).toFixed(2) * 100) : 0
+  }
+
+  return 0
+}
+
+const getSubscriptionsByListMyIds = async (
+  galaxpayAxios,
+  listOrders
+) => {
+  // Consultation on galaxpay has a limit of 100 per request
+  const promises = []
+  try {
+    let myIds = ''
+    await galaxpayAxios.preparing
+    // Handle when there are more than 100 orders
+    for (let i = 0; i < listOrders.length; i++) {
+      if ((i + 1) % 100 !== 0 && (i + 1) !== listOrders.length) {
+        myIds += `${listOrders[i]},`
+      } else if ((i + 1) !== listOrders.length) {
+        promises.push(
+          galaxpayAxios.axios.get(`/subscriptions?myIds=${myIds}&startAt=0&&limit=100&&status=active`)
+        )
+        myIds = ''
+      } else {
+        myIds += `${listOrders[i]},`
+        promises.push(
+          galaxpayAxios.axios.get(`/subscriptions?myIds=${myIds}&startAt=0&&limit=100&&status=active`)
+        )
+      }
+    }
+    const galaxPaySubscriptions = (await Promise.all(promises))?.reduce((subscriptions, resp) => {
+      if (resp.data?.Subscriptions) {
+        subscriptions.push(...resp.data.Subscriptions)
+      }
+      return subscriptions
+    }, [])
+    return galaxPaySubscriptions
+  } catch (err) {
+    console.error(err)
+    return null
+  }
 }
 
 module.exports = {
-  updateValueSubscription,
-  checkAmountItemsOrder
+  checkAndUpdateSubscriptionGalaxpay,
+  checkItemsAndRecalculeteOrder,
+  updateValueSubscriptionGalaxpay,
+  getSubscriptionsByListMyIds
 }

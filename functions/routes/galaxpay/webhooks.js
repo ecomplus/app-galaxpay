@@ -1,5 +1,5 @@
 const { parseId, parseStatus, parsePeriodicity } = require('../../lib/galaxpay/parse-to-ecom')
-const { updateValueSubscription, checkAmountItemsOrder } = require('../../lib/galaxpay/update-subscription')
+const { checkAndUpdateSubscriptionGalaxpay, checkItemsAndRecalculeteOrder } = require('../../lib/galaxpay/update-subscription')
 const getAppData = require('./../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
@@ -20,7 +20,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const GalaxPayTransaction = galaxpayHook?.Transaction
   const GalaxPayTransactionValue = GalaxPayTransaction?.value && (GalaxPayTransaction.value / 100)
 
-  console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook), ' status:', GalaxPayTransaction.status, ' <')
+  console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook),
+    ' status:', GalaxPayTransaction?.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
 
   const checkStatusIsEqual = (financialStatus, galaxPayTransactionStatus) => {
@@ -105,7 +106,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   const dateUpdate = GalaxPayTransaction.datetimeLastSentToOperator ? new Date(GalaxPayTransaction.datetimeLastSentToOperator).toISOString() : new Date().toISOString()
 
                   // remove items free in new orders subscription
-                  checkAmountItemsOrder(amount, items, plan)
+                  checkItemsAndRecalculeteOrder(amount, items, plan)
                   if (amount.balance) {
                     delete amount.balance
                   }
@@ -306,7 +307,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             .then(async (auth) => {
               let galaxPayTransactionStatus
               let galaxpaySubscriptionStatus
-              let transactionCreatedAt
+              let transactionPaymentDay
 
               try {
                 // check subscription and transaction status before in galaxpay
@@ -319,9 +320,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
 
                 galaxPayTransactionStatus = data.Transactions[0]?.status
-                const dateTimeTransaction = data.Transactions[0]?.createdAt
-                transactionCreatedAt = dateTimeTransaction && new Date(`${dateTimeTransaction} UTC-3`)
-                console.log('>> galaxpay webhook: Transaction status ', galaxPayTransactionStatus, ' ', transactionCreatedAt)
+                const dateTimeTransaction = data.Transactions[0]?.paydayDate || data.Transactions[0]?.createdAt
+                transactionPaymentDay = dateTimeTransaction && new Date(`${dateTimeTransaction} UTC-3`)
+                console.log('>> galaxpay webhook: Transaction status ', galaxPayTransactionStatus, ' ', transactionPaymentDay)
 
                 data = (await galaxpayAxios.axios
                   .get(`/subscriptions?myIds=${subscriptionId}&startAt=0&limit=1`)).data
@@ -343,7 +344,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     // console.log('plan-> ', JSON.stringify(plan))
                     // not update subscripton canceled
                     if (checkStatusPaid(GalaxPayTransaction.status)) {
-                      const newValue = await updateValueSubscription(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
+                      const newValue = await checkAndUpdateSubscriptionGalaxpay(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
 
                       if (newValue && newValue !== oldValue) {
                         const updatedAt = new Date().toISOString()
@@ -376,7 +377,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       }
                       const notificationCode = `;${GalaxPayTransaction.tid || ''};${GalaxPayTransaction.authorizationCode || ''}`
                       const body = {
-                        date_time: transactionCreatedAt || new Date().toISOString(),
+                        date_time: transactionPaymentDay || new Date().toISOString(),
                         status: parseStatus(galaxPayTransactionStatus),
                         notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,
                         flags: ['GalaxPay']
@@ -399,7 +400,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             return appSdk.apiRequest(storeId, `orders/${order._id}/transactions/${transactionId}.json`, 'PATCH', body, auth)
                           } else {
                             body.amount = order.amount.total
-                            let code = GalaxPaySubscription.mainPaymentMethodId === "creditcard" ? "credit_card" : "banking_billet"
+                            let code = GalaxPaySubscription.mainPaymentMethodId === 'creditcard' ? 'credit_card' : 'banking_billet'
+                            if (GalaxPaySubscription.mainPaymentMethodId === 'pix') {
+                              code = 'account_deposit'
+                            }
                             body.payment_method = { code }
                             return appSdk.apiRequest(storeId, `orders/${order._id}/transactions.json`, 'POST', body, auth)
                           }
@@ -477,7 +481,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       // update payment
                       const notificationCode = `;${GalaxPayTransaction.tid || ''};${GalaxPayTransaction.authorizationCode || ''}`
                       const body = {
-                        date_time: transactionCreatedAt || new Date().toISOString(),
+                        date_time: transactionPaymentDay || new Date().toISOString(),
                         status: parseStatus(galaxPayTransactionStatus),
                         transaction_id: transactionId,
                         notification_code: type + ';' + galaxpayHook.webhookId + notificationCode,

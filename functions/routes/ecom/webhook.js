@@ -5,7 +5,18 @@ const getAppData = require('./../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
 const { baseUri } = require('../../__env')
-const { checkAmountItemsOrder } = require('../../lib/galaxpay/update-subscription')
+const {
+  checkItemsAndRecalculeteOrder,
+  updateValueSubscriptionGalaxpay,
+  getSubscriptionsByListMyIds
+} = require('../../lib/galaxpay/update-subscription')
+
+const {
+  findOrderById,
+  updateOrderById,
+  getProductsById,
+  getOrdersHaveProduct
+} = require('./../../lib/store-api/request-api')
 
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
@@ -16,6 +27,7 @@ const getDocSubscription = (
   orderId,
   collectionSubscription
 ) => new Promise((resolve, reject) => {
+  console.log('>> OrderId ', orderId)
   const subscription = collectionSubscription.doc(orderId)
 
   subscription.get()
@@ -35,15 +47,20 @@ const getDocSubscription = (
     })
 })
 
-const findOrderById = (appSdk, storeId, orderId, auth) => new Promise((resolve, reject) => {
-  appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
-    .then(({ response }) => {
-      resolve(response.data)
-    })
-    .catch(err => {
-      reject(err)
-    })
-})
+const updateDocFirestore = async (collectionSubscription, value, subscriptionId, status) => {
+  const updatedAt = new Date().toISOString()
+  const body = {
+    updatedAt,
+    value
+  }
+  if (status) {
+    body.status = status
+  }
+
+  await collectionSubscription.doc(subscriptionId)
+    .set(body, { merge: true })
+    .catch(console.error)
+}
 
 exports.post = async ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
@@ -157,51 +174,33 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               })
           } else if (trigger.resource === 'orders' &&
             trigger.body.status !== 'cancelled' && trigger.action !== 'create') {
-            //
+            // When the original order is edited
             try {
               const docSubscription = await getDocSubscription(resourceId, collectionSubscription)
               const order = await findOrderById(appSdk, storeId, resourceId, auth)
               const { amount, items } = order
-              let { plan, updates, value } = docSubscription
+              const { plan } = docSubscription
 
-              const newValue = checkAmountItemsOrder({ ...amount }, [...items], { ...plan })
+              const newValue = checkItemsAndRecalculeteOrder({ ...amount }, [...items], { ...plan })
               await galaxpayAxios.preparing
-
-              if (!value) {
-                const { data } = await galaxpayAxios.axios.get(`/subscriptions?myIds=${resourceId}&startAt=0&limit=1`)
-                value = data.Subscriptions[0] && data.Subscriptions[0].value
+              const resp = await updateValueSubscriptionGalaxpay(galaxpayAxios, resourceId, newValue)
+              if (resp) {
+                console.log('> Successful signature edit on Galax Pay')
+                updateDocFirestore(collectionSubscription, newValue, resourceId)
               }
-
-              if (newValue !== value) {
-                const { data } = await galaxpayAxios.axios.put(`/subscriptions/${resourceId}/myId`, { value: newValue })
-                if (data.type) {
-                  console.log('> Successful signature edit on Galax Pay')
-                  res.send(ECHO_SUCCESS)
-
-                  const updatedAt = new Date().toISOString()
-                  if (updates) {
-                    updates.push({ value: newValue, updatedAt })
-                  } else {
-                    updates = []
-                    updates.push({ value: newValue, updatedAt })
-                  }
-
-                  admin.firestore().collection('subscriptions').doc(resourceId)
-                    .set({
-                      updates,
-                      updatedAt,
-                      value: newValue
-                    }, { merge: true })
-                    .catch(console.error)
-                }
-              }
+              res.send(ECHO_SUCCESS)
             } catch (err) {
-              console.error('> Error editing subscription => ', err)
-              const statusCode = err.response.status
-              res.status(statusCode || 500)
-              const { message } = err
+              const { message, response } = err
+              let status = response?.status || 500
+              if (message === 'Document does not exist Firestore' ||
+                message === 'StoreId property not found in document') {
+                console.warn(`>> StoreApi webhook: Document does not exist Firestore, order #${resourceId}, not found`)
+                status = 404
+              } else {
+                console.error('> Error editing subscription => ', err)
+              }
 
-              res.send({
+              res.status(status).send({
                 error: ECHO_API_ERROR,
                 message
               })
@@ -231,6 +230,100 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   message
                 })
               })
+          } else if (trigger.resource === 'products' && trigger.action !== 'create') {
+            console.log('s: ', storeId, '> Edit product ', resourceId)
+            // const { quantity, price } = trigger.body
+            const sku = trigger.sku || trigger.body?.sku
+            // console.log('>> ', quantity, ' ', price, ' ', sku, ' ', resourceId)
+            let query = 'status!=cancelled'
+            if (sku) {
+              query += `&&items.sku=${sku}`
+            } else {
+              query += `&&items.product_id=${resourceId}`
+            }
+            try {
+              const { result } = await getOrdersHaveProduct(appSdk, storeId, query, auth)
+              // console.log('>Result ', JSON.stringify({ result }))
+
+              if (result && result.length) {
+                const galaxPaySubscriptions = await getSubscriptionsByListMyIds(
+                  galaxpayAxios,
+                  result.reduce((orderIds, order) => {
+                    orderIds.push(order._id)
+                    return orderIds
+                  }, [])
+                )
+
+                if (galaxPaySubscriptions && galaxPaySubscriptions.length) {
+                  galaxPaySubscriptions.forEach(async subscription => {
+                    try {
+                      // Need full item information, the order list does not provide information such as price
+                      const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
+                      if (order) {
+                        // console.log('>>Subscription  ', subscription)
+                        // console.log('=> ', order)
+                        const item = order.items.find((itemFind) => itemFind.sku === sku || itemFind.product_id === resourceId)
+                        const product = await getProductsById(appSdk, storeId, item.product_id, auth)
+
+                        const newItem = {
+                          sku: product.sku,
+                          price: product.price,
+                          quantity: product.quantity
+                        }
+                        console.log('>> product.sku !== item.sku ', product.sku !== item.sku, ' => ', product.sku, ' ', item.sku)
+                        if (product.sku !== item.sku) {
+                          const variation = product.variations.find((variationFind) => variationFind.sku === item.sku)
+                          console.log('>>variation ', variation)
+                          newItem.sku = variation.sku
+                          if (variation.price) {
+                            newItem.price = variation.price
+                          }
+                          if (variation.quantity || variation.quantity === 0) {
+                            newItem.quantity = variation.quantity
+                          }
+                        }
+                        if (newItem.quantity < item.quantity || newItem.price !== (item.final_price || item.price)) {
+                          const isRemoveItem = newItem.quantity < item.quantity
+                          // console.log('>> check item ', newItem, ' remove ', isRemoveItem)
+                          const { plan } = await getDocSubscription(order._id, collectionSubscription)
+                          // console.log('order: ', JSON.stringify(order))
+                          const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan, newItem, isRemoveItem)
+                          // console.log('>> New: ', newSubscriptionValue, subscription.value)
+                          if (newSubscriptionValue) {
+                            await galaxpayAxios.preparing
+                            const value = await updateValueSubscriptionGalaxpay(galaxpayAxios, order._id, newSubscriptionValue, subscription.value)
+                            if (value) {
+                              const body = {
+                                amount: order.amount,
+                                items: order.items
+                              }
+                              await updateOrderById(appSdk, storeId, order._id, body, auth)
+                              await updateDocFirestore(collectionSubscription, value, order._id)
+                            }
+                          } else if (newSubscriptionValue === 0) {
+                            console.log('>> Cancel subscription as new value is zero')
+                            // Galaxpay still does not allow you to pause your subscription.
+                            // new value equal to zero, quantity less than available, cancel subscription
+                            await updateOrderById(appSdk, storeId, order._id, { status: 'cancelled' }, auth)
+                          }
+                        }
+                      }
+                    } catch (err) {
+                      console.error(`Error trying to update signature #${subscription.myId} `, err)
+                    }
+                  })
+                }
+              }
+              res.send(ECHO_SUCCESS)
+            } catch (err) {
+              console.error(err)
+              res.status(500)
+              const { message } = err
+              res.send({
+                error: ECHO_API_ERROR,
+                message
+              })
+            }
           }
         })
     })

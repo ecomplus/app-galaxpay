@@ -55,11 +55,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
   const extraFields = [{
     tagName: 'store_id',
-    tagValue: storeId
+    tagValue: `${storeId}`
   },
   {
     tagName: 'order_number',
-    tagValue: orderNumber
+    tagValue: `${orderNumber}`
   }]
 
   const galaxpayCustomer = {
@@ -97,11 +97,10 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const finalAmount = amount.total
   const fristPayment = new Date()
 
-  const quantity = plan.quantity || 0
   const galaxpaySubscriptions = {
     myId: `${orderId}`, // requered
     value: Math.floor(finalAmount * 100),
-    quantity: quantity, //  recorrence quantity
+    quantity: 0, //  recorrence quantity
     periodicity: parsePeriodicityGalaxPay(plan.periodicity),
     // additionalInfo: '', // optional
     ExtraFields: extraFields
@@ -146,7 +145,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
     }
 
     const PaymentMethodPix = {
-      instructions: appData.pix.instructions || 'Pix'
+      instructions: appData.pix.instructions || 'Pix',
+      Deadline: {
+        type: 'days',
+        value: 2
+      }
     }
 
     fristPayment.setDate(fristPayment.getDate() + (appData.pix.add_days || 0))
@@ -198,7 +201,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 status: 'open',
                 orderNumber: params.order_number,
                 transactionId: transactionGalaxPay.galaxPayId,
-                quantity,
+                quantity: 0,
                 create_at: new Date().toISOString(),
                 plan,
                 value: Math.floor(finalAmount * 100)
