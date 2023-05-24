@@ -111,6 +111,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     delete amount.balance
                   }
 
+                  items.forEach(item => {
+                    if (item.stock_status && item.stock_status !== 'unmanaged') {
+                      item.stock_status = 'pending'
+                    }
+                  })
+
                   const transactions = [
                     {
                       amount: originalTransaction.amount,
