@@ -270,10 +270,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           price: product.price,
                           quantity: product.quantity
                         }
-                        console.log('>> product.sku !== item.sku ', product.sku !== item.sku, ' => ', product.sku, ' ', item.sku)
+                        // console.log('>> product.sku !== item.sku ', product.sku !== item.sku, ' => ', product.sku, ' ', item.sku)
                         if (product.sku !== item.sku) {
                           const variation = product.variations.find((variationFind) => variationFind.sku === item.sku)
-                          console.log('>>variation ', variation)
+                          // console.log('>>variation ', variation)
                           newItem.sku = variation.sku
                           if (variation.price) {
                             newItem.price = variation.price
