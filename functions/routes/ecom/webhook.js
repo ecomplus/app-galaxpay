@@ -242,7 +242,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             }
             try {
               const { result } = await getOrdersHaveProduct(appSdk, storeId, query, auth)
-              // console.log('>Result ', JSON.stringify({ result }))
 
               if (result && result.length) {
                 const galaxPaySubscriptions = await getSubscriptionsByListMyIds(
@@ -259,8 +258,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       // Need full item information, the order list does not provide information such as price
                       const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
                       if (order) {
-                        // console.log('>>Subscription  ', subscription)
-                        // console.log('=> ', order)
                         const item = order.items.find((itemFind) => itemFind.sku === sku || itemFind.product_id === resourceId)
                         const product = await getProductsById(appSdk, storeId, item.product_id, auth)
 
@@ -269,10 +266,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           price: product.price,
                           quantity: product.quantity
                         }
-                        // console.log('>> product.sku !== item.sku ', product.sku !== item.sku, ' => ', product.sku, ' ', item.sku)
                         if (product.sku !== item.sku) {
                           const variation = product.variations.find((variationFind) => variationFind.sku === item.sku)
-                          // console.log('>>variation ', variation)
                           newItem.sku = variation.sku
                           if (variation.price) {
                             newItem.price = variation.price
@@ -283,11 +278,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         }
                         if (newItem.quantity < item.quantity || newItem.price !== (item.final_price || item.price)) {
                           const isRemoveItem = newItem.quantity < item.quantity
-                          // console.log('>> check item ', newItem, ' remove ', isRemoveItem)
                           const { plan } = await getDocSubscription(order._id, collectionSubscription)
-                          // console.log('order: ', JSON.stringify(order))
                           const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan, newItem, isRemoveItem)
-                          // console.log('>> New: ', newSubscriptionValue, subscription.value)
                           if (newSubscriptionValue) {
                             await galaxpayAxios.preparing
                             const value = await updateValueSubscriptionGalaxpay(galaxpayAxios, order._id, newSubscriptionValue, subscription.value)
