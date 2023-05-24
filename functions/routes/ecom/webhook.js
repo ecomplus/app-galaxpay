@@ -27,7 +27,6 @@ const getDocSubscription = (
   orderId,
   collectionSubscription
 ) => new Promise((resolve, reject) => {
-  console.log('>> OrderId ', orderId)
   const subscription = collectionSubscription.doc(orderId)
 
   subscription.get()
