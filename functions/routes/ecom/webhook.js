@@ -90,12 +90,18 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 console.log('s: ', storeId, '> Cancell Subscription ', order._id)
                 getDocSubscription(order._id, collectionSubscription)
                   .then(({ status }) => {
+                    const updatedAt = new Date().toISOString()
                     if (status !== 'cancelled') {
                       galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
                         .then(() => {
                           console.log(`> ${order._id} Cancelled`)
                           res.send(ECHO_SUCCESS)
-                          updateDocSubscription(collectionSubscription, { status: 'cancelled' }, order._id)
+                          admin.firestore().collection('subscriptions').doc(order._id)
+                            .set({
+                              status: 'cancelled',
+                              updatedAt
+                            }, { merge: true })
+                            .catch(console.error)
                         })
                         .catch((err) => {
                           const statusCode = err.response.status
@@ -121,21 +127,21 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           } else if (statusCode === 404) {
                             console.log('>E-com webhook: Subscription canceled or finished in galaxPay')
 
-                            updateDocSubscription(
-                              collectionSubscription,
-                              {
+                            admin.firestore().collection('subscriptions').doc(order._id)
+                              .set({
                                 status: 'cancelled',
-                                description: 'Subscription canceled or finished in galaxPay'
-                              },
-                              order._id
-                            )
+                                description: 'Subscription canceled or finished in galaxPay',
+                                updatedAt
+                              }, { merge: true })
+                              .catch(console.error)
                           } else {
                             console.error(err)
-                            updateDocSubscription(
-                              collectionSubscription,
-                              { description: `GALAXPAY_TRANSACTION_ERR ${statusCode}` },
-                              order._id
-                            )
+                            admin.firestore().collection('subscriptions').doc(order._id)
+                              .set({
+                                description: `GALAXPAY_TRANSACTION_ERR ${statusCode}`,
+                                updatedAt
+                              }, { merge: true })
+                              .catch(console.error)
                           }
                         })
                     } else {
@@ -178,7 +184,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   newValue,
                   resourceId
                 )
-                // updateDocSubscription(collectionSubscription, { value: newValue }, resourceId)
               }
               res.send(ECHO_SUCCESS)
             } catch (err) {
@@ -229,7 +234,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             // console.log(`trigger: ${JSON.stringify(trigger)}`)
             const isVariation = trigger.subresource === 'variations'
             // console.log('>> ', quantity, ' ', price, ' ', resourceId, ' ', sku)
-            let query = 'status!=cancelled&&transactions.type=recurrence'
+            let query = 'status!=cancelled&transactions.type=recurrence'
             query += '&&transactions.app.intermediator.code=galaxpay_app'
             if (sku) {
               query += `&&items.sku=${sku}`
