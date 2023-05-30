@@ -110,9 +110,33 @@ const getSubscriptionsByListMyIds = async (
   }
 }
 
+const compareDocItemsWithOrder = (docItemsAndAmount, originalItems, originalAmount, galapayTransactionValue) => {
+  if (galapayTransactionValue !== originalAmount.total) {
+    // need update itens and recalculate order
+    let i = 0
+    let itemOrder
+    while (i < originalItems.length) {
+      itemOrder = originalItems[i]
+      const itemDoc = docItemsAndAmount.items.find(itemFind => itemFind.sku === itemOrder.sku)
+      if (itemDoc) {
+        if (itemOrder.price !== itemDoc.price) {
+          itemOrder.price = itemDoc.price
+          if (itemOrder.final_price !== itemDoc.final_price) {
+            itemOrder.final_price = itemDoc.final_price
+          }
+        }
+        i++
+      } else {
+        originalItems.splice(i, 1)
+      }
+    }
+  }
+}
+
 module.exports = {
   checkAndUpdateSubscriptionGalaxpay,
   checkItemsAndRecalculeteOrder,
   updateValueSubscriptionGalaxpay,
-  getSubscriptionsByListMyIds
+  getSubscriptionsByListMyIds,
+  compareDocItemsWithOrder
 }

@@ -307,6 +307,12 @@ const app = {
             default: 0,
             title: 'Prazo',
             description: 'Prazo em DIAS para o primeiro pagamento'
+          },
+          deadline: {
+            type: 'integer',
+            default: 1,
+            title: 'Expiração do QR Code',
+            description: 'Prazo em dias para expiração do QR Code (Padrão 1 Dia)'
           }
         }
       },
@@ -436,15 +442,24 @@ procedures.push({
     {
       resource: 'products',
       field: 'price',
+      action: 'change',
+    },
+    {
+      resource: 'products',
+      field: 'quantity',
+      action: 'change',
     },
     {
       resource: 'products',
       subresource: 'variations',
       field: 'price',
+      action: 'change',
     },
     {
       resource: 'products',
+      subresource: 'variations',
       field: 'quantity',
+      action: 'change',
     },
     // Receive notifications when order status are set or changed:
     {

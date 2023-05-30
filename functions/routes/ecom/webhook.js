@@ -13,53 +13,19 @@ const {
 
 const {
   findOrderById,
-  updateOrderById,
   getProductsById,
-  getOrdersHaveProduct
+  getOrderWithQueryString
 } = require('./../../lib/store-api/request-api')
+
+const {
+  getDocSubscription,
+  updateDocSubscription
+} = require('./../../lib/firestore/utils')
 
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
 const ECHO_SKIP = 'SKIP'
 const ECHO_API_ERROR = 'STORE_API_ERR'
-
-const getDocSubscription = (
-  orderId,
-  collectionSubscription
-) => new Promise((resolve, reject) => {
-  const subscription = collectionSubscription.doc(orderId)
-
-  subscription.get()
-    .then(documentSnapshot => {
-      if (documentSnapshot.exists) {
-        const data = documentSnapshot.data()
-        if (data.storeId) {
-          resolve(data)
-        } else {
-          reject(new Error('StoreId property not found in document'))
-        }
-      } else {
-        reject(new Error('Document does not exist Firestore'))
-      }
-    }).catch(err => {
-      reject(err)
-    })
-})
-
-const updateDocFirestore = async (collectionSubscription, value, subscriptionId, status) => {
-  const updatedAt = new Date().toISOString()
-  const body = {
-    updatedAt,
-    value
-  }
-  if (status) {
-    body.status = status
-  }
-
-  await collectionSubscription.doc(subscriptionId)
-    .set(body, { merge: true })
-    .catch(console.error)
-}
 
 exports.post = async ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
@@ -71,6 +37,30 @@ exports.post = async ({ appSdk, admin }, req, res) => {
    */
   const trigger = req.body
   const resourceId = trigger.resource_id || trigger.inserted_id
+
+  const addItemsAndValueSubscriptionDoc = async (collectionSubscription, amount, items, value, subscriptionId) => {
+    const itemsAndAmount = {
+      amount: amount,
+      items: items.reduce((items, itemOrder) => {
+        items.push({
+          sku: itemOrder.sku,
+          final_price: itemOrder.final_price,
+          price: itemOrder.price,
+          quantity: itemOrder.quantity,
+          product_id: itemOrder.product_id,
+          variation_id: itemOrder.variation_id
+        })
+        return items
+      }, [])
+    }
+    const body = { itemsAndAmount }
+
+    if (value) {
+      body.value = value
+    }
+
+    await updateDocSubscription(collectionSubscription, body, subscriptionId)
+  }
 
   appSdk.getAuth(storeId)
     .then((auth) => {
@@ -100,18 +90,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 console.log('s: ', storeId, '> Cancell Subscription ', order._id)
                 getDocSubscription(order._id, collectionSubscription)
                   .then(({ status }) => {
-                    const updatedAt = new Date().toISOString()
                     if (status !== 'cancelled') {
                       galaxpayAxios.axios.delete(`/subscriptions/${order._id}/myId`)
                         .then(() => {
                           console.log(`> ${order._id} Cancelled`)
                           res.send(ECHO_SUCCESS)
-                          admin.firestore().collection('subscriptions').doc(order._id)
-                            .set({
-                              status: 'cancelled',
-                              updatedAt
-                            }, { merge: true })
-                            .catch(console.error)
+                          updateDocSubscription(collectionSubscription, { status: 'cancelled' }, order._id)
                         })
                         .catch((err) => {
                           const statusCode = err.response.status
@@ -136,21 +120,22 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               })
                           } else if (statusCode === 404) {
                             console.log('>E-com webhook: Subscription canceled or finished in galaxPay')
-                            admin.firestore().collection('subscriptions').doc(order._id)
-                              .set({
+
+                            updateDocSubscription(
+                              collectionSubscription,
+                              {
                                 status: 'cancelled',
-                                description: 'Subscription canceled or finished in galaxPay',
-                                updatedAt
-                              }, { merge: true })
-                              .catch(console.error)
+                                description: 'Subscription canceled or finished in galaxPay'
+                              },
+                              order._id
+                            )
                           } else {
                             console.error(err)
-                            admin.firestore().collection('subscriptions').doc(order._id)
-                              .set({
-                                description: `GALAXPAY_TRANSACTION_ERR ${statusCode}`,
-                                updatedAt
-                              }, { merge: true })
-                              .catch(console.error)
+                            updateDocSubscription(
+                              collectionSubscription,
+                              { description: `GALAXPAY_TRANSACTION_ERR ${statusCode}` },
+                              order._id
+                            )
                           }
                         })
                     } else {
@@ -185,7 +170,15 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               const resp = await updateValueSubscriptionGalaxpay(galaxpayAxios, resourceId, newValue)
               if (resp) {
                 console.log('> Successful signature edit on Galax Pay')
-                updateDocFirestore(collectionSubscription, newValue, resourceId)
+
+                addItemsAndValueSubscriptionDoc(
+                  collectionSubscription,
+                  amount,
+                  items,
+                  newValue,
+                  resourceId
+                )
+                // updateDocSubscription(collectionSubscription, { value: newValue }, resourceId)
               }
               res.send(ECHO_SUCCESS)
             } catch (err) {
@@ -229,19 +222,22 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   message
                 })
               })
-          } else if (trigger.resource === 'products' && trigger.action !== 'create') {
-            console.log('s: ', storeId, '> Edit product ', resourceId)
-            // const { quantity, price } = trigger.body
-            const sku = trigger.sku || trigger.body?.sku
-            // console.log('>> ', quantity, ' ', price, ' ', sku, ' ', resourceId)
-            let query = 'status!=cancelled'
+          } else if (trigger.resource === 'products' && trigger.action === 'change') {
+            console.log('> Edit product ', resourceId, 's: ', storeId)
+            const { quantity, price, sku } = trigger.body
+            // console.log(`body: ${JSON.stringify(trigger.body)}`)
+            // console.log(`trigger: ${JSON.stringify(trigger)}`)
+            const isVariation = trigger.subresource === 'variations'
+            // console.log('>> ', quantity, ' ', price, ' ', resourceId, ' ', sku)
+            let query = 'status!=cancelled&&transactions.type=recurrence'
+            query += '&&transactions.app.intermediator.code=galaxpay_app'
             if (sku) {
               query += `&&items.sku=${sku}`
             } else {
               query += `&&items.product_id=${resourceId}`
             }
             try {
-              const { result } = await getOrdersHaveProduct(appSdk, storeId, query, auth)
+              const { result } = await getOrderWithQueryString(appSdk, storeId, query, auth)
 
               if (result && result.length) {
                 const galaxPaySubscriptions = await getSubscriptionsByListMyIds(
@@ -255,49 +251,69 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 if (galaxPaySubscriptions && galaxPaySubscriptions.length) {
                   galaxPaySubscriptions.forEach(async subscription => {
                     try {
-                      // Need full item information, the order list does not provide information such as price
                       const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
-                      if (order) {
-                        const item = order.items.find((itemFind) => itemFind.sku === sku || itemFind.product_id === resourceId)
-                        const product = await getProductsById(appSdk, storeId, item.product_id, auth)
+                      let product = { sku, price }
 
-                        const newItem = {
-                          sku: product.sku,
-                          price: product.price,
-                          quantity: product.quantity
-                        }
-                        if (product.sku !== item.sku) {
-                          const variation = product.variations.find((variationFind) => variationFind.sku === item.sku)
-                          newItem.sku = variation.sku
-                          if (variation.price) {
-                            newItem.price = variation.price
-                          }
-                          if (variation.quantity || variation.quantity === 0) {
-                            newItem.quantity = variation.quantity
-                          }
-                        }
-                        if (newItem.quantity < item.quantity || newItem.price !== (item.final_price || item.price)) {
-                          const isRemoveItem = newItem.quantity < item.quantity
-                          const { plan } = await getDocSubscription(order._id, collectionSubscription)
-                          const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan, newItem, isRemoveItem)
-                          if (newSubscriptionValue) {
-                            await galaxpayAxios.preparing
-                            const value = await updateValueSubscriptionGalaxpay(galaxpayAxios, order._id, newSubscriptionValue, subscription.value)
-                            if (value) {
-                              const body = {
-                                amount: order.amount,
-                                items: order.items
-                              }
-                              await updateOrderById(appSdk, storeId, order._id, body, auth)
-                              await updateDocFirestore(collectionSubscription, value, order._id)
+                      if (!sku) {
+                        product = await getProductsById(appSdk, storeId, resourceId, auth)
+                      }
+
+                      if (order) {
+                        const { plan } = await getDocSubscription(order._id, collectionSubscription)
+                        order.items.forEach(item => {
+                          if (isVariation) {
+                            let variationProduct
+
+                            if (!sku) {
+                              variationProduct = product.variations
+                                .find(variationFind => variationFind.sku === item.sku)
+                            } else if (sku === item.sku) {
+                              variationProduct = product
                             }
-                          } else if (newSubscriptionValue === 0) {
-                            console.log('>> Cancel subscription as new value is zero')
-                            // Galaxpay still does not allow you to pause your subscription.
-                            // new value equal to zero, quantity less than available, cancel subscription
-                            await updateOrderById(appSdk, storeId, order._id, { status: 'cancelled' }, auth)
+
+                            if (variationProduct) {
+                              const newItem = {
+                                sku: variationProduct.sku,
+                                price: variationProduct.price || item.final_price || item.price
+                              }
+                              const isRemoveItem = quantity < item.quantity
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, plan, newItem, isRemoveItem)
+                            }
+                          } else {
+                            if (item.sku === product.sku) {
+                              const newItem = {
+                                sku: product.sku,
+                                price: product.price
+                              }
+                              const isRemoveItem = quantity < item.quantity
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, plan, newItem, isRemoveItem)
+                            }
+                          }
+                        })
+                        const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
+                        if (newSubscriptionValue) {
+                          await galaxpayAxios.preparing
+                          const value = await updateValueSubscriptionGalaxpay(
+                            galaxpayAxios,
+                            order._id,
+                            newSubscriptionValue,
+                            subscription.value
+                          )
+
+                          if (value) {
+                            await addItemsAndValueSubscriptionDoc(
+                              collectionSubscription,
+                              order.amount,
+                              order.items,
+                              value,
+                              order._id
+                            )
                           }
                         }
+                        // TODO:
+                        // Galaxpay still does not allow you to pause your subscription.
+                        // new value equal to zero, quantity less than available, cancel subscription
+                        // console.log('>> Cancel subscription as new value is zero')
                       }
                     } catch (err) {
                       console.error(`Error trying to update signature #${subscription.myId} `, err)

@@ -148,7 +148,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
       instructions: appData.pix.instructions || 'Pix',
       Deadline: {
         type: 'days',
-        value: 2
+        value: (appData.pix.deadline || 1)
       }
     }
 
