@@ -230,16 +230,13 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           } else if (trigger.resource === 'products' && trigger.action === 'change') {
             console.log('> Edit product ', resourceId, 's: ', storeId)
             const { quantity, price, sku } = trigger.body
-            // console.log(`body: ${JSON.stringify(trigger.body)}`)
-            // console.log(`trigger: ${JSON.stringify(trigger)}`)
             const isVariation = trigger.subresource === 'variations'
-            // console.log('>> ', quantity, ' ', price, ' ', resourceId, ' ', sku)
             let query = 'status!=cancelled&transactions.type=recurrence'
-            query += '&&transactions.app.intermediator.code=galaxpay_app'
+            query += '&transactions.app.intermediator.code=galaxpay_app'
             if (sku) {
-              query += `&&items.sku=${sku}`
+              query += `&items.sku=${sku}`
             } else {
-              query += `&&items.product_id=${resourceId}`
+              query += `&items.product_id=${resourceId}`
             }
             try {
               const { result } = await getOrderWithQueryString(appSdk, storeId, query, auth)
