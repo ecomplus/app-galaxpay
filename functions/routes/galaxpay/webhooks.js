@@ -319,7 +319,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
 
                 galaxPayTransactionStatus = data.Transactions[0]?.status
-                const dateTimeTransaction = data.Transactions[0]?.createdAt
+                const dateTimeTransaction = data.Transactions[0]?.paydayDate || data.Transactions[0]?.createdAt
                 transactionCreatedAt = dateTimeTransaction && new Date(`${dateTimeTransaction} UTC-3`)
                 console.log('>> galaxpay webhook: Transaction status ', galaxPayTransactionStatus, ' ', transactionCreatedAt)
 

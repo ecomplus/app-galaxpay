@@ -76,6 +76,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           const collectionSubscription = admin.firestore().collection('subscriptions')
 
           if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
+            console.log('>>> ', JSON.stringify(trigger.body))
             galaxpayAxios.preparing
               .then(async () => {
                 // Get Original Order
@@ -175,7 +176,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               if (newValue !== value) {
                 const { data } = await galaxpayAxios.axios.put(`/subscriptions/${resourceId}/myId`, { value: newValue })
                 if (data.type) {
-                  console.log('> Successful signature edit on Galax Pay')
+                  console.log(`> Successful signature edit on Galax Pay ${resourceId}`)
                   res.send(ECHO_SUCCESS)
 
                   const updatedAt = new Date().toISOString()
