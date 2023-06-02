@@ -455,12 +455,6 @@ procedures.push({
       field: 'price',
       action: 'change',
     },
-    {
-      resource: 'products',
-      subresource: 'variations',
-      field: 'quantity',
-      action: 'change',
-    },
     // Receive notifications when order status are set or changed:
     {
       resource: 'orders',
