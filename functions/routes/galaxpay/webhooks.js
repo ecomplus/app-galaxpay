@@ -170,10 +170,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     staff_notes: `Valor cobrado no GalaxPay R$${GalaxPayTransactionValue}`
                   }
                   const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-                  if (GalaxPayTransactionValue !== amount.total) {
+                  if (GalaxPayTransactionValue === amount.total) {
                     return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   } else {
-                    console.log(`[Transaction Error #${storeId}] items: ${items}, amount: ${amount}, Galaxpay value: ${GalaxPayTransactionValue}`)
+                    console.log(`[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId} items: ${JSON.stringify(items)}, amount: ${JSON.stringify(amount)}, Galaxpay value: ${GalaxPayTransactionValue}`)
                   }
                 })
                 .then(({ response }) => {
@@ -226,7 +226,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         // const orderNumber = documentSnapshot.data().orderNumber
         const transactionId = documentSnapshot.data().transactionId
         const plan = documentSnapshot.data().plan
-        const oldValue = documentSnapshot.data().value
+
         let updates = documentSnapshot.data().updates
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
@@ -270,9 +270,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     // console.log('plan-> ', JSON.stringify(plan))
                     // not update subscripton canceled
                     if (checkStatusPaid(GalaxPayTransaction.status)) {
-                      const newValue = await checkAndUpdateSubscriptionGalaxpay(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
+                      const oldValue = GalaxPayTransactionValue
+                      const newValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
 
-                      if (newValue && newValue !== oldValue) {
+                      if (newValue && (newValue / 100) !== oldValue) {
+                        await checkAndUpdateSubscriptionGalaxpay(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
                         const updatedAt = new Date().toISOString()
                         if (updates) {
                           updates.push({ value: newValue, updatedAt })

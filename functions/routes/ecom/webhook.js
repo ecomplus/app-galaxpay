@@ -22,6 +22,8 @@ const {
   updateDocSubscription
 } = require('./../../lib/firestore/utils')
 
+const ecomUtils = require('@ecomplus/utils')
+
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
 const ECHO_SKIP = 'SKIP'
@@ -82,6 +84,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           const collectionSubscription = admin.firestore().collection('subscriptions')
 
           if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
+            console.log('>>> ', JSON.stringify(trigger.body))
             galaxpayAxios.preparing
               .then(async () => {
                 // Get Original Order
@@ -162,8 +165,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     })
                   })
               })
-          } else if (trigger.resource === 'orders' &&
-            trigger.body.status !== 'cancelled' && trigger.action !== 'create') {
+          } else if (trigger.resource === 'orders' && trigger.body.status !== 'cancelled' &&
+            trigger.action !== 'create' && trigger.fields.includes('items')) {
+            console.log('>> ', JSON.stringify(trigger))
             // When the original order is edited
             try {
               const docSubscription = await getDocSubscription(resourceId, collectionSubscription)
@@ -229,15 +233,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               })
           } else if (trigger.resource === 'products' && trigger.action === 'change') {
             console.log('> Edit product ', resourceId, 's: ', storeId)
-            const { quantity, price, sku } = trigger.body
-            const isVariation = trigger.subresource === 'variations'
+
             let query = 'status!=cancelled&transactions.type=recurrence'
             query += '&transactions.app.intermediator.code=galaxpay_app'
-            if (sku) {
-              query += `&items.sku=${sku}`
-            } else {
-              query += `&items.product_id=${resourceId}`
-            }
+
+            query += `&items.product_id=${resourceId}`
+
             try {
               const { result } = await getOrderWithQueryString(appSdk, storeId, query, auth)
 
@@ -251,65 +252,67 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 )
 
                 if (galaxPaySubscriptions && galaxPaySubscriptions.length) {
-                  galaxPaySubscriptions.forEach(async subscription => {
+                  for (let i = 0; i < galaxPaySubscriptions.length; i++) {
+                    const subscription = galaxPaySubscriptions[i]
                     try {
                       const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
-                      let product = { sku, price }
-
-                      if (!sku) {
-                        product = await getProductsById(appSdk, storeId, resourceId, auth)
-                      }
+                      const product = await getProductsById(appSdk, storeId, resourceId, auth)
 
                       if (order) {
-                        const { plan } = await getDocSubscription(order._id, collectionSubscription)
-                        order.items.forEach(item => {
-                          if (isVariation) {
-                            let variationProduct
+                        const docSubscription = await getDocSubscription(order._id, collectionSubscription)
 
-                            if (!sku) {
-                              variationProduct = product.variations
-                                .find(variationFind => variationFind.sku === item.sku)
-                            } else if (sku === item.sku) {
-                              variationProduct = product
-                            }
-
-                            if (variationProduct) {
-                              const newItem = {
-                                sku: variationProduct.sku,
-                                price: variationProduct.price || item.final_price || item.price
+                        order.items.forEach(orderItem => {
+                          if (orderItem.product_id === product._id) {
+                            if (orderItem.variation_id) {
+                              const variation = product.variations.find(itemFind => itemFind._id === orderItem.variation_id)
+                              let quantity = orderItem.quantity
+                              if (variation.quantity < orderItem.quantity) {
+                                quantity = variation.quantity
                               }
-                              const isRemoveItem = quantity < item.quantity
-                              checkItemsAndRecalculeteOrder(order.amount, order.items, plan, newItem, isRemoveItem)
-                            }
-                          } else {
-                            if (item.sku === product.sku) {
+                              const newItem = {
+                                sku: variation.sku,
+                                price: ecomUtils.price({ ...product, ...variation }),
+                                quantity
+                              }
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
+                            } else {
                               const newItem = {
                                 sku: product.sku,
-                                price: product.price
+                                price: ecomUtils.price(product),
+                                quantity: product.quantity < orderItem.quantity ? product.quantity : orderItem.quantity
                               }
-                              const isRemoveItem = quantity < item.quantity
-                              checkItemsAndRecalculeteOrder(order.amount, order.items, plan, newItem, isRemoveItem)
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
                             }
                           }
                         })
-                        const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
-                        if (newSubscriptionValue) {
-                          await galaxpayAxios.preparing
-                          const value = await updateValueSubscriptionGalaxpay(
-                            galaxpayAxios,
-                            order._id,
-                            newSubscriptionValue,
-                            subscription.value
-                          )
 
-                          if (value) {
-                            await addItemsAndValueSubscriptionDoc(
+                        const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan)
+                        if (newSubscriptionValue) {
+                          await addItemsAndValueSubscriptionDoc(
+                            collectionSubscription,
+                            order.amount,
+                            order.items,
+                            newSubscriptionValue,
+                            order._id
+                          )
+                          try {
+                            await galaxpayAxios.preparing
+                            await updateValueSubscriptionGalaxpay(
+                              galaxpayAxios,
+                              order._id,
+                              newSubscriptionValue,
+                              subscription.value
+                            )
+                          } catch (err) {
+                            console.error(err)
+                            // back firebase document
+                            updateDocSubscription(
                               collectionSubscription,
-                              order.amount,
-                              order.items,
-                              value,
+                              docSubscription,
                               order._id
                             )
+
+                            throw err
                           }
                         }
                         // TODO:
@@ -319,8 +322,14 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       }
                     } catch (err) {
                       console.error(`Error trying to update signature #${subscription.myId} `, err)
+                      res.status(500)
+                      const { message } = err
+                      res.send({
+                        error: ECHO_API_ERROR,
+                        message
+                      })
                     }
-                  })
+                  }
                 }
               }
               res.send(ECHO_SUCCESS)

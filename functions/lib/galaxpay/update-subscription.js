@@ -10,6 +10,7 @@ const updateValueSubscriptionGalaxpay = async (galaxpayAxios, subscriptionId, va
   if (oldValue !== value) {
     const { data } = await galaxpayAxios.axios.put(`subscriptions/${subscriptionId}/myId`, { value })
     if (data.type) {
+      console.log('> Update [GP] =>', subscriptionId, ': ', oldValue, ' to ', value)
       return value
     }
   }
@@ -25,20 +26,21 @@ const checkAndUpdateSubscriptionGalaxpay = async (appSdk, storeId, auth, subscri
   return updateValueSubscriptionGalaxpay(galaxpayAxios, subscriptionId, value, oldValue)
 }
 
-const checkItemsAndRecalculeteOrder = (amount, items, plan, newItem, isRemoveItem) => {
+const checkItemsAndRecalculeteOrder = (amount, items, plan, newItem) => {
   let subtotal = 0
   let item
   let i = 0
   while (i < items.length) {
     item = items[i]
     if (newItem && item.sku === newItem.sku) {
-      if (isRemoveItem) {
+      if (newItem.quantity === 0) {
         items.splice(i, 1)
       } else {
         if (item.final_price) {
           item.final_price = newItem.price
         }
         item.price = newItem.price
+        item.quantity = newItem.quantity
         subtotal += item.quantity * (item.final_price || item.price)
         i++
       }
@@ -66,7 +68,7 @@ const checkItemsAndRecalculeteOrder = (amount, items, plan, newItem, isRemoveIte
     amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) : (amount.discount || 0)
 
     amount.total -= amount.discount
-    return amount.total > 0 ? Math.floor((amount.total).toFixed(2) * 100) : 0
+    return amount.total > 0 ? Math.floor((amount.total).toFixed(2) * 1000) / 10 : 0
   }
 
   return 0
@@ -124,6 +126,10 @@ const compareDocItemsWithOrder = (docItemsAndAmount, originalItems, originalAmou
           if (itemOrder.final_price !== itemDoc.final_price) {
             itemOrder.final_price = itemDoc.final_price
           }
+        }
+
+        if (itemOrder.quantity !== itemDoc.quantity) {
+          itemOrder.quantity = itemDoc.quantity
         }
         i++
       } else {
