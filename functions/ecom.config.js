@@ -54,7 +54,7 @@ const app = {
       'POST'           // Create procedures to receive webhooks
     ],
     products: [
-      // 'GET',           // Read products with public and private fields
+      'GET',           // Read products with public and private fields
       // 'POST',          // Create products
       // 'PATCH',         // Edit products
       // 'PUT',           // Overwrite products
@@ -115,20 +115,28 @@ const app = {
      * Stock and price management only.
      */
     'products/quantity': [
-      // 'GET',           // Read product available quantity
+      'GET',           // Read product available quantity
       // 'PUT',           // Set product stock quantity
     ],
     'products/variations/quantity': [
-      // 'GET',           // Read variaton available quantity
+      'GET',           // Read variaton available quantity
       // 'PUT',           // Set variation stock quantity
     ],
     'products/price': [
-      // 'GET',           // Read product current sale price
+      'GET',           // Read product current sale price
       // 'PUT',           // Set product sale price
     ],
     'products/variations/price': [
-      // 'GET',           // Read variation current sale price
+      'GET',           // Read variation current sale price
       // 'PUT',           // Set variation sale price
+    ],
+    'products/sku': [
+      'GET',           // Read
+      // 'PUT',           // Set
+    ],
+    'products/variations/sku': [
+      'GET',           // Read
+      // 'PUT',           // Set
     ],
 
     /**
@@ -153,14 +161,6 @@ const app = {
         maxLength: 255,
         title: 'Galax Hash',
         description: 'Seu hash de acesso a API do Galaxpay, solicitação via suporte https://docs.galaxpay.com.br/suporte'
-      },
-      hide: true
-    },
-    galaxpay_sandbox: {
-      schema: {
-        type: 'boolean',
-        title: 'Galaxpay Sandbox',
-        description: 'Galaxpay API sandbox env'
       },
       hide: true
     },
@@ -307,6 +307,12 @@ const app = {
             default: 0,
             title: 'Prazo',
             description: 'Prazo em DIAS para o primeiro pagamento'
+          },
+          deadline: {
+            type: 'integer',
+            default: 1,
+            title: 'Expiração do QR Code',
+            description: 'Prazo em dias para expiração do QR Code (Padrão 1 Dia)'
           }
         }
       },
@@ -343,12 +349,6 @@ const app = {
               default: 'Mensal',
               title: 'Periodicidade da recorrência',
               description: 'Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual '
-            },
-            quantity: {
-              type: 'integer',
-              default: 0,
-              title: 'Quantidade da recorrência',
-              description: 'Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0'
             },
             discount: {
               title: 'Desconto',
@@ -438,6 +438,23 @@ procedures.push({
   title: app.title,
 
   triggers: [
+    // Receive notifications when products/variations prices or quantities changes:
+    {
+      resource: 'products',
+      field: 'price',
+      action: 'change',
+    },
+    {
+      resource: 'products',
+      field: 'quantity',
+      action: 'change',
+    },
+    {
+      resource: 'products',
+      subresource: 'variations',
+      field: 'price',
+      action: 'change',
+    },
     // Receive notifications when order status are set or changed:
     {
       resource: 'orders',

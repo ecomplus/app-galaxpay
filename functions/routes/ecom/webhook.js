@@ -5,45 +5,29 @@ const getAppData = require('./../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
 const { baseUri } = require('../../__env')
-const { checkAmountItemsOrder } = require('../../lib/galaxpay/update-subscription')
+const {
+  checkItemsAndRecalculeteOrder,
+  updateValueSubscriptionGalaxpay,
+  getSubscriptionsByListMyIds
+} = require('../../lib/galaxpay/update-subscription')
+
+const {
+  findOrderById,
+  getProductsById,
+  getOrderWithQueryString
+} = require('./../../lib/store-api/request-api')
+
+const {
+  getDocSubscription,
+  updateDocSubscription
+} = require('./../../lib/firestore/utils')
+
+const ecomUtils = require('@ecomplus/utils')
 
 const SKIP_TRIGGER_NAME = 'SkipTrigger'
 const ECHO_SUCCESS = 'SUCCESS'
 const ECHO_SKIP = 'SKIP'
 const ECHO_API_ERROR = 'STORE_API_ERR'
-
-const getDocSubscription = (
-  orderId,
-  collectionSubscription
-) => new Promise((resolve, reject) => {
-  const subscription = collectionSubscription.doc(orderId)
-
-  subscription.get()
-    .then(documentSnapshot => {
-      if (documentSnapshot.exists) {
-        const data = documentSnapshot.data()
-        if (data.storeId) {
-          resolve(data)
-        } else {
-          reject(new Error('StoreId property not found in document'))
-        }
-      } else {
-        reject(new Error('Document does not exist Firestore'))
-      }
-    }).catch(err => {
-      reject(err)
-    })
-})
-
-const findOrderById = (appSdk, storeId, orderId, auth) => new Promise((resolve, reject) => {
-  appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
-    .then(({ response }) => {
-      resolve(response.data)
-    })
-    .catch(err => {
-      reject(err)
-    })
-})
 
 exports.post = async ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
@@ -55,6 +39,30 @@ exports.post = async ({ appSdk, admin }, req, res) => {
    */
   const trigger = req.body
   const resourceId = trigger.resource_id || trigger.inserted_id
+
+  const addItemsAndValueSubscriptionDoc = async (collectionSubscription, amount, items, value, subscriptionId) => {
+    const itemsAndAmount = {
+      amount: amount,
+      items: items.reduce((items, itemOrder) => {
+        items.push({
+          sku: itemOrder.sku,
+          final_price: itemOrder.final_price,
+          price: itemOrder.price,
+          quantity: itemOrder.quantity,
+          product_id: itemOrder.product_id,
+          variation_id: itemOrder.variation_id
+        })
+        return items
+      }, [])
+    }
+    const body = { itemsAndAmount }
+
+    if (value) {
+      body.value = value
+    }
+
+    await updateDocSubscription(collectionSubscription, body, subscriptionId)
+  }
 
   appSdk.getAuth(storeId)
     .then((auth) => {
@@ -121,6 +129,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               })
                           } else if (statusCode === 404) {
                             console.log('>E-com webhook: Subscription canceled or finished in galaxPay')
+
                             admin.firestore().collection('subscriptions').doc(order._id)
                               .set({
                                 status: 'cancelled',
@@ -156,53 +165,43 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     })
                   })
               })
-          } else if (trigger.resource === 'orders' &&
-            trigger.body.status !== 'cancelled' && trigger.action !== 'create') {
-            //
+          } else if (trigger.resource === 'orders' && trigger.body.status !== 'cancelled' &&
+            trigger.action !== 'create' && trigger.fields.includes('items')) {
+            console.log('>> ', JSON.stringify(trigger))
+            // When the original order is edited
             try {
               const docSubscription = await getDocSubscription(resourceId, collectionSubscription)
               const order = await findOrderById(appSdk, storeId, resourceId, auth)
               const { amount, items } = order
-              let { plan, updates, value } = docSubscription
+              const { plan } = docSubscription
 
-              const newValue = checkAmountItemsOrder({ ...amount }, [...items], { ...plan })
+              const newValue = checkItemsAndRecalculeteOrder({ ...amount }, [...items], { ...plan })
               await galaxpayAxios.preparing
+              const resp = await updateValueSubscriptionGalaxpay(galaxpayAxios, resourceId, newValue)
+              if (resp) {
+                console.log('> Successful signature edit on Galax Pay')
 
-              if (!value) {
-                const { data } = await galaxpayAxios.axios.get(`/subscriptions?myIds=${resourceId}&startAt=0&limit=1`)
-                value = data.Subscriptions[0] && data.Subscriptions[0].value
+                addItemsAndValueSubscriptionDoc(
+                  collectionSubscription,
+                  amount,
+                  items,
+                  newValue,
+                  resourceId
+                )
               }
-
-              if (newValue !== value) {
-                const { data } = await galaxpayAxios.axios.put(`/subscriptions/${resourceId}/myId`, { value: newValue })
-                if (data.type) {
-                  console.log(`> Successful signature edit on Galax Pay ${resourceId}`)
-                  res.send(ECHO_SUCCESS)
-
-                  const updatedAt = new Date().toISOString()
-                  if (updates) {
-                    updates.push({ value: newValue, updatedAt })
-                  } else {
-                    updates = []
-                    updates.push({ value: newValue, updatedAt })
-                  }
-
-                  admin.firestore().collection('subscriptions').doc(resourceId)
-                    .set({
-                      updates,
-                      updatedAt,
-                      value: newValue
-                    }, { merge: true })
-                    .catch(console.error)
-                }
-              }
+              res.send(ECHO_SUCCESS)
             } catch (err) {
-              console.error('> Error editing subscription => ', err)
-              const statusCode = err.response.status
-              res.status(statusCode || 500)
-              const { message } = err
+              const { message, response } = err
+              let status = response?.status || 500
+              if (message === 'Document does not exist Firestore' ||
+                message === 'StoreId property not found in document') {
+                console.warn(`>> StoreApi webhook: Document does not exist Firestore, order #${resourceId}, not found`)
+                status = 404
+              } else {
+                console.error('> Error editing subscription => ', err)
+              }
 
-              res.send({
+              res.status(status).send({
                 error: ECHO_API_ERROR,
                 message
               })
@@ -232,6 +231,119 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   message
                 })
               })
+          } else if (trigger.resource === 'products' && trigger.action === 'change') {
+            console.log('> Edit product ', resourceId, 's: ', storeId)
+
+            let query = 'status!=cancelled&transactions.type=recurrence'
+            query += '&transactions.app.intermediator.code=galaxpay_app'
+
+            query += `&items.product_id=${resourceId}`
+
+            try {
+              const { result } = await getOrderWithQueryString(appSdk, storeId, query, auth)
+
+              if (result && result.length) {
+                const galaxPaySubscriptions = await getSubscriptionsByListMyIds(
+                  galaxpayAxios,
+                  result.reduce((orderIds, order) => {
+                    orderIds.push(order._id)
+                    return orderIds
+                  }, [])
+                )
+
+                if (galaxPaySubscriptions && galaxPaySubscriptions.length) {
+                  for (let i = 0; i < galaxPaySubscriptions.length; i++) {
+                    const subscription = galaxPaySubscriptions[i]
+                    try {
+                      const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
+                      const product = await getProductsById(appSdk, storeId, resourceId, auth)
+
+                      if (order) {
+                        const docSubscription = await getDocSubscription(order._id, collectionSubscription)
+
+                        order.items.forEach(orderItem => {
+                          if (orderItem.product_id === product._id) {
+                            if (orderItem.variation_id) {
+                              const variation = product.variations.find(itemFind => itemFind.sku === orderItem.sku)
+                              let quantity = orderItem.quantity
+                              if (variation && variation.quantity < orderItem.quantity) {
+                                quantity = variation.quantity
+                              } else if (!variation) {
+                                quantity = 0
+                              }
+                              const newItem = {
+                                sku: variation.sku,
+                                price: ecomUtils.price({ ...product, ...variation }),
+                                quantity
+                              }
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
+                            } else {
+                              const newItem = {
+                                sku: product.sku,
+                                price: ecomUtils.price(product),
+                                quantity: product.quantity < orderItem.quantity ? product.quantity : orderItem.quantity
+                              }
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
+                            }
+                          }
+                        })
+
+                        const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan)
+                        if (newSubscriptionValue !== subscription.value) {
+                          await addItemsAndValueSubscriptionDoc(
+                            collectionSubscription,
+                            order.amount,
+                            order.items,
+                            newSubscriptionValue,
+                            order._id
+                          )
+                          try {
+                            await galaxpayAxios.preparing
+                            await updateValueSubscriptionGalaxpay(
+                              galaxpayAxios,
+                              order._id,
+                              newSubscriptionValue,
+                              subscription.value
+                            )
+                          } catch (err) {
+                            console.error(err)
+                            // back firebase document
+                            updateDocSubscription(
+                              collectionSubscription,
+                              docSubscription,
+                              order._id
+                            )
+
+                            throw err
+                          }
+                        }
+                        // TODO:
+                        // Galaxpay still does not allow you to pause your subscription.
+                        // new value equal to zero, quantity less than available, cancel subscription
+                        // console.log('>> Cancel subscription as new value is zero')
+                      }
+                    } catch (err) {
+                      console.error(`Error trying to update signature #${subscription.myId} `, err)
+                      res.status(500)
+                      const { message } = err
+                      res.send({
+                        error: ECHO_API_ERROR,
+                        message
+                      })
+                    }
+                  }
+                }
+              }
+              res.send(ECHO_SUCCESS)
+            } catch (err) {
+              console.error(err)
+              res.status(500)
+              const { message } = err
+              res.send({
+                error: ECHO_API_ERROR,
+                message
+              })
+            }
           }
         })
     })
