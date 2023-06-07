@@ -2,6 +2,83 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/ecomplus/application-starter/compare/v1.1.2...v2.0.0) (2023-06-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* updating app authentication scope and procedures
+
+* feat(webhook ecom): Update subscription with product value/quantity
+
+* fix(webhook ecom): remove unnecessary logs
+
+* fix(webhook ecom): remove unnecessary logs
+
+* fix(webhook ecom): remove unnecessary comments
+
+* fix(webhook galaxpay): On new order set stock status on item as pending
+
+* fix(update subscription): Updates signature in galaxpay and saves items in firebase if there is a value change
+
+* fix(webhook ecom): fix the query and remove unnecessary logs
+
+* fix(webhook ecom): correct the query and remove unnecessary comments
+
+* Update functions/ecom.config.js
+
+[skip ci]
+
+* fix(Webhook ecom): Fix product variation search error
+
+* fix(webhook ecom): Check the values before any changes
+
+### Features
+
+* update subscription value on items quantity/price change ([#59](https://github.com/ecomplus/application-starter/issues/59)) ([15883b0](https://github.com/ecomplus/application-starter/commit/15883b0008ef697acec19ce7c0abd56edc2b9a3b))
+* **update-subscription:** receive item edit webhook to change subscription ([4cc2b50](https://github.com/ecomplus/application-starter/commit/4cc2b50e06fdbba796a5655a2fd900b039693f23))
+
+
+### Bug Fixes
+
+* **deps:** update all non-major ([81e5381](https://github.com/ecomplus/application-starter/commit/81e538178395dc127e9987d676f82254b7852fd6))
+* **deps:** update all non-major ([5ec6117](https://github.com/ecomplus/application-starter/commit/5ec6117a0de03668c371f32fe5d0368ddf72f277))
+* **deps:** update all non-major ([dc51e58](https://github.com/ecomplus/application-starter/commit/dc51e58f0e5104b248904ecbf42aca1d63c65863))
+* **deps:** update all non-major ([e6a8f96](https://github.com/ecomplus/application-starter/commit/e6a8f9682ce1103988610577208db9938ddaf1b9))
+* **deps:** update dependency firebase-tools to ^11.16.0 ([58e7712](https://github.com/ecomplus/application-starter/commit/58e771241625641b21ff1720d85c17d49e7ee08f))
+* **discount:** fix discount duplication ([3b6ed01](https://github.com/ecomplus/application-starter/commit/3b6ed019e516433447e8344bbd18e6c74e649b09))
+* **logs:** correction in logs for refactoring and correction of refactoring searches ([bce5dc8](https://github.com/ecomplus/application-starter/commit/bce5dc8386e0bab873dffead509dfcb71843da5e))
+* **update-subscription:** check the value before updating subscription after payment of the first installment ([776e204](https://github.com/ecomplus/application-starter/commit/776e2044313a4bb572c97a5dd70c1a692697ef6d))
+* **update-subscription:** remove variable isSandbox and check value before updating ([cdb40b1](https://github.com/ecomplus/application-starter/commit/cdb40b12cbf8fb89336f658fe98546ad438d7b94))
+* **webhook-ecom:** improved logging in case of ecom cancellation error for galaxpay ([4180cdc](https://github.com/ecomplus/application-starter/commit/4180cdc3e179ba961351c6c44b3f8b1244d5a01a))
+* **webhook-ecom:** Url correction for editing the signature in galaxpay ([ce80e63](https://github.com/ecomplus/application-starter/commit/ce80e636e1441ad4d6adb827f6d0fd3ec03630f3))
+* **webhook-galaxpay:** validate order search ([760d80c](https://github.com/ecomplus/application-starter/commit/760d80c1adca1015b305eb99cf5684cb10d9ae68))
+* **webhook-galaxy:** Starts creating new orders only if status is paid, renames functions ([5c6fadd](https://github.com/ecomplus/application-starter/commit/5c6fadd359f81e4f64741496817063191a9dacd3))
+* **webhook-galaxy:** Starts creating new orders only if status is paid, renames functions ([0e00843](https://github.com/ecomplus/application-starter/commit/0e008430cc80617b8b214efcd631fea59c9af0ea))
+* **webhook-utils:** Add confirmHash check or check status in galaxPay and use randomObjectId for id ([ef78830](https://github.com/ecomplus/application-starter/commit/ef78830b9fb2f2f55004f18c13f09a25771eb2a3))
+* **webhook:** Add verification of galaxPaySubscriptionId ([4047d68](https://github.com/ecomplus/application-starter/commit/4047d6812681df4fc426a06f40b632e2a487e5a2))
+* **webhook:** adds a little delay to get the order ([f84d14f](https://github.com/ecomplus/application-starter/commit/f84d14f73317056c656303134628d532e0b6ef0f))
+* **webhook:** Check transaction date to insert in payment history ([14429e0](https://github.com/ecomplus/application-starter/commit/14429e0bb7480abf54aa41db0ee66a7f6a2aec04))
+* **webhook:** check transaction status and subscription before in galaxpay and cancel subscription with webhook if needed ([f8c9ba9](https://github.com/ecomplus/application-starter/commit/f8c9ba950d190326f37dd76e2fab2109fa96b6f0))
+* **webhook:** Condition not to update canceled subscription ([3a219a0](https://github.com/ecomplus/application-starter/commit/3a219a01fc4474252d4e540ce1f21e40ed54f89f))
+* **webhook:** Create payment history if there is no previous transaction ([0bd8792](https://github.com/ecomplus/application-starter/commit/0bd8792c2a36728b07b5cca8c71a8fb1bfe75a8e))
+* **webhook:** fix log ([a845cee](https://github.com/ecomplus/application-starter/commit/a845cee0f4b3f95442f031c84207bb980ae924ac))
+* **webhook:** fix to not try to edit canceled order and prevent addTransaction retries ([18b5cfe](https://github.com/ecomplus/application-starter/commit/18b5cfe5f8aae29f559b91e28a969ddc2324982f))
+* **webhook:** fix url for id update ([9e805c8](https://github.com/ecomplus/application-starter/commit/9e805c88687d06726c319ca06cf78fbcb2874d5c))
+* **webhook:** fix when updating canceled payment ([93fcdb2](https://github.com/ecomplus/application-starter/commit/93fcdb254290d817ecba4f061d310ca598b357f4))
+* **webhook:** Handle error message in storeAPi webhook ([2636fc0](https://github.com/ecomplus/application-starter/commit/2636fc0c63a25c3ac13946a27bca56ab4989473d))
+* **webhook:** handle exception when order does not exist ([4baf5ac](https://github.com/ecomplus/application-starter/commit/4baf5ace2f72b1029d09227a388ebc13b086efe0))
+* **webhook:** make sure the order was found before trying to cancel ([536d782](https://github.com/ecomplus/application-starter/commit/536d782d8d8026bdc35f18783fbcaf78be6b8833))
+* **webhook:** Printing wrong variable ([6120f6e](https://github.com/ecomplus/application-starter/commit/6120f6e62e03e99efc7af0df973be0529636bdbe))
+* **webhook:** remove parse from status coming from webhook ([b9f3d10](https://github.com/ecomplus/application-starter/commit/b9f3d106971ff7132ebf4c21e90bad6ef13434b6))
+* **webhook:** Remove some unnecessary logs ([60c1640](https://github.com/ecomplus/application-starter/commit/60c16402960380e65238ec05b0ab536ac10cccc9))
+* **webhooks-utils:** Fix long try/catch block and semantics ([135191b](https://github.com/ecomplus/application-starter/commit/135191b149d18c479a495313c8721327f1b8cb29))
+* **webhooks:** Add log for update order ([883f3c4](https://github.com/ecomplus/application-starter/commit/883f3c4d238d0ffa5f7129905c7e5f1ee33ee902))
+* **webhook:** Update logs ([26f8c11](https://github.com/ecomplus/application-starter/commit/26f8c11acb4a7c3fe51cefcf25738b189a0d93d1))
+* **webhook:** Update logs ([f435fd4](https://github.com/ecomplus/application-starter/commit/f435fd4f202eed7459b4ccf5bc8ac284b3b5310b))
+* **webhook:** Update logs ([6ecf88f](https://github.com/ecomplus/application-starter/commit/6ecf88fff06128305e3d69b9223636e77717c6aa))
+* **webhook:** Update logs ([7853af6](https://github.com/ecomplus/application-starter/commit/7853af6ea22793f4347971d874ddda761d18f5b4))
+
 ### [1.1.2](https://github.com/ecomplus/application-starter/compare/v1.1.0...v1.1.2) (2022-09-09)
 
 
