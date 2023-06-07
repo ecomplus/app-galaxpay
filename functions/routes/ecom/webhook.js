@@ -264,10 +264,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         order.items.forEach(orderItem => {
                           if (orderItem.product_id === product._id) {
                             if (orderItem.variation_id) {
-                              const variation = product.variations.find(itemFind => itemFind._id === orderItem.variation_id)
+                              const variation = product.variations.find(itemFind => itemFind.sku === orderItem.sku)
                               let quantity = orderItem.quantity
-                              if (variation.quantity < orderItem.quantity) {
+                              if (variation && variation.quantity < orderItem.quantity) {
                                 quantity = variation.quantity
+                              } else if (!variation) {
+                                quantity = 0
                               }
                               const newItem = {
                                 sku: variation.sku,
