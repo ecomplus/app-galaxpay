@@ -289,7 +289,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         })
 
                         const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan)
-                        if (newSubscriptionValue) {
+                        if (newSubscriptionValue !== subscription.value) {
                           await addItemsAndValueSubscriptionDoc(
                             collectionSubscription,
                             order.amount,
