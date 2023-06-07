@@ -22,7 +22,9 @@
     "procedures": [
       "POST"
     ],
-    "products": [],
+    "products": [
+      "GET"
+    ],
     "brands": [],
     "categories": [],
     "customers": [],
@@ -36,10 +38,24 @@
     "orders/payments_history": [
       "POST"
     ],
-    "products/quantity": [],
-    "products/variations/quantity": [],
-    "products/price": [],
-    "products/variations/price": []
+    "products/quantity": [
+      "GET"
+    ],
+    "products/variations/quantity": [
+      "GET"
+    ],
+    "products/price": [
+      "GET"
+    ],
+    "products/variations/price": [
+      "GET"
+    ],
+    "products/sku": [
+      "GET"
+    ],
+    "products/variations/sku": [
+      "GET"
+    ]
   },
   "admin_settings": {
     "galaxpay_id": {
@@ -57,14 +73,6 @@
         "maxLength": 255,
         "title": "Galax Hash",
         "description": "Seu hash de acesso a API do Galaxpay, solicitação via suporte https://docs.galaxpay.com.br/suporte"
-      },
-      "hide": true
-    },
-    "galaxpay_sandbox": {
-      "schema": {
-        "type": "boolean",
-        "title": "Galaxpay Sandbox",
-        "description": "Galaxpay API sandbox env"
       },
       "hide": true
     },
@@ -211,6 +219,12 @@
             "default": 0,
             "title": "Prazo",
             "description": "Prazo em DIAS para o primeiro pagamento"
+          },
+          "deadline": {
+            "type": "integer",
+            "default": 1,
+            "title": "Expiração do QR Code",
+            "description": "Prazo em dias para expiração do QR Code (Padrão 1 Dia)"
           }
         }
       },
@@ -247,12 +261,6 @@
               "default": "Mensal",
               "title": "Periodicidade da recorrência",
               "description": "Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual "
-            },
-            "quantity": {
-              "type": "integer",
-              "default": 0,
-              "title": "Quantidade da recorrência",
-              "description": "Definir a quantidade da recorrência. Para as assinaturas continuar criando transações indefinidamente até ser canceladas, difina valor 0"
             },
             "discount": {
               "title": "Desconto",
@@ -293,5 +301,5 @@
     }
   },
   "auth_callback_uri": "https://us-central1-ecom-galaxpay.cloudfunctions.net/app/ecom/auth-callback",
-  "version": "1.1.2"
+  "version": "2.0.0"
 }
