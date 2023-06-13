@@ -44,14 +44,19 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     const itemsAndAmount = {
       amount: amount,
       items: items.reduce((items, itemOrder) => {
-        items.push({
+        const item = {
           sku: itemOrder.sku,
           final_price: itemOrder.final_price,
           price: itemOrder.price,
           quantity: itemOrder.quantity,
-          product_id: itemOrder.product_id,
-          variation_id: itemOrder.variation_id
-        })
+          product_id: itemOrder.product_id
+        }
+
+        if (itemOrder.variation_id) {
+          item.variation_id = itemOrder.variation_id
+        }
+
+        items.push(item)
         return items
       }, [])
     }
