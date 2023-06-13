@@ -76,7 +76,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     })
   }
 
-  const createTransaction = (appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId) => {
+  const createTransaction = (appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId, galaxPayTransactionStatus) => {
     subscription.get()
       .then((documentSnapshot) => {
         // find StoreId in subscription
@@ -129,7 +129,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       amount: amount.total,
                       status: {
                         updated_at: dateUpdate,
-                        current: parseStatus(GalaxPayTransaction.status)
+                        current: parseStatus(galaxPayTransactionStatus)
                       },
                       intermediator: {
                         transaction_id: GalaxPayTransaction.tid || '',
@@ -148,7 +148,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
                   const financialStatus = {
                     updated_at: dateUpdate,
-                    current: parseStatus(GalaxPayTransaction.status)
+                    current: parseStatus(galaxPayTransactionStatus)
                   }
                   body = {
                     opened_at: new Date().toISOString(),
@@ -270,7 +270,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     // Update value Subscription in GalaxPay
                     // console.log('plan-> ', JSON.stringify(plan))
                     // not update subscripton canceled
-                    if (checkStatusPaid(GalaxPayTransaction.status)) {
+                    if (checkStatusPaid(galaxPayTransactionStatus)) {
                       const oldValue = GalaxPayTransactionValue
                       const newValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
 
@@ -361,7 +361,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         // console.log('> Not found Transaction in API')
                         if (checkStatusPaid(galaxPayTransactionStatus) && checkPayDay(GalaxPayTransaction.payday)) {
                           // necessary to create order
-                          createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
+                          createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId, galaxPayTransactionStatus)
                         } else {
                           // reject(new Error('Status or checkPayDay invalid'))
 
@@ -472,7 +472,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       // find transaction in firebase
       const subscription = collectionSubscription.doc(subscriptionId)
       if (checkPayDay(GalaxPayTransaction.payday)) {
-        createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId)
+        createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId, GalaxPayTransaction.status)
       }
     } else {
       // Avoid retries of this GalaxPay webhook
