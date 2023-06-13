@@ -170,7 +170,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     staff_notes: `Valor cobrado no GalaxPay R$${GalaxPayTransactionValue}`
                   }
                   const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-                  if (GalaxPayTransactionValue === amount.total) {
+                  if (GalaxPayTransactionValue === parseFloat((amount.total).toFixed(2))) {
                     return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                   } else {
                     console.log(`[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId} items: ${JSON.stringify(items)}, amount: ${JSON.stringify(amount)}, Galaxpay value: ${GalaxPayTransactionValue}`)

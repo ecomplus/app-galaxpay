@@ -113,7 +113,8 @@ const getSubscriptionsByListMyIds = async (
 }
 
 const compareDocItemsWithOrder = (docItemsAndAmount, originalItems, originalAmount, galapayTransactionValue) => {
-  if (galapayTransactionValue !== originalAmount.total) {
+  console.log(`>>Compare values: ${originalAmount.total} GP: ${galapayTransactionValue}`)
+  if (galapayTransactionValue !== originalAmount.total && docItemsAndAmount) {
     // need update itens and recalculate order
     let i = 0
     let itemOrder
