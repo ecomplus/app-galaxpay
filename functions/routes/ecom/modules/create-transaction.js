@@ -94,12 +94,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
     amount: amount.total
   }
 
-  const finalAmount = amount.total
+  const finalAmount = Math.floor((amount.total).toFixed(2) * 1000) / 10
   const fristPayment = new Date()
 
   const galaxpaySubscriptions = {
     myId: `${orderId}`, // requered
-    value: Math.floor(finalAmount * 100),
+    value: finalAmount,
     quantity: 0, //  recorrence quantity
     periodicity: parsePeriodicityGalaxPay(plan.periodicity),
     // additionalInfo: '', // optional
@@ -204,7 +204,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 quantity: 0,
                 create_at: new Date().toISOString(),
                 plan,
-                value: Math.floor(finalAmount * 100)
+                value: finalAmount
               })
               .catch(console.error)
           })
