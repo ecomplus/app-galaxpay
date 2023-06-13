@@ -170,12 +170,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     staff_notes: `Valor cobrado no GalaxPay R$${GalaxPayTransactionValue}`
                   }
                   const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
-                  if (GalaxPayTransactionValue !== parseFloat((amount.total).toFixed(2))) {
-                    // return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
-                    // } else {
-                    console.error(`[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId} amount: ${JSON.stringify(amount)}, Galaxpay value: ${GalaxPayTransactionValue}, items: ${JSON.stringify(items)},`)
+                  const finalAmount = Math.floor((amount.total).toFixed(2) * 1000) / 1000
+                  if (GalaxPayTransactionValue === finalAmount) {
+                    return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
+                  } else {
+                    console.log(`[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId} amount: ${JSON.stringify(amount)}, Galaxpay value: ${GalaxPayTransactionValue}, items: ${JSON.stringify(items)},`)
                   }
-                  return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                 })
                 .then(({ response }) => {
                   const { result } = response.data
