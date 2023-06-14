@@ -111,7 +111,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
                   const { itemsAndAmount } = documentSnapshot.data()
 
-                  compareDocItemsWithOrder(itemsAndAmount, items, amount, GalaxPayTransactionValue)
+                  if (itemsAndAmount) {
+                    compareDocItemsWithOrder(itemsAndAmount, items, amount, GalaxPayTransactionValue)
+                  }
                   // recalculate order
                   checkItemsAndRecalculeteOrder(amount, items, plan)
                   if (amount.balance) {
@@ -171,11 +173,13 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   }
                   const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))
                   const finalAmount = Math.floor((amount.total).toFixed(2) * 1000) / 1000
-                  if (GalaxPayTransactionValue === finalAmount) {
-                    return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
-                  } else {
-                    console.log(`[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId} amount: ${JSON.stringify(amount)}, Galaxpay value: ${GalaxPayTransactionValue}, items: ${JSON.stringify(items)},`)
+                  if (GalaxPayTransactionValue !== finalAmount) {
+                    // GalaxPayTransactionValue === finalAmount
+                    // return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
+                    // } else {
+                    console.log(`>>[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId} amount: ${JSON.stringify(amount)}, Galaxpay value: ${GalaxPayTransactionValue}, items: ${JSON.stringify(items)},`)
                   }
+                  return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                 })
                 .then(({ response }) => {
                   const { result } = response.data

@@ -116,7 +116,7 @@ const compareDocItemsWithOrder = (docItemsAndAmount, originalItems, originalAmou
   const finalAmount = Math.floor((originalAmount.total).toFixed(2) * 1000) / 1000
 
   console.log(`>>Compare values: ${JSON.stringify(originalAmount)} => total: ${finalAmount} GP: ${galapayTransactionValue}`)
-  if (galapayTransactionValue !== finalAmount && docItemsAndAmount) {
+  if (galapayTransactionValue !== finalAmount) {
     // need update itens and recalculate order
     let i = 0
     let itemOrder
