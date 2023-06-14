@@ -39,7 +39,7 @@ module.exports = function (galaxpayId, galaxpayHash, storeId, isSandbox = false,
       documentRef.get()
         .then((documentSnapshot) => {
           if (documentSnapshot.exists &&
-            Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 9 * 60 * 1000 // access token expires in 10 minutes
+            Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 5 * 60 * 1000 // access token expires in 10 minutes
           ) {
             authenticate(documentSnapshot.get('accessToken'), isSandbox)
           } else {
