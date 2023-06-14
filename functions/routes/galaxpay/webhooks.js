@@ -258,6 +258,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 console.log('>> galaxpay webhook: Subscription status ', galaxpaySubscriptionStatus)
               } catch (err) {
                 console.warn(`galaxpay webhook Error: get Transaction/Subscription in Galaxpay => ${err.message}`)
+                if (err.response && typeof err.response === 'object') {
+                  console.log(`galaxpay webhook Error response: ${JSON.stringify(err.response)}`)
+                }
+                return res.sendStatus(500)
               }
 
               let order
