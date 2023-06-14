@@ -331,6 +331,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       console.error(`Error trying to update signature #${subscription.myId} `, err)
                       res.status(500)
                       const { message } = err
+                      if (err.response) {
+                        console.log(`${JSON.stringify(err.response)}`)
+                      }
                       res.send({
                         error: ECHO_API_ERROR,
                         message
@@ -338,8 +341,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     }
                   }
                 }
+              } else {
+                res.send(ECHO_SUCCESS)
               }
-              res.send(ECHO_SUCCESS)
             } catch (err) {
               console.error(err)
               res.status(500)
