@@ -1,5 +1,69 @@
 const getAppData = require('../store-api/get-app-data')
 const GalaxpayAxios = require('./create-access')
+const axios = require('axios')
+const { getProductsById } = require('../store-api/request-api')
+
+const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOriginal, appSdk, auth) => {
+  const items = []
+  let i = 0
+  while (i < itemsOrder.length) {
+    const item = itemsOrder[i]
+    if (!item.dimensions) {
+      // add dimensions for shipping calculation
+      const product = await getProductsById(appSdk, storeId, item.product_id, auth)
+      let dimensions = product?.dimensions
+      let weight = product?.weight
+
+      if (item.variation_id) {
+        const variation = product.variations.find(itemFind => itemFind.sku === item.sku)
+        if (variation.dimensions) {
+          dimensions = variation.dimensions
+        }
+        if (variation.weight) {
+          weight = variation.weight
+        }
+      }
+      items.push({ ...item, dimensions, weight })
+    } else {
+      items.push({ ...item })
+    }
+    i += 1
+  }
+
+  const body = {
+    items,
+    subtotal,
+    to
+  }
+
+  const headers = {
+    'x-store-id': storeId,
+    accept: 'application/json'
+  }
+
+  // console.log('>>> body ', JSON.stringify(body), ' headeres: ', JSON.stringify(headers))
+  try {
+    const { data: { result } } = await axios.post(
+      'https://apx-mods.e-com.plus/api/v1/calculate_shipping.json',
+      body,
+      { headers }
+    )
+
+    // console.log('>>> request ', JSON.stringify(result))
+    const app = result.find(appFind => appFind._id === shippingLineOriginal.app._id)
+    // TODO: app not found by id, get app by name?
+
+    if (app) {
+      const service = app.response?.shipping_services.find(serviceFind => serviceFind.service_code === shippingLineOriginal.app.service_code)
+      return service
+    }
+
+    return null
+  } catch (err) {
+    console.error(err)
+    return null
+  }
+}
 
 const updateValueSubscriptionGalaxpay = async (galaxpayAxios, subscriptionId, value, oldValue) => {
   if (!oldValue) {
@@ -17,8 +81,17 @@ const updateValueSubscriptionGalaxpay = async (galaxpayAxios, subscriptionId, va
   return null
 }
 
-const checkAndUpdateSubscriptionGalaxpay = async (appSdk, storeId, auth, subscriptionId, amount, items, plan, oldValue) => {
-  const value = checkItemsAndRecalculeteOrder({ ...amount }, [...items], { ...plan })
+const checkAndUpdateSubscriptionGalaxpay = async (appSdk, storeId, auth, subscriptionId, amount, items, plan, oldValue, shippingLine) => {
+  const value = await checkItemsAndRecalculeteOrder(
+    { ...amount },
+    [...items],
+    { ...plan },
+    null,
+    { ...shippingLine },
+    storeId,
+    appSdk,
+    auth
+  )
 
   const appData = await getAppData({ appSdk, storeId, auth })
   const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
@@ -26,7 +99,7 @@ const checkAndUpdateSubscriptionGalaxpay = async (appSdk, storeId, auth, subscri
   return updateValueSubscriptionGalaxpay(galaxpayAxios, subscriptionId, value, oldValue)
 }
 
-const checkItemsAndRecalculeteOrder = (amount, items, plan, newItem) => {
+const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shippingLine, storeId, appSdk, auth) => {
   let subtotal = 0
   let item
   let i = 0
@@ -55,6 +128,16 @@ const checkItemsAndRecalculeteOrder = (amount, items, plan, newItem) => {
   }
 
   if (subtotal > 0) {
+    if (shippingLine && storeId && appSdk && auth) {
+      const service = await getNewFreight(storeId, items, shippingLine.to, subtotal, shippingLine, appSdk, auth)
+
+      if (service && service?.shipping_line?.total_price) {
+        shippingLine = { ...shippingLine, ...service.shipping_line }
+        delete shippingLine._id
+        amount.freight = service.shipping_line.total_price
+      }
+    }
+
     amount.subtotal = subtotal
     amount.total = amount.subtotal + (amount.tax || 0) + (amount.freight || 0) + (amount.extra || 0)
     let planDiscount
@@ -122,7 +205,7 @@ const compareDocItemsWithOrder = (docItemsAndAmount, originalItems, originalAmou
     let itemOrder
     while (i < originalItems.length) {
       itemOrder = originalItems[i]
-      const itemDoc = docItemsAndAmount.items.find(itemFind => itemFind.sku === itemOrder.sku)
+      const itemDoc = docItemsAndAmount.items?.find(itemFind => itemFind.sku === itemOrder.sku)
       if (itemDoc) {
         if (itemOrder.price !== itemDoc.price) {
           itemOrder.price = itemDoc.price

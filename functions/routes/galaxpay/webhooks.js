@@ -92,7 +92,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               // Get Original Order
               let body
               appSdk.apiRequest(storeId, `/orders/${subscriptionId}.json`, 'GET', null, auth)
-                .then(({ response }) => {
+                .then(async ({ response }) => {
                   // console.log('> Create new Order ')
                   const installment = GalaxPayTransaction.installment
                   const oldOrder = response.data
@@ -115,7 +115,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     compareDocItemsWithOrder(itemsAndAmount, items, amount, GalaxPayTransactionValue)
                   }
                   // recalculate order
-                  checkItemsAndRecalculeteOrder(amount, items, plan)
+                  const shippingLine = shippingLines[0]
+                  await checkItemsAndRecalculeteOrder(amount, items, plan, null, shippingLine, storeId, appSdk, auth)
+                  shippingLines[0] = shippingLine
+
                   if (amount.balance) {
                     delete amount.balance
                   }
@@ -280,10 +283,31 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     // not update subscripton canceled
                     if (checkStatusPaid(galaxPayTransactionStatus)) {
                       const oldValue = GalaxPayTransactionValue
-                      const newValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
+
+                      // Calculates new value
+                      const newValue = await checkItemsAndRecalculeteOrder(
+                        order.amount,
+                        order.items,
+                        plan,
+                        null,
+                        order.shipping_lines[0],
+                        storeId,
+                        appSdk,
+                        auth
+                      )
 
                       if (newValue && (newValue / 100) !== oldValue) {
-                        await checkAndUpdateSubscriptionGalaxpay(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
+                        await checkAndUpdateSubscriptionGalaxpay(
+                          appSdk,
+                          storeId,
+                          auth,
+                          subscriptionId,
+                          order.amount,
+                          order.items,
+                          plan,
+                          oldValue,
+                          order.shipping_lines[0]
+                        )
                         const updatedAt = new Date().toISOString()
                         if (updates) {
                           updates.push({ value: newValue, updatedAt })
