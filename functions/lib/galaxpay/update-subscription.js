@@ -41,7 +41,6 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
     accept: 'application/json'
   }
 
-  // console.log('>>> body ', JSON.stringify(body), ' headeres: ', JSON.stringify(headers))
   try {
     const { data: { result } } = await axios.post(
       'https://apx-mods.e-com.plus/api/v1/calculate_shipping.json',
@@ -49,9 +48,7 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
       { headers }
     )
 
-    // console.log('>>> request ', JSON.stringify(result))
     const app = result.find(appFind => appFind._id === shippingLineOriginal.app._id)
-    // TODO: app not found by id, get app by name?
 
     if (app) {
       const service = app.response?.shipping_services.find(serviceFind => serviceFind.service_code === shippingLineOriginal.app.service_code)
