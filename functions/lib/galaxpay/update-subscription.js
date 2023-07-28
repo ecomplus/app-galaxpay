@@ -4,8 +4,10 @@ const axios = require('axios')
 const { getProductsById } = require('../store-api/request-api')
 
 const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOriginal, appSdk, auth) => {
+  if (!shippingLineOriginal.app) return null
   const items = []
   let i = 0
+
   while (i < itemsOrder.length) {
     const item = itemsOrder[i]
     if (!item.dimensions) {
@@ -48,14 +50,34 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
       { headers }
     )
 
-    const app = result.find(appFind => appFind._id === shippingLineOriginal.app._id)
+    if (!result.length) return null
 
-    if (app) {
-      const service = app.response?.shipping_services.find(serviceFind => serviceFind.service_code === shippingLineOriginal.app.service_code)
-      return service
+    const sameApp = result.find(appFind => appFind._id === shippingLineOriginal.app._id)
+
+    if (sameApp) {
+      const service = sameApp.response?.shipping_services
+        .find(serviceFind => serviceFind.service_code === shippingLineOriginal.app.service_code)
+      return service || sameApp.response?.shipping_services[0]
+    } else {
+      let minPrice = result[0]?.response?.shipping_services[0]?.shipping_line?.total_price
+      const indexPosition = { app: 0, service: 0 }
+      for (let i = 0; i < result.length; i++) {
+        const app = result[i]
+
+        for (let j = 0; j < app.response?.shipping_services.length; j++) {
+          const service = app.response?.shipping_services[j]
+
+          if (service.service_code === shippingLineOriginal.app.service_code) {
+            return service
+          } else if (minPrice > service?.shipping_line?.total_price) {
+            minPrice = service?.shipping_line?.total_price
+            indexPosition.app = i
+            indexPosition.service = j
+          }
+        }
+      }
+      return result[indexPosition.app]?.response?.shipping_services[indexPosition.service]
     }
-
-    return null
   } catch (err) {
     console.error(err)
     return null
@@ -128,7 +150,7 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
     if (shippingLine && storeId && appSdk && auth) {
       const service = await getNewFreight(storeId, items, shippingLine.to, subtotal, shippingLine, appSdk, auth)
 
-      if (service && service?.shipping_line?.total_price) {
+      if (service && service?.shipping_line?.total_price >= 0) {
         shippingLine = { ...shippingLine, ...service.shipping_line }
         delete shippingLine._id
         amount.freight = service.shipping_line.total_price
