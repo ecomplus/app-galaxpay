@@ -4,6 +4,7 @@ const {
   checkItemsAndRecalculeteOrder,
   compareDocItemsWithOrder
 } = require('../../lib/galaxpay/update-subscription')
+const { createItemsAndAmount } = require('./../../lib/firestore/utils')
 const getAppData = require('./../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
 
@@ -19,7 +20,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const galaxpayHook = req.body
   const type = galaxpayHook?.event
   const GalaxPaySubscription = galaxpayHook?.Subscription
-  const GalaxPaySubscriptionQuantity = GalaxPaySubscription?.quantity
+  // const GalaxPaySubscriptionQuantity = GalaxPaySubscription?.quantity
   const subscriptionId = GalaxPaySubscription?.myId
   const GalaxPayTransaction = galaxpayHook?.Transaction
   const GalaxPayTransactionValue = GalaxPayTransaction?.value && (GalaxPayTransaction.value / 100)
@@ -27,6 +28,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   console.log('> Galaxy WebHook ', type, ' Body Webhook ', JSON.stringify(galaxpayHook),
     ' status:', GalaxPayTransaction?.status, ' <')
   const collectionSubscription = admin.firestore().collection('subscriptions')
+  const collectionTransactions = admin.firestore().collection('transactions')
 
   const checkStatusIsEqual = (financialStatus, galaxPayTransactionStatus) => {
     if (financialStatus.current === parseStatus(galaxPayTransactionStatus)) {
@@ -92,7 +94,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               // Get Original Order
               let body
               appSdk.apiRequest(storeId, `/orders/${subscriptionId}.json`, 'GET', null, auth)
-                .then(({ response }) => {
+                .then(async ({ response }) => {
                   // console.log('> Create new Order ')
                   const installment = GalaxPayTransaction.installment
                   const oldOrder = response.data
@@ -109,9 +111,16 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   const periodicity = parsePeriodicity(GalaxPaySubscription.periodicity)
                   const dateUpdate = GalaxPayTransaction.datetimeLastSentToOperator ? new Date(GalaxPayTransaction.datetimeLastSentToOperator).toISOString() : new Date().toISOString()
 
-                  const { itemsAndAmount } = documentSnapshot.data()
+                  let { itemsAndAmount } = documentSnapshot.data()
+                  try {
+                    const transactionDoc = (await collectionTransactions.doc(`${GalaxPayTransaction.galaxPayId}`).get())?.data()
+                    itemsAndAmount = transactionDoc.itemsAndAmount
+                    console.log('>> items to transaction')
+                  } catch (err) {
+                    console.warn(err)
+                  }
 
-                  if (itemsAndAmount) {
+                  if (itemsAndAmount && itemsAndAmount.items?.length) {
                     compareDocItemsWithOrder(itemsAndAmount, items, amount, GalaxPayTransactionValue)
                   }
                   // recalculate order
@@ -188,6 +197,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       .then(({ response }) => {
                         // console.log('> Created new order API')
                         res.sendStatus(201)
+                        collectionTransactions.doc(`${GalaxPayTransaction.galaxPayId}`)
+                          .delete()
+                          .catch(console.error)
                       })
                       .catch((err) => {
                         console.error(err)
@@ -196,6 +208,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   } else {
                     // Order Exists
                     res.sendStatus(200)
+                    collectionTransactions.doc(`${GalaxPayTransaction.galaxPayId}`)
+                      .delete()
+                      .catch(console.error)
                   }
                 })
                 .catch((err) => {
@@ -476,16 +491,43 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         res.sendStatus(500)
       })
   } else if (type === 'subscription.addTransaction') {
-    if (GalaxPaySubscriptionQuantity === 0) {
-      // find transaction in firebase
-      const subscription = collectionSubscription.doc(subscriptionId)
-      if (checkPayDay(GalaxPayTransaction.payday)) {
-        createTransaction(appSdk, res, subscription, GalaxPayTransaction, GalaxPaySubscription, subscriptionId, GalaxPayTransaction.status)
+    console.log('>> Add transaction')
+    try {
+      const subscriptionDoc = (await collectionSubscription.doc(subscriptionId).get())?.data()
+      const { storeId, plan, transactionId } = subscriptionDoc
+      if (storeId) {
+        if (transactionId !== GalaxPayTransaction.galaxPayId) {
+          const auth = await appSdk.getAuth(storeId)
+          const order = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
+
+          let { itemsAndAmount } = subscriptionDoc
+          if (itemsAndAmount && itemsAndAmount.items?.length) {
+            compareDocItemsWithOrder(itemsAndAmount, order.items, order.amount, GalaxPayTransactionValue)
+          }
+
+          checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
+          itemsAndAmount = createItemsAndAmount(order.amount, order.items)
+
+          await collectionTransactions.doc(`${GalaxPayTransaction.galaxPayId}`)
+            .set({
+              itemsAndAmount,
+              updatedAt: new Date().toISOString()
+            },
+            { merge: true }
+            )
+
+          res.sendStatus(200)
+        } else {
+          // console.log('>> Transaction Original')
+          res.sendStatus(200)
+        }
+      } else {
+        // console.log('>> storeId not found')
+        res.sendStatus(400)
       }
-    } else {
-      // Avoid retries of this GalaxPay webhook
-      res.status(200)
-        .send('Subscription webhook with non-zero quantity. The Order will be analyzed with the updateStatus webhook.')
+    } catch (err) {
+      console.error(err)
+      res.sendStatus(500)
     }
   }
 }
