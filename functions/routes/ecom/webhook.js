@@ -19,8 +19,7 @@ const {
 
 const {
   getDocSubscription,
-  updateDocSubscription,
-  createItemsAndAmount
+  updateDocSubscription
 } = require('./../../lib/firestore/utils')
 
 const ecomUtils = require('@ecomplus/utils')
@@ -42,11 +41,31 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const resourceId = trigger.resource_id || trigger.inserted_id
 
   const addItemsAndValueSubscriptionDoc = async (collectionSubscription, amount, items, value, subscriptionId) => {
-    const itemsAndAmount = createItemsAndAmount(amount, items)
+    const itemsAndAmount = {
+      amount: amount,
+      items: items.reduce((items, itemOrder) => {
+        const item = {
+          sku: itemOrder.sku,
+          final_price: itemOrder.final_price,
+          price: itemOrder.price,
+          quantity: itemOrder.quantity,
+          product_id: itemOrder.product_id
+        }
+
+        if (itemOrder.variation_id) {
+          item.variation_id = itemOrder.variation_id
+        }
+
+        items.push(item)
+        return items
+      }, [])
+    }
     const body = { itemsAndAmount }
+
     if (value) {
       body.value = value
     }
+
     await updateDocSubscription(collectionSubscription, body, subscriptionId)
   }
 

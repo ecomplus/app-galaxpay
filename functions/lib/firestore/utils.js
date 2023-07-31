@@ -30,31 +30,7 @@ const updateDocSubscription = async (collectionSubscription, body, subscriptionI
     .catch(console.error)
 }
 
-const createItemsAndAmount = (amount, items) => {
-  const itemsAndAmount = {
-    amount,
-    items: items.reduce((items, itemOrder) => {
-      const item = {
-        sku: itemOrder.sku,
-        final_price: itemOrder.final_price,
-        price: itemOrder.price,
-        quantity: itemOrder.quantity,
-        product_id: itemOrder.product_id
-      }
-
-      if (itemOrder.variation_id) {
-        item.variation_id = itemOrder.variation_id
-      }
-
-      items.push(item)
-      return items
-    }, [])
-  }
-  return itemsAndAmount
-}
-
 module.exports = {
   getDocSubscription,
-  updateDocSubscription,
-  createItemsAndAmount
+  updateDocSubscription
 }
