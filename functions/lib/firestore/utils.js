@@ -30,9 +30,9 @@ const updateDocSubscription = async (collectionSubscription, body, subscriptionI
     .catch(console.error)
 }
 
-const createItemsAndAmount = (amount, items ) => {
+const createItemsAndAmount = (amount, items) => {
   const itemsAndAmount = {
-    amount: amount,
+    amount,
     items: items.reduce((items, itemOrder) => {
       const item = {
         sku: itemOrder.sku,

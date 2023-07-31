@@ -114,7 +114,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   let { itemsAndAmount } = documentSnapshot.data()
                   try {
                     const transactionDoc = (await collectionTransactions.doc(`${GalaxPayTransaction.galaxPayId}`).get())?.data()
-                    itemsAndAmount = transactionDoc.itemsAndAmount
+                    itemsAndAmount = transactionDoc?.itemsAndAmount
                     console.log('>> items to transaction')
                   } catch (err) {
                     console.warn(err)
@@ -124,7 +124,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     compareDocItemsWithOrder(itemsAndAmount, items, amount, GalaxPayTransactionValue)
                   }
                   // recalculate order
-                  checkItemsAndRecalculeteOrder(amount, items, plan)
+                  const shippingLine = shippingLines[0]
+                  await checkItemsAndRecalculeteOrder(amount, items, plan, null, shippingLine, storeId, appSdk, auth)
+                  shippingLines[0] = shippingLine
+
                   if (amount.balance) {
                     delete amount.balance
                   }
@@ -295,10 +298,31 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     // not update subscripton canceled
                     if (checkStatusPaid(galaxPayTransactionStatus)) {
                       const oldValue = GalaxPayTransactionValue
-                      const newValue = checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
+
+                      // Calculates new value
+                      const newValue = await checkItemsAndRecalculeteOrder(
+                        order.amount,
+                        order.items,
+                        plan,
+                        null,
+                        order.shipping_lines[0],
+                        storeId,
+                        appSdk,
+                        auth
+                      )
 
                       if (newValue && (newValue / 100) !== oldValue) {
-                        await checkAndUpdateSubscriptionGalaxpay(appSdk, storeId, auth, subscriptionId, order.amount, order.items, plan, oldValue)
+                        await checkAndUpdateSubscriptionGalaxpay(
+                          appSdk,
+                          storeId,
+                          auth,
+                          subscriptionId,
+                          order.amount,
+                          order.items,
+                          plan,
+                          oldValue,
+                          order.shipping_lines[0]
+                        )
                         const updatedAt = new Date().toISOString()
                         if (updates) {
                           updates.push({ value: newValue, updatedAt })
@@ -491,43 +515,58 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         res.sendStatus(500)
       })
   } else if (type === 'subscription.addTransaction') {
-    console.log('>> Add transaction')
-    try {
-      const subscriptionDoc = (await collectionSubscription.doc(subscriptionId).get())?.data()
-      const { storeId, plan, transactionId } = subscriptionDoc
-      if (storeId) {
-        if (transactionId !== GalaxPayTransaction.galaxPayId) {
-          const auth = await appSdk.getAuth(storeId)
-          const order = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
+    if (GalaxPaySubscription?.quantity === 0) {
+      try {
+        console.log('>> Add transaction')
+        const subscriptionDoc = (await collectionSubscription.doc(subscriptionId).get())?.data()
+        const { storeId, plan, transactionId } = subscriptionDoc
+        if (storeId) {
+          if (transactionId !== GalaxPayTransaction.galaxPayId) {
+            const auth = await appSdk.getAuth(storeId)
+            const order = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
 
-          let { itemsAndAmount } = subscriptionDoc
-          if (itemsAndAmount && itemsAndAmount.items?.length) {
-            compareDocItemsWithOrder(itemsAndAmount, order.items, order.amount, GalaxPayTransactionValue)
-          }
+            let { itemsAndAmount } = subscriptionDoc
+            if (itemsAndAmount && itemsAndAmount.items?.length) {
+              compareDocItemsWithOrder(itemsAndAmount, order.items, order.amount, GalaxPayTransactionValue)
+            }
 
-          checkItemsAndRecalculeteOrder(order.amount, order.items, plan)
-          itemsAndAmount = createItemsAndAmount(order.amount, order.items)
-
-          await collectionTransactions.doc(`${GalaxPayTransaction.galaxPayId}`)
-            .set({
-              itemsAndAmount,
-              updatedAt: new Date().toISOString()
-            },
-            { merge: true }
+            await checkItemsAndRecalculeteOrder(
+              order.amount,
+              order.items,
+              plan,
+              null,
+              order.shipping_lines[0],
+              storeId,
+              appSdk,
+              auth
             )
+            itemsAndAmount = createItemsAndAmount(order.amount, order.items)
 
-          res.sendStatus(200)
+            await collectionTransactions.doc(`${GalaxPayTransaction.galaxPayId}`)
+              .set({
+                itemsAndAmount,
+                updatedAt: new Date().toISOString()
+              },
+              { merge: true }
+              )
+
+            res.sendStatus(200)
+          } else {
+            // console.log('>> Transaction Original')
+            res.sendStatus(200)
+          }
         } else {
-          // console.log('>> Transaction Original')
-          res.sendStatus(200)
+          // console.log('>> storeId not found')
+          res.sendStatus(400)
         }
-      } else {
-        // console.log('>> storeId not found')
-        res.sendStatus(400)
+      } catch (err) {
+        console.error(err)
+        res.sendStatus(500)
       }
-    } catch (err) {
-      console.error(err)
-      res.sendStatus(500)
+    } else {
+      // Avoid retries of this GalaxPay webhook
+      res.status(200)
+        .send('Subscription webhook with non-zero quantity. The Order will be analyzed with the updateStatus webhook.')
     }
   }
 }

@@ -159,9 +159,20 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               const docSubscription = await getDocSubscription(resourceId, collectionSubscription)
               const order = await findOrderById(appSdk, storeId, resourceId, auth)
               const { amount, items } = order
+              const shippingLine = order.shipping_lines[0]
               const { plan } = docSubscription
 
-              const newValue = checkItemsAndRecalculeteOrder({ ...amount }, [...items], { ...plan })
+              // Calculates new value
+              const newValue = await checkItemsAndRecalculeteOrder(
+                { ...amount },
+                [...items],
+                { ...plan },
+                null,
+                { ...shippingLine },
+                storeId,
+                appSdk,
+                auth
+              )
               await galaxpayAxios.preparing
               const resp = await updateValueSubscriptionGalaxpay(galaxpayAxios, resourceId, newValue)
               if (resp) {
@@ -247,7 +258,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       if (order) {
                         const docSubscription = await getDocSubscription(order._id, collectionSubscription)
 
-                        order.items.forEach(orderItem => {
+                        order.items.forEach(async (orderItem) => {
+                          let dimensions = product?.dimensions
+                          let weight = product?.weight
+
                           if (orderItem.product_id === product._id) {
                             if (orderItem.variation_id) {
                               const variation = product.variations.find(itemFind => itemFind.sku === orderItem.sku)
@@ -257,11 +271,18 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               } else if (!variation) {
                                 quantity = 0
                               }
+                              if (variation.dimensions) {
+                                dimensions = variation.dimensions
+                              }
+                              if (variation.weight) {
+                                weight = variation.weight
+                              }
                               const newItem = {
                                 sku: variation.sku,
                                 price: ecomUtils.price({ ...product, ...variation }),
                                 quantity
                               }
+                              // update item, price or quantity
                               checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
                             } else {
                               const newItem = {
@@ -269,13 +290,26 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                                 price: ecomUtils.price(product),
                                 quantity: product.quantity < orderItem.quantity ? product.quantity : orderItem.quantity
                               }
+                              // update item, price or quantity
                               checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
                             }
+                            orderItem.dimensions = dimensions
+                            orderItem.weight = weight
                           }
                         })
 
-                        const newSubscriptionValue = checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan)
-                        if (newSubscriptionValue !== subscription.value) {
+                        // Calculates new value
+                        const newSubscriptionValue = await checkItemsAndRecalculeteOrder(
+                          order.amount,
+                          order.items,
+                          docSubscription.plan,
+                          null,
+                          order.shipping_lines[0],
+                          storeId,
+                          appSdk,
+                          auth
+                        )
+                        if (newSubscriptionValue && newSubscriptionValue !== subscription.value) {
                           await addItemsAndValueSubscriptionDoc(
                             collectionSubscription,
                             order.amount,
