@@ -309,7 +309,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           appSdk,
                           auth
                         )
-                        if (newSubscriptionValue !== subscription.value) {
+                        if (newSubscriptionValue && newSubscriptionValue !== subscription.value) {
                           await addItemsAndValueSubscriptionDoc(
                             collectionSubscription,
                             order.amount,
