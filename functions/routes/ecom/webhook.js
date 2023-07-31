@@ -66,6 +66,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       body.value = value
     }
 
+    console.log('>>> ', JSON.stringify(body))
+
     await updateDocSubscription(collectionSubscription, body, subscriptionId)
   }
 
@@ -328,7 +330,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           appSdk,
                           auth
                         )
-                        if (newSubscriptionValue && newSubscriptionValue !== subscription.value) {
+                        if (newSubscriptionValue !== subscription.value) {
                           await addItemsAndValueSubscriptionDoc(
                             collectionSubscription,
                             order.amount,
