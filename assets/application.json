@@ -263,23 +263,28 @@
               "description": "Definir a periodicidade da recorrência. Ex.: quinzenal, mensal, anual "
             },
             "discount": {
-              "title": "Desconto",
+              "title": "Desconto do plano",
               "type": "object",
               "required": [
                 "value"
               ],
               "properties": {
-                "percentage": {
-                  "type": "boolean",
-                  "default": false,
-                  "title": "Desconto percentual"
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "percentage",
+                    "fixed"
+                  ],
+                  "default": "percentage",
+                  "title": "Tipo de desconto",
+                  "description": "Desconto com valor percentual ou fixo"
                 },
                 "value": {
                   "type": "number",
-                  "minimum": -99999999,
+                  "minimum": 0,
                   "maximum": 99999999,
                   "title": "Valor do desconto",
-                  "description": "Valor percentual/fixo do desconto ou acréscimo (negativo)"
+                  "description": "Valor percentual/fixo do desconto"
                 },
                 "apply_at": {
                   "type": "string",
@@ -291,6 +296,45 @@
                   "default": "subtotal",
                   "title": "Aplicar desconto em",
                   "description": "Em qual valor o desconto deverá ser aplicado no checkout"
+                }
+              }
+            },
+            "discount_first_installment": {
+              "title": "Desconto 1ª parcela",
+              "type": "object",
+              "properties": {
+                "disable": {
+                  "type": "boolean",
+                  "default": false,
+                  "title": "Desativar desconto na 1ª parcela da recorrência",
+                  "description": "Se desabilitado, desconto considerado na 1ª parcela da recorrência será o desconto do plano"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "percentage",
+                    "fixed"
+                  ],
+                  "default": "percentage",
+                  "title": "Tipo de desconto",
+                  "description": "Desconto com valor percentual ou fixo"
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 99999999,
+                  "title": "Valor do desconto",
+                  "description": "Valor percentual/fixo do desconto da 1ª parcela da recorrência"
+                },
+                "apply_at": {
+                  "type": "string",
+                  "enum": [
+                    "total",
+                    "subtotal"
+                  ],
+                  "default": "subtotal",
+                  "title": "Aplicar desconto em",
+                  "description": "Em qual valor o desconto da 1ª parcela da recorrência deverá ser aplicado no checkout"
                 }
               }
             }
