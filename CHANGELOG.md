@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.1.0](https://github.com/ecomplus/application-starter/compare/v2.0.0...v2.1.0) (2023-08-02)
+
+
+### Features
+
+* **plans:** add first installment discount ([8128fba](https://github.com/ecomplus/application-starter/commit/8128fbaf2c65b32ffa60cda230f6058154cb7806))
+
+
+### Bug Fixes
+
+* **create access:** Updated galaxpay token in 5min ([820ba5c](https://github.com/ecomplus/application-starter/commit/820ba5cafac45cacd65b192e7ade6e0fa8ea2a0c))
+* **create order:** fix create new order ([94fdda9](https://github.com/ecomplus/application-starter/commit/94fdda9228b40b5e0b67770079eb07e32a93284d))
+* **create transaction:** fix finalAmount ([2695595](https://github.com/ecomplus/application-starter/commit/26955953539a45a03edc939d5b87d88f3b38a117))
+* **update subscription:** log update ([774b4ae](https://github.com/ecomplus/application-starter/commit/774b4ae14b203a87361d128a64ed9cf5cc31be77))
+* **webhook ecom:** Fix firestore erro save ([bb043fb](https://github.com/ecomplus/application-starter/commit/bb043fb449113bec6e49045b38df145c63103a18))
+* **webhook ecom:** fix recalculate freigth ([2dd40d9](https://github.com/ecomplus/application-starter/commit/2dd40d9c9dbb7f35aa422f8e6f91de0d193f3e6d))
+* **webhook ecom:** update logs erros ([e203ef4](https://github.com/ecomplus/application-starter/commit/e203ef410dd0bb5e42aed3c0d58dc7e6f179accc))
+* **webhook galaxpay:** If galapay api fails reply 500 to webhook ([eb7445e](https://github.com/ecomplus/application-starter/commit/eb7445e7d289cdac8915cc9a89e7f0f4aa63acb5))
+* **webhook galaxpay:** It does not compare if it does not find the items in the firestore ([f4956ca](https://github.com/ecomplus/application-starter/commit/f4956ca59f087faeb6da70a07a9f4622a73d3fe2))
+* **webhook galaxpay:** merge to main and do not create when subscription quantity is not equal to zero ([87dba31](https://github.com/ecomplus/application-starter/commit/87dba314dd5dad6b5fdb22e7d040ac3d0a8e13a7))
+* **webhook galaxpay:** rebase commit ([ba3ab46](https://github.com/ecomplus/application-starter/commit/ba3ab462bf3e3da2d147a86c82400e83464d12a0))
+* **webhook gp:** Fix status create transactions ([c0e8632](https://github.com/ecomplus/application-starter/commit/c0e86321ba379e92f525c45ddb5e0c34bc771760))
+* **webhook gp:** fix value check error ([deca38d](https://github.com/ecomplus/application-starter/commit/deca38dae85a239e7038dbaacd5ebdc8bb3519bc))
+* **webhook gp:** Fix value check error ([cd2a138](https://github.com/ecomplus/application-starter/commit/cd2a138ec0394348d48765a42fddb1de2d058d4f))
+* **webhook gp:** Fix value check error ([34d7485](https://github.com/ecomplus/application-starter/commit/34d74851516ba7825f0fa5e8a966218af54b84d5))
+* **webhook:** find app with lowest shipping price ([2b1f45d](https://github.com/ecomplus/application-starter/commit/2b1f45d60206acd9a035e00a18ab821b07e78190))
+
 ## [2.0.0](https://github.com/ecomplus/application-starter/compare/v1.1.2...v2.0.0) (2023-06-07)
 
 
