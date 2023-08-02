@@ -164,6 +164,13 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     updated_at: dateUpdate,
                     current: parseStatus(galaxPayTransactionStatus)
                   }
+
+                  const planPergentage = plan.discount.type === 'percentage' || plan.discount.percentage
+                  let notes = `Parcela #${quantity} desconto de ${planPergentage ? '' : 'R$'}`
+                  notes += ` ${plan.discount.value} ${planPergentage ? '%' : ''}`
+                  notes += ` sobre ${plan.discount.apply_at}`
+                  notes += ` referente à ${subscriptionLabel} ${periodicity}`
+
                   body = {
                     opened_at: new Date().toISOString(),
                     items,
@@ -180,7 +187,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       _id: subscriptionId,
                       number: parseInt(orderNumber)
                     },
-                    notes: `Pedido #${quantity} referente à ${subscriptionLabel} ${periodicity}`,
+                    notes,
                     staff_notes: `Valor cobrado no GalaxPay R$${GalaxPayTransactionValue}`
                   }
                   const transactionId = String(parseId(GalaxPayTransaction.galaxPayId))

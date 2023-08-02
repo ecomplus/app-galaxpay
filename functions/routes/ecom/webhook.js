@@ -249,6 +249,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 )
 
                 if (galaxPaySubscriptions && galaxPaySubscriptions.length) {
+                  let error
                   for (let i = 0; i < galaxPaySubscriptions.length; i++) {
                     const subscription = galaxPaySubscriptions[i]
                     try {
@@ -337,24 +338,20 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             throw err
                           }
                         }
-                        // TODO:
-                        // Galaxpay still does not allow you to pause your subscription.
-                        // new value equal to zero, quantity less than available, cancel subscription
-                        // console.log('>> Cancel subscription as new value is zero')
                       }
                     } catch (err) {
-                      console.error(`Error trying to update signature #${subscription.myId} `, err)
-                      res.status(500)
-                      const { message } = err
-                      if (err.response) {
-                        console.log(`${JSON.stringify(err.response)}`)
-                      }
-                      res.send({
-                        error: ECHO_API_ERROR,
-                        message
-                      })
+                      console.error(`Error trying to update signature #${subscription.myId} `, ' ', JSON.stringify(err?.response))
+                      error = err
                     }
+                  } //
+
+                  if (!error) {
+                    res.send(ECHO_SUCCESS)
+                  } else {
+                    throw error
                   }
+                } else {
+                  res.send(ECHO_SUCCESS)
                 }
               } else {
                 res.send(ECHO_SUCCESS)
@@ -363,7 +360,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               console.error(err)
               res.status(500)
               const { message } = err
-              res.send({
+              return res.send({
                 error: ECHO_API_ERROR,
                 message
               })
@@ -382,7 +379,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         console.error(error)
         res.status(412).send(msg)
       } else {
-        // console.error(err)
+        console.error(err)
         // request to Store API with error response
         // return error status code
         res.status(500)

@@ -51,7 +51,7 @@ exports.post = ({ appSdk }, req, res) => {
   })
 
   */
-  let amount = params.amount || {}
+  let amount = { ...params.amount } || {}
 
   if (!appData.galaxpay_id || !appData.galaxpay_hash) {
     return res.status(409).send({
@@ -80,7 +80,7 @@ exports.post = ({ appSdk }, req, res) => {
       paymentTypes.forEach(type => {
         const methodConfig = appData[paymentMethod] || {}
         const methodMinAmount = methodConfig.min_amount || 0
-        if (!methodConfig.disable && ( methodMinAmount <= amount.total)) {
+        if (!methodConfig.disable && (methodMinAmount <= amount.total)) {
           console.log('s: ', storeId, ' > Plan ', plan.periodicity)
 
           const isCreditCard = paymentMethod === 'credit_card'
@@ -121,12 +121,12 @@ exports.post = ({ appSdk }, req, res) => {
             }
           }
 
-          const discount = discountPlan(label, plan.discount, amount)
-          if (discount) {
-            amount = discount.amount
-            gateway.discount = plan.discount
-            gateway.discount.type = discount.discountOption.type
-            response.discount_option = discount.discountOption
+          const handleDiscount = discountPlan(label, plan, amount)
+          if (handleDiscount) {
+            amount = handleDiscount.amount
+            gateway.discount = handleDiscount.discount
+            gateway.discount.type = handleDiscount.discountOption.type
+            response.discount_option = handleDiscount.discountOption
           }
           response.payment_gateways.push(gateway)
         }

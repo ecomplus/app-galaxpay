@@ -163,13 +163,14 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
     amount.total = amount.subtotal + (amount.tax || 0) + (amount.freight || 0) + (amount.extra || 0)
     let planDiscount
     if (plan && plan.discount) {
-      if (plan.discount.percentage) {
+      if (plan.discount.percentage || plan.discount.type === 'percentage') {
         planDiscount = amount[plan.discount.apply_at]
         planDiscount = planDiscount * ((plan.discount.value) / 100)
+      } else {
+        planDiscount = plan.discount.value
       }
     }
-    // if the plan doesn't exist, because it's subscription before the update
-    amount.discount = plan ? ((plan.discount && !plan.discount.percentage ? plan.discount.value : planDiscount) || 0) : (amount.discount || 0)
+    amount.discount = planDiscount || amount.discount || 0
 
     amount.total -= amount.discount
     return amount.total > 0 ? Math.floor((amount.total).toFixed(2) * 1000) / 10 : 0

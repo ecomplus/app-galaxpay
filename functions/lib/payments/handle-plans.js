@@ -54,14 +54,22 @@ const handlePlanTransction = (label, appData) => {
   }
 }
 
-const discountPlan = (planName, discount, amount) => {
+const discountPlan = (planName, plan, amount) => {
+  let discount
+  if (plan.discount_first_installment && !plan.discount_first_installment?.disable) {
+    discount = plan.discount_first_installment
+  } else {
+    discount = plan.discount
+  }
+
   if (discount && discount.value > 0) {
     // default discount option
     const { value } = discount
+    const type = discount.type || (discount.percentage ? 'percentage' : 'fixed')
     const discountOption = {
       label: planName,
       value,
-      type: discount.percentage ? 'percentage' : 'fixed'
+      type
     }
 
     if (amount.total) {
@@ -76,7 +84,9 @@ const discountPlan = (planName, discount, amount) => {
 
         const maxDiscount = amount[applyDiscount || 'subtotal']
         let discountValue
-        if (discount.percentage && discount.percentage === true) {
+        const discountPercentage = discount.type === 'percentage' || discount.percentage === true
+
+        if (discountPercentage) {
           discountValue = maxDiscount * discount.value / 100
         } else {
           discountValue = discount.value
@@ -84,6 +94,7 @@ const discountPlan = (planName, discount, amount) => {
             discountValue = maxDiscount
           }
         }
+
         if (discountValue > 0) {
           amount.discount = (amount.discount || 0) + discountValue
           amount.total -= discountValue
@@ -93,7 +104,7 @@ const discountPlan = (planName, discount, amount) => {
         }
       }
     }
-    return { amount, discountOption }
+    return { amount, discountOption, discount }
   }
 }
 
