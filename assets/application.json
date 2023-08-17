@@ -306,8 +306,7 @@
                 "disable": {
                   "type": "boolean",
                   "default": false,
-                  "title": "Desativar desconto na 1ª parcela da recorrência",
-                  "description": "Se desabilitado, desconto considerado na 1ª parcela da recorrência será o desconto do plano"
+                  "title": "Desativar desconto na 1ª parcela da recorrência"
                 },
                 "type": {
                   "type": "string",
