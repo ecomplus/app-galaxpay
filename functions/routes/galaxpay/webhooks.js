@@ -2,11 +2,16 @@ const { parseId, parseStatus, parsePeriodicity } = require('../../lib/galaxpay/p
 const {
   checkAndUpdateSubscriptionGalaxpay,
   checkItemsAndRecalculeteOrder,
-  compareDocItemsWithOrder
+  compareDocItemsWithOrder,
+  updateValueSubscriptionGalaxpay
 } = require('../../lib/galaxpay/update-subscription')
-const { createItemsAndAmount } = require('./../../lib/firestore/utils')
+const { 
+  createItemsAndAmount,
+  updateDocSubscription 
+} = require('./../../lib/firestore/utils')
 const getAppData = require('./../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
+const ecomUtils = require('@ecomplus/utils')
 
 exports.post = async ({ appSdk, admin }, req, res) => {
   // const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, appData.galaxpay_sandbox)
@@ -104,7 +109,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   const domain = oldOrder.domain
                   const amount = oldOrder.amount
                   const shippingLines = oldOrder.shipping_lines
-                  const shippingMethodLabel = oldOrder.shipping_method_label
+                  let shippingMethodLabel = oldOrder.shipping_method_label
                   const paymentMethodLabel = oldOrder.payment_method_label
                   const originalTransaction = oldOrder.transactions[0]
                   const quantity = installment
@@ -124,9 +129,16 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     compareDocItemsWithOrder(itemsAndAmount, items, amount, GalaxPayTransactionValue)
                   }
                   // recalculate order
-                  const shippingLine = shippingLines[0]
-                  await checkItemsAndRecalculeteOrder(amount, items, plan, null, shippingLine, storeId, appSdk, auth)
-                  shippingLines[0] = shippingLine
+                  const shippingLine = { ...shippingLines[0] }
+                  // console.log('>>SL1 ', JSON.stringify(shippingLine))
+
+                  const { shippingLine: newShippingLine } = await checkItemsAndRecalculeteOrder(amount, items, plan, null, shippingLine, storeId, appSdk, auth)
+                  shippingLines[0] = {
+                    _id: ecomUtils.randomObjectId(),
+                    ...newShippingLine
+                  }
+                  shippingMethodLabel = newShippingLine.label
+                  
 
                   if (amount.balance) {
                     delete amount.balance
@@ -169,9 +181,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     ? plan.discount.type === 'percentage' || plan.discount.percentage
                     : null
                   let notes = `Parcela #${quantity} desconto de ${planPergentage ? '' : 'R$'}`
-                  notes += ` ${plan.discount.value} ${planPergentage ? '%' : ''}`
-                  notes += ` sobre ${plan.discount.apply_at}`
-                  notes += ` referente à ${subscriptionLabel} ${periodicity}`
+                  if (planPergentage) {
+                    notes += ` ${plan?.discount?.value || ''} ${planPergentage ? '%' : ''}`
+                    notes += ` sobre ${plan?.discount?.apply_at || ''}`
+                    notes += ` referente à ${subscriptionLabel} ${periodicity}`
+                  }
 
                   body = {
                     opened_at: new Date().toISOString(),
@@ -205,6 +219,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 .then(({ response }) => {
                   const { result } = response.data
                   if (!result.length) {
+                    // console.log('>>Test ', JSON.stringify(body))
                     appSdk.apiRequest(storeId, 'orders.json', 'POST', body, auth)
                       .then(({ response }) => {
                         // console.log('> Created new order API')
@@ -309,7 +324,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       const oldValue = GalaxPayTransactionValue
 
                       // Calculates new value
-                      const newValue = await checkItemsAndRecalculeteOrder(
+                      const { value: newValue } = await checkItemsAndRecalculeteOrder(
                         order.amount,
                         order.items,
                         plan,
@@ -539,7 +554,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               compareDocItemsWithOrder(itemsAndAmount, order.items, order.amount, GalaxPayTransactionValue)
             }
 
-            await checkItemsAndRecalculeteOrder(
+            const { value } = await checkItemsAndRecalculeteOrder(
               order.amount,
               order.items,
               plan,
@@ -558,6 +573,33 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               },
               { merge: true }
               )
+            
+            try{
+              const appData = await getAppData({ appSdk, storeId, auth })
+
+              const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
+              await galaxpayAxios.preparing
+
+              let { data } = await galaxpayAxios.axios
+                .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
+              
+              const total = itemsAndAmount?.amount?.total && Math.floor((itemsAndAmount?.amount?.total).toFixed(2) * 100)
+              // console.log('>> ', data?.Transactions[0]?.value, ' ', total , ' ', JSON.stringify(data))
+              const hasUpdateValue = total &&  data?.Transactions[0]?.value && total !== data?.Transactions[0]?.value
+              if (hasUpdateValue) {
+                const resp = await updateValueSubscriptionGalaxpay(galaxpayAxios, subscriptionId, total)
+                if (resp) {
+                  console.log('> Successful signature edit on Galax Pay')
+                  const body = { itemsAndAmount }
+                  if (total) {
+                    body.value = total
+                  }
+                  await updateDocSubscription(collectionSubscription, body, subscriptionId)
+                }
+              }
+            } catch (error){
+              console.error(error)
+            }
 
             res.sendStatus(200)
           } else {

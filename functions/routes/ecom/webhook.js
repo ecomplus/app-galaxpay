@@ -69,7 +69,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
           const collectionSubscription = admin.firestore().collection('subscriptions')
 
-          if (trigger.resource === 'orders' && trigger.body.status === 'cancelled') {
+          if (trigger.resource === 'orders' && trigger.body?.status === 'cancelled') {
             console.log('>>> ', JSON.stringify(trigger.body))
             galaxpayAxios.preparing
               .then(async () => {
@@ -151,8 +151,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     })
                   })
               })
-          } else if (trigger.resource === 'orders' && trigger.body.status !== 'cancelled' &&
-            trigger.action !== 'create' && trigger.fields.includes('items')) {
+          } else if (trigger.resource === 'orders' && trigger.body.status
+           && trigger.body.status !== 'cancelled' && trigger.action !== 'create' 
+           && trigger.fields.includes('items')) {
             console.log('>> ', JSON.stringify(trigger))
             // When the original order is edited
             try {
@@ -163,7 +164,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               const { plan } = docSubscription
 
               // Calculates new value
-              const newValue = await checkItemsAndRecalculeteOrder(
+              const { value: newValue } = await checkItemsAndRecalculeteOrder(
                 { ...amount },
                 [...items],
                 { ...plan },
@@ -300,7 +301,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         })
 
                         // Calculates new value
-                        const newSubscriptionValue = await checkItemsAndRecalculeteOrder(
+                        const { value: newSubscriptionValue } = await checkItemsAndRecalculeteOrder(
                           order.amount,
                           order.items,
                           docSubscription.plan,

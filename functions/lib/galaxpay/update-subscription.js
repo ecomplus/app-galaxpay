@@ -59,7 +59,10 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
         serviceFind => serviceFind.service_code === shippingLineOriginal.app.service_code
       )
 
-      return service || sameApp.response?.shipping_services[0]
+      return {
+        app: sameApp,
+        service: service || sameApp.response?.shipping_services[0]
+      }
     } else {
       let minPrice = result[0]?.response?.shipping_services[0]?.shipping_line?.total_price
       const indexPosition = { app: 0, service: 0 }
@@ -70,7 +73,7 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
           const service = app.response?.shipping_services[j]
 
           if (service.service_code === shippingLineOriginal.app.service_code) {
-            return service
+            return { app, service }
           } else if (minPrice > service?.shipping_line?.total_price) {
             minPrice = service?.shipping_line?.total_price
             indexPosition.app = i
@@ -78,7 +81,10 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
           }
         }
       }
-      return result[indexPosition.app]?.response?.shipping_services[indexPosition.service]
+      return {
+        app: result[indexPosition.app],
+        service: result[indexPosition.app]?.response?.shipping_services[indexPosition.service]
+      }
     }
   } catch (err) {
     console.error(err)
@@ -103,7 +109,7 @@ const updateValueSubscriptionGalaxpay = async (galaxpayAxios, subscriptionId, va
 }
 
 const checkAndUpdateSubscriptionGalaxpay = async (appSdk, storeId, auth, subscriptionId, amount, items, plan, oldValue, shippingLine) => {
-  const value = await checkItemsAndRecalculeteOrder(
+  const { value } = await checkItemsAndRecalculeteOrder(
     { ...amount },
     [...items],
     { ...plan },
@@ -150,13 +156,21 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
 
   if (subtotal > 0) {
     if (shippingLine && storeId && appSdk && auth) {
-      const service = await getNewFreight(storeId, items, shippingLine.to, subtotal, shippingLine, appSdk, auth)
-
-      if (service && service?.shipping_line?.total_price) {
-        shippingLine = { ...shippingLine, ...service.shipping_line }
-        delete shippingLine._id
+      const { app, service } = await getNewFreight(storeId, items, shippingLine.to, subtotal, shippingLine, appSdk, auth)
+      if (service && service?.service_code !== shippingLine.app.service_code) {
+        shippingLine = { 
+          ...service.shipping_line,
+          app: {
+            _id: app._id,
+            service_code: service?.service_code,
+            label: service?.label
+          }
+        }
         amount.freight = service.shipping_line.total_price
       }
+      delete shippingLine._id
+      delete shippingLine.tracking_codes
+      delete shippingLine.invoices
     }
 
     amount.subtotal = subtotal
@@ -173,10 +187,13 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
     amount.discount = planDiscount || amount.discount || 0
 
     amount.total -= amount.discount
-    return amount.total > 0 ? Math.floor((amount.total).toFixed(2) * 1000) / 10 : 0
+    return {
+      value: amount.total > 0 ? Math.floor((amount.total).toFixed(2) * 1000) / 10 : 0,
+      shippingLine,
+    }
   }
 
-  return 0
+  return { value: 0, shippingLine }
 }
 
 const getSubscriptionsByListMyIds = async (
