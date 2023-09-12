@@ -169,9 +169,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     ? plan.discount.type === 'percentage' || plan.discount.percentage
                     : null
                   let notes = `Parcela #${quantity} desconto de ${planPergentage ? '' : 'R$'}`
-                  notes += ` ${plan.discount.value} ${planPergentage ? '%' : ''}`
-                  notes += ` sobre ${plan.discount.apply_at}`
-                  notes += ` referente à ${subscriptionLabel} ${periodicity}`
+                  if (planPergentage) {
+                    notes += ` ${plan?.discount?.value || ''} ${planPergentage ? '%' : ''}`
+                    notes += ` sobre ${plan?.discount?.apply_at || ''}`
+                    notes += ` referente à ${subscriptionLabel} ${periodicity}`
+                  }
 
                   body = {
                     opened_at: new Date().toISOString(),
