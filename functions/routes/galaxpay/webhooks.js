@@ -165,7 +165,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     current: parseStatus(galaxPayTransactionStatus)
                   }
 
-                  const planPergentage = plan.discount.type === 'percentage' || plan.discount.percentage
+                  const planPergentage = plan?.discount
+                    ? plan.discount.type === 'percentage' || plan.discount.percentage
+                    : null
                   let notes = `Parcela #${quantity} desconto de ${planPergentage ? '' : 'R$'}`
                   notes += ` ${plan.discount.value} ${planPergentage ? '%' : ''}`
                   notes += ` sobre ${plan.discount.apply_at}`
