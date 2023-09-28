@@ -5,9 +5,9 @@ const {
   compareDocItemsWithOrder,
   updateValueSubscriptionGalaxpay
 } = require('../../lib/galaxpay/update-subscription')
-const { 
+const {
   createItemsAndAmount,
-  updateDocSubscription 
+  updateDocSubscription
 } = require('./../../lib/firestore/utils')
 const getAppData = require('./../../lib/store-api/get-app-data')
 const GalaxpayAxios = require('./../../lib/galaxpay/create-access')
@@ -138,7 +138,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     ...newShippingLine
                   }
                   shippingMethodLabel = newShippingLine.label
-                  
 
                   if (amount.balance) {
                     delete amount.balance
@@ -573,19 +572,19 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               },
               { merge: true }
               )
-            
-            try{
+
+            try {
               const appData = await getAppData({ appSdk, storeId, auth })
 
               const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
               await galaxpayAxios.preparing
 
-              let { data } = await galaxpayAxios.axios
+              const { data } = await galaxpayAxios.axios
                 .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
-              
+
               const total = itemsAndAmount?.amount?.total && Math.floor((itemsAndAmount?.amount?.total).toFixed(2) * 100)
               // console.log('>> ', data?.Transactions[0]?.value, ' ', total , ' ', JSON.stringify(data))
-              const hasUpdateValue = total &&  data?.Transactions[0]?.value && total !== data?.Transactions[0]?.value
+              const hasUpdateValue = total && data?.Transactions[0]?.value && total !== data?.Transactions[0]?.value
               if (hasUpdateValue) {
                 const resp = await updateValueSubscriptionGalaxpay(galaxpayAxios, subscriptionId, total)
                 if (resp) {
@@ -597,7 +596,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   await updateDocSubscription(collectionSubscription, body, subscriptionId)
                 }
               }
-            } catch (error){
+            } catch (error) {
               console.error(error)
             }
 

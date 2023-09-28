@@ -151,9 +151,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     })
                   })
               })
-          } else if (trigger.resource === 'orders' && trigger.body.status
-           && trigger.body.status !== 'cancelled' && trigger.action !== 'create' 
-           && trigger.fields.includes('items')) {
+          } else if (
+            trigger.resource === 'orders' && trigger.body.status &&
+              trigger.body.status !== 'cancelled' && trigger.action !== 'create' &&
+              trigger.fields.includes('items')
+          ) {
             console.log('>> ', JSON.stringify(trigger))
             // When the original order is edited
             try {
