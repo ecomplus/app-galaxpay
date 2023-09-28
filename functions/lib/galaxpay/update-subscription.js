@@ -156,21 +156,25 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
 
   if (subtotal > 0) {
     if (shippingLine && storeId && appSdk && auth) {
-      const { app, service } = await getNewFreight(storeId, items, shippingLine.to, subtotal, shippingLine, appSdk, auth)
-      if (service && service?.service_code !== shippingLine.app.service_code) {
-        shippingLine = { 
-          ...service.shipping_line,
-          app: {
-            _id: app._id,
-            service_code: service?.service_code,
-            label: service?.label
+      const newFreight = await getNewFreight(storeId, items, shippingLine.to, subtotal, shippingLine, appSdk, auth)
+
+      if (newFreight) {
+        const { app, service } = newFreight
+        if (service && service?.service_code !== shippingLine.app.service_code) {
+          shippingLine = {
+            ...service.shipping_line,
+            app: {
+              _id: app._id,
+              service_code: service?.service_code,
+              label: service?.label
+            }
           }
+          amount.freight = service.shipping_line.total_price
         }
-        amount.freight = service.shipping_line.total_price
+        delete shippingLine._id
+        delete shippingLine.tracking_codes
+        delete shippingLine.invoices
       }
-      delete shippingLine._id
-      delete shippingLine.tracking_codes
-      delete shippingLine.invoices
     }
 
     amount.subtotal = subtotal
@@ -189,7 +193,7 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
     amount.total -= amount.discount
     return {
       value: amount.total > 0 ? Math.floor((amount.total).toFixed(2) * 1000) / 10 : 0,
-      shippingLine,
+      shippingLine
     }
   }
 
