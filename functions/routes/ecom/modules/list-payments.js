@@ -126,7 +126,6 @@ exports.post = ({ appSdk }, req, res) => {
             amount = handleDiscount.amount
             gateway.discount = handleDiscount.discount
             gateway.discount.type = handleDiscount.discountOption.type
-            response.discount_option = handleDiscount.discountOption
           }
           response.payment_gateways.push(gateway)
         }
