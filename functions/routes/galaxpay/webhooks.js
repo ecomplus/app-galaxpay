@@ -258,9 +258,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       })
   }
 
-  if (galaxpayHook.confirmHash) {
-    console.log('> ', galaxpayHook.confirmHash)
-  }
+  // if (galaxpayHook.confirmHash) {
+  //   console.log('> confirmHash:', galaxpayHook.confirmHash)
+  // }
 
   if (type === 'transaction.updateStatus') {
     const subscription = collectionSubscription.doc(subscriptionId)
@@ -292,7 +292,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   .get(`/transactions?galaxPayIds=${GalaxPayTransaction.galaxPayId}&startAt=0&limit=1`)
 
                 galaxPayTransactionStatus = data.Transactions[0]?.status
-                const dateTimeTransaction = data.Transactions[0]?.paydayDate || data.Transactions[0]?.createdAt
+                const dateTimeTransaction = data.Transactions[0]?.paydayDate
                 transactionPaymentDay = dateTimeTransaction && new Date(`${dateTimeTransaction} UTC-3`)
                 console.log('>> galaxpay webhook: Transaction status ', galaxPayTransactionStatus, ' ', transactionPaymentDay)
 
@@ -570,7 +570,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 itemsAndAmount,
                 updatedAt: new Date().toISOString()
               },
-              { merge: true }
+                { merge: true }
               )
 
             try {
