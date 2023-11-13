@@ -8,7 +8,8 @@ const { baseUri } = require('../../__env')
 const {
   checkItemsAndRecalculeteOrder,
   updateValueSubscriptionGalaxpay,
-  getSubscriptionsByListMyIds
+  getSubscriptionsByListMyIds,
+  updateTransactionGalaxpay
 } = require('../../lib/galaxpay/update-subscription')
 
 const {
@@ -153,8 +154,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               })
           } else if (
             trigger.resource === 'orders' && trigger.body.status &&
-              trigger.body.status !== 'cancelled' && trigger.action !== 'create' &&
-              trigger.fields.includes('items')
+            trigger.body.status !== 'cancelled' && trigger.action !== 'create' &&
+            trigger.fields.includes('items')
           ) {
             console.log('>> ', JSON.stringify(trigger))
             // When the original order is edited
@@ -257,9 +258,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     const subscription = galaxPaySubscriptions[i]
                     try {
                       const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
-                      const product = await getProductsById(appSdk, storeId, resourceId, auth)
+                        .catch(console.error)
 
-                      if (order) {
+                      const product = await getProductsById(appSdk, storeId, resourceId, auth)
+                        .catch(console.error)
+
+                      if (order && product) {
                         const docSubscription = await getDocSubscription(order._id, collectionSubscription)
 
                         order.items.forEach(async (orderItem) => {
@@ -339,6 +343,27 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             )
 
                             throw err
+                          }
+                          //
+                          // subscription.galaxPayId
+                          // console.log('>Sub: ', JSON.stringify(subscription))
+                          let queryString = `subscriptionGalaxPayIds=${subscription.galaxPayId}`
+                          queryString += '&status=notSend,pendingBoleto,pendingPix&order=payday.desc'
+
+                          try {
+                            const { data: { Transactions } } = await galaxpayAxios.axios
+                              .get(`/transactions?startAt=0&limit=100&${queryString}`)
+                            let i = 0
+                            while (i < Transactions?.length) {
+                              const transaction = Transactions[i]
+                              if (transaction.value !== newSubscriptionValue) {
+                                await updateTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId, newSubscriptionValue)
+                                  .catch(console.error)
+                              }
+                              i += 1
+                            }
+                          } catch (err) {
+                            console.error(err)
                           }
                         }
                       }

@@ -3,7 +3,8 @@ const {
   checkAndUpdateSubscriptionGalaxpay,
   checkItemsAndRecalculeteOrder,
   compareDocItemsWithOrder,
-  updateValueSubscriptionGalaxpay
+  updateValueSubscriptionGalaxpay,
+  updateTransactionGalaxpay
 } = require('../../lib/galaxpay/update-subscription')
 const {
   createItemsAndAmount,
@@ -553,7 +554,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               compareDocItemsWithOrder(itemsAndAmount, order.items, order.amount, GalaxPayTransactionValue)
             }
 
-            const { value } = await checkItemsAndRecalculeteOrder(
+            await checkItemsAndRecalculeteOrder(
               order.amount,
               order.items,
               plan,
@@ -566,10 +567,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             itemsAndAmount = createItemsAndAmount(order.amount, order.items)
 
             await collectionTransactions.doc(`${storeId}-${GalaxPayTransaction.galaxPayId}`)
-              .set({
-                itemsAndAmount,
-                updatedAt: new Date().toISOString()
-              },
+              .set(
+                {
+                  itemsAndAmount,
+                  updatedAt: new Date().toISOString()
+                },
                 { merge: true }
               )
 
@@ -595,6 +597,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   }
                   await updateDocSubscription(collectionSubscription, body, subscriptionId)
                 }
+                // Update transaction
+                await updateTransactionGalaxpay(galaxpayAxios, GalaxPayTransaction.galaxPayId, total)
               }
             } catch (error) {
               console.error(error)

@@ -3,6 +3,22 @@ const GalaxpayAxios = require('./create-access')
 const axios = require('axios')
 const { getProductsById } = require('../store-api/request-api')
 
+const checkProducstExists = async (appSdk, storeId, items, auth) => {
+  // product may have been deleted but still belong to a subscription
+  let i = 0
+  while (i < items.length) {
+    const item = items[i]
+    const product = await getProductsById(appSdk, storeId, item.product_id, auth)
+      .catch(console.error)
+
+    if (!product) {
+      items.splice(i, 1)
+    } else {
+      i += 1
+    }
+  }
+}
+
 const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOriginal, appSdk, auth) => {
   if (!shippingLineOriginal.app) return null
   const items = []
@@ -13,19 +29,23 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
     if (!item.dimensions) {
       // add dimensions for shipping calculation
       const product = await getProductsById(appSdk, storeId, item.product_id, auth)
+        .catch(console.error)
+
       let dimensions = product?.dimensions
       let weight = product?.weight
 
-      if (item.variation_id) {
-        const variation = product.variations.find(itemFind => itemFind.sku === item.sku)
-        if (variation.dimensions) {
-          dimensions = variation.dimensions
+      if (product) {
+        if (item.variation_id) {
+          const variation = product.variations.find(itemFind => itemFind.sku === item.sku)
+          if (variation.dimensions) {
+            dimensions = variation.dimensions
+          }
+          if (variation.weight) {
+            weight = variation.weight
+          }
         }
-        if (variation.weight) {
-          weight = variation.weight
-        }
+        items.push({ ...item, dimensions, weight })
       }
-      items.push({ ...item, dimensions, weight })
     } else {
       items.push({ ...item })
     }
@@ -130,6 +150,11 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
   let subtotal = 0
   let item
   let i = 0
+
+  if (appSdk) {
+    await checkProducstExists(appSdk, storeId, items, auth)
+  }
+
   while (i < items.length) {
     item = items[i]
     if (newItem && item.sku === newItem.sku) {
@@ -268,10 +293,24 @@ const compareDocItemsWithOrder = (docItemsAndAmount, originalItems, originalAmou
   }
 }
 
+const updateTransactionGalaxpay = async (galaxpayAxios, galaxPayId, value) => {
+  const { data } = await galaxpayAxios.axios
+    .put(`/transactions/${galaxPayId}/galaxPayId`,
+      {
+        value
+      }
+    )
+
+  if (data) {
+    console.log('> Successful transaction edit on Galax Pay #', galaxPayId)
+  }
+}
+
 module.exports = {
   checkAndUpdateSubscriptionGalaxpay,
   checkItemsAndRecalculeteOrder,
   updateValueSubscriptionGalaxpay,
   getSubscriptionsByListMyIds,
-  compareDocItemsWithOrder
+  compareDocItemsWithOrder,
+  updateTransactionGalaxpay
 }

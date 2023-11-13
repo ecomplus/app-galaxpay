@@ -8,12 +8,15 @@ const findOrderById = (appSdk, storeId, orderId, auth) => new Promise((resolve, 
     })
 })
 
-const getProductsById = (appSdk, storeId, productId, auth) => new Promise((resolve, reject) => {
+const getProductsById = (appSdk, storeId, productId, auth, isRetry) => new Promise((resolve, reject) => {
   appSdk.apiRequest(storeId, `/products/${productId}.json`, 'GET', null, auth)
     .then(({ response }) => {
       resolve(response.data)
     })
     .catch(err => {
+      if (!isRetry && err.response && err.response.status >= 429) {
+        setTimeout(() => getProductsById(appSdk, storeId, productId, auth, true), 10)
+      }
       reject(err)
     })
 })
