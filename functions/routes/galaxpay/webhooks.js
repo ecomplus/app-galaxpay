@@ -548,15 +548,16 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           if (transactionId !== GalaxPayTransaction.galaxPayId) {
             const auth = await appSdk.getAuth(storeId)
             const order = (await findOrderById(appSdk, storeId, auth, subscriptionId))?.response?.data
+            let items = order.items
 
             let { itemsAndAmount } = subscriptionDoc
             if (itemsAndAmount && itemsAndAmount.items?.length) {
-              compareDocItemsWithOrder(itemsAndAmount, order.items, order.amount, GalaxPayTransactionValue)
+              items = itemsAndAmount.items
             }
 
             await checkItemsAndRecalculeteOrder(
               order.amount,
-              order.items,
+              items,
               plan,
               null,
               order.shipping_lines[0],
@@ -564,7 +565,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               appSdk,
               auth
             )
-            itemsAndAmount = createItemsAndAmount(order.amount, order.items)
+            itemsAndAmount = createItemsAndAmount(order.amount, items)
 
             await collectionTransactions.doc(`${storeId}-${GalaxPayTransaction.galaxPayId}`)
               .set(
@@ -598,7 +599,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   await updateDocSubscription(collectionSubscription, body, subscriptionId)
                 }
                 // Update transaction
-                await updateTransactionGalaxpay(galaxpayAxios, GalaxPayTransaction.galaxPayId, total)
+                const { status } = data?.Transactions[0]
+                if (!status || status === 'notSend' || status === 'pendingBoleto' || status === 'pendingPix') {
+                  await updateTransactionGalaxpay(galaxpayAxios, GalaxPayTransaction.galaxPayId, total)
+                }
               }
             } catch (error) {
               console.error(error)

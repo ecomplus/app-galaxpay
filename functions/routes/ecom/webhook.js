@@ -345,8 +345,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             throw err
                           }
                           //
-                          // subscription.galaxPayId
-                          // console.log('>Sub: ', JSON.stringify(subscription))
                           let queryString = `subscriptionGalaxPayIds=${subscription.galaxPayId}`
                           queryString += '&status=notSend,pendingBoleto,pendingPix&order=payday.desc'
 
@@ -356,7 +354,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             let i = 0
                             while (i < Transactions?.length) {
                               const transaction = Transactions[i]
-                              if (transaction.value !== newSubscriptionValue) {
+                              if (transaction.value !== newSubscriptionValue && transaction.galaxPayId !== docSubscription.transactionId) {
                                 await updateTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId, newSubscriptionValue)
                                   .catch(console.error)
                               }
