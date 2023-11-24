@@ -361,7 +361,14 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                                 const transaction = Transactions[i]
                                 if (transaction.value !== newSubscriptionValue && transaction.galaxPayId !== docSubscription.transactionId) {
                                   await updateTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId, newSubscriptionValue)
-                                    .catch(console.error)
+                                    .catch(error => {
+                                      if (error.response) {
+                                        const { status, data } = error.response
+                                        console.error('Error response: ', status, ' ', data && JSON.stringify(data))
+                                      } else {
+                                        console.error(error)
+                                      }
+                                    })
                                 }
                                 i += 1
                               }

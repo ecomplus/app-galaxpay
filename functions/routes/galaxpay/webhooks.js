@@ -606,6 +606,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               }
             } catch (error) {
               console.error(error)
+              if (error.response) {
+                const { status, data } = error.response
+                console.error('Error response: ', status, ' ', data && JSON.stringify(data))
+              }
             }
 
             res.sendStatus(200)

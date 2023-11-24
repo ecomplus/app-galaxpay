@@ -2,6 +2,7 @@ const getAppData = require('../store-api/get-app-data')
 const GalaxpayAxios = require('./create-access')
 const axios = require('axios')
 const { getProductsById } = require('../store-api/request-api')
+const { error } = require('firebase-functions/logger')
 
 const checkProducstExists = async (appSdk, storeId, items, auth) => {
   // product may have been deleted but still belong to a subscription
