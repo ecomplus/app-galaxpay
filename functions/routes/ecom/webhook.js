@@ -199,7 +199,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 console.warn(`>> StoreApi webhook: Document does not exist Firestore, order #${resourceId}, not found`)
                 status = 404
               } else {
-                console.error('> Error editing subscription => ', err)
+                if (response && response.data) {
+                  console.error('> Error editing subscription => ', JSON.stringify(response.data))
+                } else {
+                  console.error('> Error editing subscription => ', err)
+                }
               }
 
               res.status(status).send({
@@ -368,8 +372,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         }
                       } catch (err) {
                         console.error(`Error trying to update signature #${subscription.myId}`)
-                        if (err?.response) {
-                          console.error('Error: ', err?.response, ' <')
+                        if (error.response) {
+                          const { status, data } = error.response
+                          console.log('Error: ', status, ' ', data && JSON.stringify(data))
                         }
                         error = err
                       }
