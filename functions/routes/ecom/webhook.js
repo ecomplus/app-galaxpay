@@ -373,7 +373,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       } catch (err) {
                         console.error(`Error trying to update signature #${subscription.myId}`)
                         if (err.response) {
-                          const { status, data } = error.response
+                          const { status, data } = err.response
                           console.log('Error: ', status, ' ', data && JSON.stringify(data))
                         }
                         error = err

@@ -258,7 +258,12 @@ const getSubscriptionsByListMyIds = async (
     }, [])
     return galaxPaySubscriptions
   } catch (err) {
-    console.error(err)
+    if (err.response) {
+      const { status, data } = err.response
+      console.log('Error: ', status, ' ', data && JSON.stringify(data))
+    } else {
+      console.error(err)
+    }
     return null
   }
 }
