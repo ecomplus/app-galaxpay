@@ -260,131 +260,130 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   let error
                   for (let i = 0; i < galaxPaySubscriptions.length; i++) {
                     const subscription = galaxPaySubscriptions[i]
-                    if (subscription.quantity === 0) {
-                      try {
-                        const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
-                          .catch(console.error)
+                    try {
+                      const order = await findOrderById(appSdk, storeId, subscription.myId, auth)
+                        .catch(console.error)
 
-                        const product = await getProductsById(appSdk, storeId, resourceId, auth)
-                          .catch(console.error)
+                      const product = await getProductsById(appSdk, storeId, resourceId, auth)
+                        .catch(console.error)
 
-                        if (order && product) {
-                          const docSubscription = await getDocSubscription(order._id, collectionSubscription)
+                      if (order && product) {
+                        const docSubscription = await getDocSubscription(order._id, collectionSubscription)
 
-                          order.items.forEach(async (orderItem) => {
-                            let dimensions = product?.dimensions
-                            let weight = product?.weight
+                        order.items.forEach(async (orderItem) => {
+                          let dimensions = product?.dimensions
+                          let weight = product?.weight
 
-                            if (orderItem.product_id === product._id) {
-                              if (orderItem.variation_id) {
-                                const variation = product.variations.find(itemFind => itemFind.sku === orderItem.sku)
-                                let quantity = orderItem.quantity
-                                if (variation && variation.quantity < orderItem.quantity) {
-                                  quantity = variation.quantity
-                                } else if (!variation) {
-                                  quantity = 0
-                                }
-                                if (variation.dimensions) {
-                                  dimensions = variation.dimensions
-                                }
-                                if (variation.weight) {
-                                  weight = variation.weight
-                                }
-                                const newItem = {
-                                  sku: variation.sku,
-                                  price: ecomUtils.price({ ...product, ...variation }),
-                                  quantity
-                                }
-                                // update item, price or quantity
-                                checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
-                              } else {
-                                const newItem = {
-                                  sku: product.sku,
-                                  price: ecomUtils.price(product),
-                                  quantity: product.quantity < orderItem.quantity ? product.quantity : orderItem.quantity
-                                }
-                                // update item, price or quantity
-                                checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
+                          if (orderItem.product_id === product._id) {
+                            if (orderItem.variation_id) {
+                              const variation = product.variations.find(itemFind => itemFind.sku === orderItem.sku)
+                              let quantity = orderItem.quantity
+                              if (variation && variation.quantity < orderItem.quantity) {
+                                quantity = variation.quantity
+                              } else if (!variation) {
+                                quantity = 0
                               }
-                              orderItem.dimensions = dimensions
-                              orderItem.weight = weight
+                              if (variation.dimensions) {
+                                dimensions = variation.dimensions
+                              }
+                              if (variation.weight) {
+                                weight = variation.weight
+                              }
+                              const newItem = {
+                                sku: variation.sku,
+                                price: ecomUtils.price({ ...product, ...variation }),
+                                quantity
+                              }
+                              // update item, price or quantity
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
+                            } else {
+                              const newItem = {
+                                sku: product.sku,
+                                price: ecomUtils.price(product),
+                                quantity: product.quantity < orderItem.quantity ? product.quantity : orderItem.quantity
+                              }
+                              // update item, price or quantity
+                              checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
                             }
-                          })
+                            orderItem.dimensions = dimensions
+                            orderItem.weight = weight
+                          }
+                        })
 
-                          // Calculates new value
-                          const { value: newSubscriptionValue } = await checkItemsAndRecalculeteOrder(
+                        // Calculates new value
+                        const { value: newSubscriptionValue } = await checkItemsAndRecalculeteOrder(
+                          order.amount,
+                          order.items,
+                          docSubscription.plan,
+                          null,
+                          order.shipping_lines[0],
+                          storeId,
+                          appSdk,
+                          auth
+                        )
+                        if (newSubscriptionValue && newSubscriptionValue !== subscription.value) {
+                          await addItemsAndValueSubscriptionDoc(
+                            collectionSubscription,
                             order.amount,
                             order.items,
-                            docSubscription.plan,
-                            null,
-                            order.shipping_lines[0],
-                            storeId,
-                            appSdk,
-                            auth
+                            newSubscriptionValue,
+                            order._id
                           )
-                          if (newSubscriptionValue && newSubscriptionValue !== subscription.value) {
-                            await addItemsAndValueSubscriptionDoc(
-                              collectionSubscription,
-                              order.amount,
-                              order.items,
+                          try {
+                            await galaxpayAxios.preparing
+                            await updateValueSubscriptionGalaxpay(
+                              galaxpayAxios,
+                              order._id,
                               newSubscriptionValue,
+                              subscription.value
+                            )
+                          } catch (err) {
+                            console.error(err)
+                            // back firebase document
+                            updateDocSubscription(
+                              collectionSubscription,
+                              docSubscription,
                               order._id
                             )
-                            try {
-                              await galaxpayAxios.preparing
-                              await updateValueSubscriptionGalaxpay(
-                                galaxpayAxios,
-                                order._id,
-                                newSubscriptionValue,
-                                subscription.value
-                              )
-                            } catch (err) {
-                              console.error(err)
-                              // back firebase document
-                              updateDocSubscription(
-                                collectionSubscription,
-                                docSubscription,
-                                order._id
-                              )
 
-                              throw err
-                            }
-                            //
-                            let queryString = `subscriptionGalaxPayIds=${subscription.galaxPayId}`
-                            queryString += '&status=notSend,pendingBoleto,pendingPix&order=payday.desc'
+                            throw err
+                          }
+                          //
+                          let queryString = `subscriptionGalaxPayIds=${subscription.galaxPayId}`
+                          queryString += '&status=notSend,pendingBoleto,pendingPix&order=payday.desc'
 
-                            try {
-                              const { data: { Transactions } } = await galaxpayAxios.axios
-                                .get(`/transactions?startAt=0&limit=100&${queryString}`)
-                              let i = 0
-                              while (i < Transactions?.length) {
-                                const transaction = Transactions[i]
-                                if (transaction.value !== newSubscriptionValue && transaction.galaxPayId !== docSubscription.transactionId) {
-                                  await updateTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId, newSubscriptionValue)
-                                    .catch(error => {
-                                      if (error.response) {
-                                        const { status, data } = error.response
-                                        console.error('Error response: ', status, ' ', data && JSON.stringify(data))
-                                      } else {
-                                        console.error(error)
-                                      }
-                                    })
-                                }
-                                i += 1
+                          try {
+                            const { data: { Transactions } } = await galaxpayAxios.axios
+                              .get(`/transactions?startAt=0&limit=100&${queryString}`)
+                            let i = 0
+                            while (i < Transactions?.length) {
+                              const transaction = Transactions[i]
+                              // console.log('>>Transaction ', transaction)
+                              if (transaction.value !== newSubscriptionValue && transaction.galaxPayId !== docSubscription.transactionId) {
+                                await updateTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId, newSubscriptionValue)
+                                  .catch(error => {
+                                    if (error.response) {
+                                      const { status, data } = error.response
+                                      console.error('Error response: ', status, ' ', data && JSON.stringify(data))
+                                    } else {
+                                      console.error(error)
+                                    }
+                                  })
                               }
-                            } catch (err) {
-                              console.error(err)
+                              i += 1
                             }
+                          } catch (err) {
+                            console.error(err)
                           }
                         }
-                      } catch (err) {
-                        console.error(`Error trying to update signature #${subscription.myId}`)
-                        if (err.response) {
-                          const { status, data } = err.response
-                          console.log('Error: ', status, ' ', data && JSON.stringify(data))
-                        }
-                        error = err
                       }
+                    } catch (err) {
+                      console.error(`Error trying to update signature #${subscription.myId}`)
+                      if (err.response) {
+                        const { status, data } = err.response
+                        console.log('Error: ', status, ' ', data && JSON.stringify(data))
+                      }
+                      error = err
                     }
                   } //
 
