@@ -81,7 +81,7 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
 
       return {
         app: sameApp,
-        service: service || sameApp.response?.shipping_services[0]
+        service: service || (sameApp.response?.shipping_services && sameApp.response?.shipping_services[0])
       }
     } else {
       let minPrice = result[0]?.response?.shipping_services[0]?.shipping_line?.total_price
