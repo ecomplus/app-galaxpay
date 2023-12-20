@@ -84,6 +84,8 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
         service: service || (sameApp.response?.shipping_services && sameApp.response?.shipping_services[0])
       }
     } else {
+      if (!result[0]?.response?.shipping_services.length) return null
+
       let minPrice = result[0]?.response?.shipping_services[0]?.shipping_line?.total_price
       const indexPosition = { app: 0, service: 0 }
       for (let i = 0; i < result.length; i++) {
