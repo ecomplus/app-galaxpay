@@ -9,7 +9,8 @@ const {
   checkItemsAndRecalculeteOrder,
   updateValueSubscriptionGalaxpay,
   getSubscriptionsByListMyIds,
-  updateTransactionGalaxpay
+  updateTransactionGalaxpay,
+  cancellTransactionGalaxpay
 } = require('../../lib/galaxpay/update-subscription')
 
 const {
@@ -257,6 +258,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 )
 
                 if (galaxPaySubscriptions && galaxPaySubscriptions.length) {
+                  console.log('>> body ', JSON.stringify(trigger.body))
                   let error
                   for (let i = 0; i < galaxPaySubscriptions.length; i++) {
                     const subscription = galaxPaySubscriptions[i]
@@ -321,7 +323,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           appSdk,
                           auth
                         )
-                        if (newSubscriptionValue && newSubscriptionValue !== subscription.value) {
+                        if (
+                          (newSubscriptionValue && newSubscriptionValue !== subscription.value) ||
+                          (newSubscriptionValue && docSubscription.value === 0)
+                        ) {
                           await addItemsAndValueSubscriptionDoc(
                             collectionSubscription,
                             order.amount,
@@ -361,6 +366,37 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               // console.log('>>Transaction ', transaction)
                               if (transaction.value !== newSubscriptionValue && transaction.galaxPayId !== docSubscription.transactionId) {
                                 await updateTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId, newSubscriptionValue)
+                                  .catch(error => {
+                                    if (error.response) {
+                                      const { status, data } = error.response
+                                      console.error('Error response: ', status, ' ', data && JSON.stringify(data))
+                                    } else {
+                                      console.error(error)
+                                    }
+                                  })
+                              }
+                              i += 1
+                            }
+                          } catch (err) {
+                            console.error(err)
+                          }
+                        } else if (newSubscriptionValue === 0) {
+                          console.log('>> Attempts to cancel transactions already created from the subscription: ',
+                            order._id, ' new value is: ', newSubscriptionValue)
+
+                          await updateDocSubscription(collectionSubscription, { value: 0 }, order._id)
+
+                          let queryString = `subscriptionGalaxPayIds=${subscription.galaxPayId}`
+                          queryString += '&status=notSend,pendingBoleto,pendingPix&order=payday.desc'
+
+                          try {
+                            const { data: { Transactions } } = await galaxpayAxios.axios
+                              .get(`/transactions?startAt=0&limit=100&${queryString}`)
+                            let i = 0
+                            while (i < Transactions?.length) {
+                              const transaction = Transactions[i]
+                              if (transaction.value !== newSubscriptionValue && transaction.galaxPayId !== docSubscription.transactionId) {
+                                await cancellTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId)
                                   .catch(error => {
                                     if (error.response) {
                                       const { status, data } = error.response

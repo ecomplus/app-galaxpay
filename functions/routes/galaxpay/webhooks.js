@@ -4,7 +4,8 @@ const {
   checkItemsAndRecalculeteOrder,
   compareDocItemsWithOrder,
   updateValueSubscriptionGalaxpay,
-  updateTransactionGalaxpay
+  updateTransactionGalaxpay,
+  cancellTransactionGalaxpay
 } = require('../../lib/galaxpay/update-subscription')
 const {
   createItemsAndAmount,
@@ -131,7 +132,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   }
                   // recalculate order
                   const shippingLine = { ...shippingLines[0] }
-                  // console.log('>>SL1 ', JSON.stringify(shippingLine))
+                  console.log('>> check items ', JSON.stringify(items))
 
                   const { shippingLine: newShippingLine } = await checkItemsAndRecalculeteOrder(amount, items, plan, null, shippingLine, storeId, appSdk, auth)
                   shippingLines[0] = {
@@ -212,7 +213,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     // GalaxPayTransactionValue === finalAmount
                     // return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                     // } else {
-                    console.log(`>>[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId} amount: ${JSON.stringify(amount)}, Galaxpay value: ${GalaxPayTransactionValue}, items: ${JSON.stringify(items)},`)
+                    console.log(`>>[Transaction Error GP: #${GalaxPayTransaction.galaxPayId}] s: ${storeId}` +
+                      `total: ${amount.total}, Galaxpay value: ${GalaxPayTransactionValue}` +
+                      `amount: ${JSON.stringify(amount)}, items: ${JSON.stringify(items)},` +
+                      `itemsAndAmount: ${itemsAndAmount && JSON.stringify(itemsAndAmount)}`)
                   }
                   return findOrderByTransactionId(appSdk, storeId, auth, transactionId)
                 })
@@ -273,8 +277,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         // const orderNumber = documentSnapshot.data().orderNumber
         const transactionId = documentSnapshot.data().transactionId
         const plan = documentSnapshot.data().plan
+        const docValue = documentSnapshot.data().value
 
-        let updates = documentSnapshot.data().updates
         if (documentSnapshot.exists && storeId) {
           appSdk.getAuth(storeId)
             .then(async (auth) => {
@@ -347,22 +351,15 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           oldValue,
                           order.shipping_lines[0]
                         )
-                        const updatedAt = new Date().toISOString()
-                        if (updates) {
-                          updates.push({ value: newValue, updatedAt })
-                        } else {
-                          updates = []
-                          updates.push({ value: newValue, updatedAt })
-                        }
-
-                        collectionSubscription.doc(subscriptionId)
-                          .set({
-                            updates,
-                            updatedAt,
-                            value: newValue
-                          }, { merge: true })
-                          .catch(console.error)
                       }
+                      // if docValue is zero, the subscription has no products (no stock), keep the value in firebase as zero
+                      await updateDocSubscription(
+                        collectionSubscription,
+                        {
+                          value: docValue === 0 ? 0 : newValue
+                        },
+                        subscriptionId
+                      )
                     }
                     // console.log('ORDER: ', JSON.stringify(order.amount), ' **')
 
@@ -543,7 +540,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       try {
         console.log('>> Add transaction')
         const subscriptionDoc = (await collectionSubscription.doc(subscriptionId).get())?.data()
-        const { storeId, plan, transactionId } = subscriptionDoc
+        const { storeId, plan, transactionId, value: subscriptionValue } = subscriptionDoc
         if (storeId) {
           if (transactionId !== GalaxPayTransaction.galaxPayId) {
             const auth = await appSdk.getAuth(storeId)
@@ -588,6 +585,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               const total = itemsAndAmount?.amount?.total && Math.floor((itemsAndAmount?.amount?.total).toFixed(2) * 100)
               // console.log('>> ', data?.Transactions[0]?.value, ' ', total , ' ', JSON.stringify(data))
               const hasUpdateValue = total && data?.Transactions[0]?.value && total !== data?.Transactions[0]?.value
+              const { status } = data?.Transactions[0]
+              console.log('>> new value ', subscriptionValue, ' status ', status)
               if (hasUpdateValue) {
                 const resp = await updateValueSubscriptionGalaxpay(galaxpayAxios, subscriptionId, total)
                 if (resp) {
@@ -599,9 +598,17 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   await updateDocSubscription(collectionSubscription, body, subscriptionId)
                 }
                 // Update transaction
-                const { status } = data?.Transactions[0]
                 if (!status || status === 'notSend' || status === 'pendingBoleto' || status === 'pendingPix') {
                   await updateTransactionGalaxpay(galaxpayAxios, GalaxPayTransaction.galaxPayId, total)
+                }
+              } else if (subscriptionValue === 0) {
+                console.log('Try canceling transaction: ',
+                  GalaxPayTransaction.galaxPayId, ' subscriptions is ',
+                  subscriptionValue
+                )
+                // cancell transaction
+                if (!status || status === 'notSend' || status === 'pendingBoleto' || status === 'pendingPix') {
+                  await cancellTransactionGalaxpay(galaxpayAxios, GalaxPayTransaction.galaxPayId)
                 }
               }
             } catch (error) {

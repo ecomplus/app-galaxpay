@@ -271,7 +271,10 @@ const getSubscriptionsByListMyIds = async (
 const compareDocItemsWithOrder = (docItemsAndAmount, originalItems, originalAmount, galapayTransactionValue) => {
   const finalAmount = Math.floor((originalAmount.total).toFixed(2) * 1000) / 1000
 
-  console.log(`>>Compare values: ${JSON.stringify(originalAmount)} => total: ${finalAmount} GP: ${galapayTransactionValue}`)
+  console.log(`>> Compare values: ${JSON.stringify(originalAmount)} total: ${finalAmount} GP: ${galapayTransactionValue}`)
+  console.log('>> DocItems: ', docItemsAndAmount?.items && JSON.stringify(docItemsAndAmount?.items))
+  console.log('>> originalItems: ', JSON.stringify(originalItems))
+
   if (galapayTransactionValue !== finalAmount) {
     // need update itens and recalculate order
     let i = 0
@@ -311,11 +314,21 @@ const updateTransactionGalaxpay = async (galaxpayAxios, galaxPayId, value) => {
   }
 }
 
+const cancellTransactionGalaxpay = async (galaxpayAxios, galaxPayId) => {
+  const { data } = await galaxpayAxios.axios
+    .delete(`/transactions/${galaxPayId}/galaxPayId`)
+
+  if (data) {
+    console.log('> Transaction successfully canceled on Galax Pay#', galaxPayId)
+  }
+}
+
 module.exports = {
   checkAndUpdateSubscriptionGalaxpay,
   checkItemsAndRecalculeteOrder,
   updateValueSubscriptionGalaxpay,
   getSubscriptionsByListMyIds,
   compareDocItemsWithOrder,
-  updateTransactionGalaxpay
+  updateTransactionGalaxpay,
+  cancellTransactionGalaxpay
 }
