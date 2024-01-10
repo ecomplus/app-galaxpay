@@ -94,7 +94,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     amount: amount.total
   }
 
-  const finalAmount = Math.floor((amount.total).toFixed(2) * 1000) / 10
+  const finalAmount = Math.floor(amount.total * 100)
   const fristPayment = new Date()
 
   const galaxpaySubscriptions = {
