@@ -121,8 +121,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                   let { itemsAndAmount } = documentSnapshot.data()
                   try {
                     const transactionDoc = (await collectionTransactions.doc(`${storeId}-${GalaxPayTransaction.galaxPayId}`).get())?.data()
-                    itemsAndAmount = transactionDoc?.itemsAndAmount
-                    console.log('>> items to transaction')
+                    if(transactionDoc && transactionDoc.itemsAndAmount){
+                      itemsAndAmount = transactionDoc?.itemsAndAmount
+                      console.log('>> items to transaction')
+                    }
                   } catch (err) {
                     console.warn(err)
                   }
