@@ -91,7 +91,7 @@ const getNewFreight = async (storeId, itemsOrder, to, subtotal, shippingLineOrig
       for (let i = 0; i < result.length; i++) {
         const app = result[i]
 
-        for (let j = 0; j < app.response?.shipping_services.length; j++) {
+        for (let j = 0; j < app.response?.shipping_services?.length; j++) {
           const service = app.response?.shipping_services[j]
 
           if (service.service_code === shippingLineOriginal.app.service_code) {
@@ -161,6 +161,7 @@ const checkItemsAndRecalculeteOrder = async (amount, items, plan, newItem, shipp
     item = items[i]
     if (newItem && item.sku === newItem.sku) {
       if (newItem.quantity === 0) {
+        console.log('>> Item Stock at zero ', JSON.stringify(newItem))
         items.splice(i, 1)
       } else {
         if (item.final_price) {

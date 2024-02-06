@@ -97,10 +97,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const finalAmount = Math.floor(amount.total * 100)
   const fristPayment = new Date()
 
+  const recorrenceQuantity = 0
+
   const galaxpaySubscriptions = {
     myId: `${orderId}`, // requered
     value: finalAmount,
-    quantity: 0, //  recorrence quantity
+    quantity: recorrenceQuantity,
     periodicity: parsePeriodicityGalaxPay(plan.periodicity),
     // additionalInfo: '', // optional
     ExtraFields: extraFields
@@ -201,7 +203,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 status: 'open',
                 orderNumber: params.order_number,
                 transactionId: transactionGalaxPay.galaxPayId,
-                quantity: 0,
+                quantity: recorrenceQuantity,
                 create_at: new Date().toISOString(),
                 plan,
                 value: finalAmount

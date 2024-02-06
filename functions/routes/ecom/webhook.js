@@ -70,6 +70,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           /* DO YOUR CUSTOM STUFF HERE */
           const galaxpayAxios = new GalaxpayAxios(appData.galaxpay_id, appData.galaxpay_hash, storeId)
           const collectionSubscription = admin.firestore().collection('subscriptions')
+          const collectionTransactions = admin.firestore().collection('transactions')
 
           if (trigger.resource === 'orders' && trigger.body?.status === 'cancelled') {
             console.log('>>> ', JSON.stringify(trigger.body))
@@ -270,9 +271,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                         .catch(console.error)
 
                       if (order && product) {
-                        const docSubscription = await getDocSubscription(order._id, collectionSubscription)
+                        const items = [...order.items]
+                        let docSubscription = await getDocSubscription(order._id, collectionSubscription)
+                        const hasItems = docSubscription?.itemsAndAmount?.items
 
-                        order.items.forEach(async (orderItem) => {
+                        items.forEach(async (orderItem) => {
                           let dimensions = product?.dimensions
                           let weight = product?.weight
 
@@ -292,6 +295,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                                 weight = variation.weight
                               }
                               const newItem = {
+                                subscription_id: order._id,
+                                product_id: product._id,
                                 sku: variation.sku,
                                 price: ecomUtils.price({ ...product, ...variation }),
                                 quantity
@@ -300,6 +305,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
                             } else {
                               const newItem = {
+                                subscription_id: order._id,
+                                product_id: product._id,
                                 sku: product.sku,
                                 price: ecomUtils.price(product),
                                 quantity: product.quantity < orderItem.quantity ? product.quantity : orderItem.quantity
@@ -309,6 +316,22 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             }
                             orderItem.dimensions = dimensions
                             orderItem.weight = weight
+                          } else if (hasItems) {
+                            // It is necessary to update the reading in firebase, as the item may have already been updated
+                            docSubscription = await getDocSubscription(order._id, collectionSubscription)
+                            const docItems = docSubscription?.itemsAndAmount?.items
+                            let newItem = docItems?.find(item => item.sku === orderItem.sku)
+
+                            if (!newItem) {
+                              newItem = {
+                                subscription_id: order._id,
+                                product_id: product._id,
+                                sku: orderItem.sku,
+                                price: orderItem.price,
+                                quantity: 0
+                              }
+                            }
+                            checkItemsAndRecalculeteOrder(order.amount, order.items, docSubscription.plan, newItem)
                           }
                         })
 
@@ -366,6 +389,19 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                               // console.log('>>Transaction ', transaction)
                               if (transaction.value !== newSubscriptionValue && transaction.galaxPayId !== docSubscription.transactionId) {
                                 await updateTransactionGalaxpay(galaxpayAxios, transaction.galaxPayId, newSubscriptionValue)
+                                  .then(async () => {
+                                    const transactionDocId = `${storeId}-${transaction.galaxPayId}`
+                                    console.log('>> Update Doc Transaction ', transactionDocId)
+                                    const itemsAndAmount = createItemsAndAmount(order.amount, order.items)
+                                    await collectionTransactions.doc(transactionDocId)
+                                      .set(
+                                        {
+                                          itemsAndAmount,
+                                          updatedAt: new Date().toISOString()
+                                        },
+                                        { merge: true }
+                                      )
+                                  })
                                   .catch(error => {
                                     if (error.response) {
                                       const { status, data } = error.response
@@ -384,7 +420,20 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           console.log('>> Attempts to cancel transactions already created from the subscription: ',
                             order._id, ' new value is: ', newSubscriptionValue)
 
-                          await updateDocSubscription(collectionSubscription, { value: 0 }, order._id)
+                          // signature without items, use a copy of the items from the original order and reset the quantity, to maintain the correct items
+                          const itemsAndAmount = createItemsAndAmount(order.amount, items)
+                          itemsAndAmount?.items?.forEach(item => {
+                            item.quantity = 0
+                          })
+
+                          await updateDocSubscription(
+                            collectionSubscription,
+                            {
+                              value: 0,
+                              itemsAndAmount
+                            },
+                            order._id
+                          )
 
                           let queryString = `subscriptionGalaxPayIds=${subscription.galaxPayId}`
                           queryString += '&status=notSend,pendingBoleto,pendingPix&order=payday.desc'
