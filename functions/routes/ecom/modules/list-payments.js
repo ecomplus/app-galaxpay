@@ -20,7 +20,7 @@ exports.post = ({ appSdk }, req, res) => {
    */
 
   const { params, application } = req.body
-  const { storeId } = req
+  // const { storeId } = req
   // setup basic required response object
   const response = {
     payment_gateways: []
@@ -28,29 +28,6 @@ exports.post = ({ appSdk }, req, res) => {
   // merge all app options configured by merchant
   const appData = Object.assign({}, application.data, application.hidden_data)
 
-  /* DO THE STUFF HERE TO FILL RESPONSE OBJECT WITH PAYMENT GATEWAYS */
-
-  /**
-   * Sample snippets:
-
-  // add new payment method option
-  response.payment_gateways.push({
-    intermediator: {
-      code: 'paupay',
-      link: 'https://www.palpay.com.br',
-      name: 'paupay'
-    },
-    payment_url: 'https://www.palpay.com.br/',
-    type: 'payment',
-    payment_method: {
-      code: 'banking_billet',
-      name: 'Boleto Bancário'
-    },
-    label: 'Boleto Bancário',
-    expiration_date: appData.expiration_date || 14
-  })
-
-  */
   let amount = { ...params.amount } || {}
 
   if (!appData.galaxpay_id || !appData.galaxpay_hash) {
@@ -81,8 +58,6 @@ exports.post = ({ appSdk }, req, res) => {
         const methodConfig = appData[paymentMethod] || {}
         const methodMinAmount = methodConfig.min_amount || 0
         if (!methodConfig.disable && (methodMinAmount <= amount.total)) {
-          console.log('s: ', storeId, ' > Plan ', plan.periodicity)
-
           const isCreditCard = paymentMethod === 'credit_card'
           const isPix = paymentMethod === 'pix'
           let label = methodConfig.label || (isCreditCard ? 'Cartão de crédito' : (isPix ? 'PIX' : 'Boleto bancário'))

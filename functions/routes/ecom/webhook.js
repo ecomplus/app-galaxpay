@@ -239,8 +239,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 })
               })
           } else if (trigger.resource === 'products' && trigger.action === 'change') {
-            console.log('> Edit product ', resourceId, 's: ', storeId)
-
             let query = 'status!=cancelled&transactions.type=recurrence'
             query += '&transactions.app.intermediator.code=galaxpay_app'
 
@@ -250,6 +248,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               const { result } = await getOrderWithQueryString(appSdk, storeId, query, auth)
 
               if (result && result.length) {
+                console.log('> Edit product ', resourceId, 's: ', storeId)
+
                 const galaxPaySubscriptions = await getSubscriptionsByListMyIds(
                   galaxpayAxios,
                   result.reduce((orderIds, order) => {
@@ -492,6 +492,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 message
               })
             }
+          } else {
+            return res.send(ECHO_SKIP)
           }
         })
     })
