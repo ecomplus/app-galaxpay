@@ -16,7 +16,7 @@
     "@ecomplus/utils": "^1.4.1",
     "express": "^4.19.2",
     "firebase-admin": "^11.11.1",
-    "firebase-functions": "^3.24.1"
+    "firebase-functions": "^5.1.1"
   },
   "private": true
 }
